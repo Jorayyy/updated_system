@@ -196,7 +196,7 @@ class PayrollController extends Controller
      */
     public function showPeriod(PayrollPeriod $period)
     {
-        $period->load('processor');
+        $period->load(['processor', 'payrolls.user']);
         
         $payrolls = Payroll::with('user')
             ->where('payroll_period_id', $period->id)

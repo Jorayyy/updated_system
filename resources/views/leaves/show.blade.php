@@ -4,9 +4,15 @@
             <h2 class="font-semibold text-xl text-gray-800 leading-tight">
                 {{ __('Leave Request Details') }}
             </h2>
-            <a href="{{ route('leaves.index') }}" class="text-gray-600 hover:text-gray-800">
-                &larr; Back to List
-            </a>
+            @if(auth()->user()->isHr() || auth()->user()->isAdmin())
+                <a href="{{ route('leaves.manage') }}" class="text-gray-600 hover:text-gray-800">
+                    &larr; Back to List
+                </a>
+            @else
+                <a href="{{ route('leaves.index') }}" class="text-gray-600 hover:text-gray-800">
+                    &larr; Back to List
+                </a>
+            @endif
         </div>
     </x-slot>
 

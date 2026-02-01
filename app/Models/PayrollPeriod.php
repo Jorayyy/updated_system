@@ -54,6 +54,14 @@ class PayrollPeriod extends Model
     }
 
     /**
+     * Get name attribute (alias for period label)
+     */
+    public function getNameAttribute(): string
+    {
+        return 'Payroll Period: ' . $this->start_date->format('M d') . ' - ' . $this->end_date->format('M d, Y');
+    }
+
+    /**
      * Check if period is draft
      */
     public function isDraft(): bool

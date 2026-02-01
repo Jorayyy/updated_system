@@ -93,6 +93,14 @@ class Payroll extends Model
     }
 
     /**
+     * Get days worked (alias for total_work_days)
+     */
+    public function getDaysWorkedAttribute(): int
+    {
+        return $this->total_work_days ?? 0;
+    }
+
+    /**
      * Check if payroll is draft
      */
     public function isDraft(): bool

@@ -70,6 +70,30 @@
                 </div>
             @endif
 
+            @if($period->status == 'processing')
+                <div class="bg-white overflow-hidden shadow-sm sm:rounded-lg mb-6">
+                    <div class="p-4 flex items-center justify-between">
+                        <div class="text-sm text-yellow-600">
+                            <strong>Processing:</strong> Payroll has been calculated. Review the records below and click "Complete Payroll" to finalize. 
+                            Employees will be able to view their payslips once completed.
+                        </div>
+                        <div class="flex gap-2">
+                            <form action="{{ route('payroll.complete-period', $period) }}" method="POST"
+                                onsubmit="return confirm('Are you sure you want to complete this payroll period? This will make payslips available to employees.')">
+                                @csrf
+                                <button type="submit" class="bg-blue-600 text-white px-6 py-2 rounded-md hover:bg-blue-700">
+                                    Complete Payroll
+                                </button>
+                            </form>
+                            <a href="{{ route('payroll.report', $period) }}" 
+                                class="bg-purple-600 text-white px-6 py-2 rounded-md hover:bg-purple-700">
+                                Preview Report
+                            </a>
+                        </div>
+                    </div>
+                </div>
+            @endif
+
             @if($period->status == 'completed')
                 <div class="bg-white overflow-hidden shadow-sm sm:rounded-lg mb-6">
                     <div class="p-4 flex items-center justify-between">
