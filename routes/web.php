@@ -1,0 +1,267 @@
+<?php
+
+use App\Http\Controllers\ProfileController;
+use App\Http\Controllers\DashboardController;
+use App\Http\Controllers\AttendanceController;
+use App\Http\Controllers\EmployeeController;
+use App\Http\Controllers\LeaveController;
+use App\Http\Controllers\LeaveTypeController;
+use App\Http\Controllers\DTRController;
+use App\Http\Controllers\PayrollController;
+use App\Http\Controllers\HolidayController;
+use App\Http\Controllers\NotificationController;
+use App\Http\Controllers\SettingsController;
+use App\Http\Controllers\ReportController;
+use App\Http\Controllers\BackupController;
+use App\Http\Controllers\AuditLogController;
+use App\Http\Controllers\ComputerController;
+use App\Http\Controllers\LeaveCreditsController;
+use App\Http\Controllers\ConcernController;
+use App\Http\Controllers\AllowedIpController;
+use App\Http\Controllers\TimekeepingController;
+use App\Http\Controllers\TransactionController;
+use Illuminate\Support\Facades\Route;
+
+/*
+|--------------------------------------------------------------------------
+| Web Routes
+|--------------------------------------------------------------------------
+*/
+
+Route::get('/', function () {
+    return redirect()->route('login');
+});
+
+// Dashboard
+Route::get('/dashboard', [DashboardController::class, 'index'])
+    ->middleware(['auth', 'verified'])
+    ->name('dashboard');
+
+// Authenticated routes
+Route::middleware('auth')->group(function () {
+    // Profile
+    Route::get('/profile', [ProfileController::class, 'edit'])->name('profile.edit');
+    Route::patch('/profile', [ProfileController::class, 'update'])->name('profile.update');
+    Route::delete('/profile', [ProfileController::class, 'destroy'])->name('profile.destroy');
+
+    // ============================================
+    // NOTIFICATIONS (All authenticated users)
+    // ============================================
+    Route::get('/notifications', [NotificationController::class, 'index'])->name('notifications.index');
+    Route::get('/notifications/unread-count', [NotificationController::class, 'unreadCount'])->name('notifications.unread-count');
+    Route::get('/notifications/recent', [NotificationController::class, 'recent'])->name('notifications.recent');
+    Route::post('/notifications/{notification}/mark-read', [NotificationController::class, 'markAsRead'])->name('notifications.mark-as-read');
+    Route::post('/notifications/mark-all-read', [NotificationController::class, 'markAllAsRead'])->name('notifications.mark-all-read');
+    Route::delete('/notifications/{notification}', [NotificationController::class, 'destroy'])->name('notifications.destroy');
+    Route::delete('/notifications/delete-all-read', [NotificationController::class, 'deleteAllRead'])->name('notifications.delete-all-read');
+
+    // ============================================
+    // EMPLOYEE ROUTES (All authenticated users)
+    // ============================================
+    
+    // Attendance - Employee actions (Sequential Steps)
+    Route::get('/attendance', [AttendanceController::class, 'index'])->name('attendance.index');
+    Route::post('/attendance/step', [AttendanceController::class, 'processStep'])->name('attendance.step');
+    Route::post('/attendance/time-in', [AttendanceController::class, 'timeIn'])->name('attendance.time-in');
+    Route::post('/attendance/time-out', [AttendanceController::class, 'timeOut'])->name('attendance.time-out');
+    Route::post('/attendance/break/start', [AttendanceController::class, 'startBreak'])->name('attendance.break.start');
+    Route::post('/attendance/break/end', [AttendanceController::class, 'endBreak'])->name('attendance.break.end');
+    Route::get('/attendance/history', [AttendanceController::class, 'history'])->name('attendance.history');
+
+    // DTR - Employee
+    Route::get('/dtr', [DTRController::class, 'index'])->name('dtr.index');
+    Route::get('/dtr/pdf', [DTRController::class, 'generatePdf'])->name('dtr.pdf');
+
+    // Leaves - Employee
+    Route::get('/leaves', [LeaveController::class, 'index'])->name('leaves.index');
+    Route::get('/leaves/create', [LeaveController::class, 'create'])->name('leaves.create');
+    Route::post('/leaves', [LeaveController::class, 'store'])->name('leaves.store');
+    Route::get('/leaves/{leave}', [LeaveController::class, 'show'])->name('leaves.show');
+    Route::patch('/leaves/{leave}/cancel', [LeaveController::class, 'cancel'])->name('leaves.cancel');
+
+    // Payslips - Employee
+    Route::get('/my-payslips', [PayrollController::class, 'myPayslips'])->name('payroll.my-payslips');
+    Route::get('/my-payslip/{payroll}', [PayrollController::class, 'myPayslip'])->name('payroll.my-payslip');
+    Route::get('/my-payslip/{payroll}/pdf', [PayrollController::class, 'myPayslipPdf'])->name('payroll.my-payslip-pdf');
+
+    // PC Selection - Employee
+    Route::get('/my-pc', [ComputerController::class, 'selectView'])->name('computers.my-pc');
+    Route::post('/my-pc/select', [ComputerController::class, 'select'])->name('computers.select');
+    Route::post('/my-pc/release', [ComputerController::class, 'release'])->name('computers.release');
+
+    // Timekeeping - Employee
+    Route::get('/timekeeping', [TimekeepingController::class, 'index'])->name('timekeeping.index');
+    Route::post('/timekeeping', [TimekeepingController::class, 'store'])->name('timekeeping.store');
+    Route::get('/timekeeping/{transaction}', [TimekeepingController::class, 'show'])->name('timekeeping.show');
+
+    // Concerns - Employee
+    Route::get('/my-concerns', [ConcernController::class, 'myConcerns'])->name('concerns.my');
+    Route::get('/my-concerns/create', [ConcernController::class, 'userCreate'])->name('concerns.user-create');
+    Route::post('/my-concerns', [ConcernController::class, 'userStore'])->name('concerns.user-store');
+    Route::get('/my-concerns/{concern}', [ConcernController::class, 'userShow'])->name('concerns.user-show');
+    Route::post('/my-concerns/{concern}/comment', [ConcernController::class, 'userComment'])->name('concerns.user-comment');
+
+    // ============================================
+    // TRANSACTIONS - Employee (All authenticated users)
+    // ============================================
+    Route::get('/transactions', [TransactionController::class, 'index'])->name('transactions.index');
+    Route::get('/transactions/history', [TransactionController::class, 'history'])->name('transactions.history');
+    Route::get('/transactions/create/{type}', [TransactionController::class, 'create'])->name('transactions.create');
+    Route::post('/transactions/{type}', [TransactionController::class, 'store'])->name('transactions.store');
+    Route::get('/transactions/{transaction}', [TransactionController::class, 'show'])->name('transactions.show');
+    Route::patch('/transactions/{transaction}/cancel', [TransactionController::class, 'cancel'])->name('transactions.cancel');
+
+    // ============================================
+    // HR & ADMIN ROUTES
+    // ============================================
+    Route::middleware('hr')->group(function () {
+        // Employees Management
+        Route::resource('employees', EmployeeController::class);
+        Route::post('/employees/{employee}/toggle-status', [EmployeeController::class, 'toggleStatus'])->name('employees.toggle-status');
+
+        // Attendance Management
+        Route::get('/manage/attendance', [AttendanceController::class, 'manage'])->name('attendance.manage');
+        Route::get('/manage/attendance/create', [AttendanceController::class, 'create'])->name('attendance.create');
+        Route::post('/manage/attendance', [AttendanceController::class, 'store'])->name('attendance.store');
+        Route::get('/manage/attendance/{attendance}', [AttendanceController::class, 'show'])->name('attendance.show');
+        Route::get('/manage/attendance/{attendance}/edit', [AttendanceController::class, 'edit'])->name('attendance.edit');
+        Route::put('/manage/attendance/{attendance}', [AttendanceController::class, 'update'])->name('attendance.update');
+
+        // Leave Management
+        Route::get('/manage/leaves', [LeaveController::class, 'manage'])->name('leaves.manage');
+        Route::get('/manage/leaves/{leave}', [LeaveController::class, 'adminShow'])->name('leaves.admin-show');
+        Route::patch('/leaves/{leave}/approve', [LeaveController::class, 'approve'])->name('leaves.approve');
+        Route::patch('/leaves/{leave}/hr-approve', [LeaveController::class, 'hrApprove'])->name('leaves.hr-approve');
+        Route::patch('/leaves/{leave}/admin-approve', [LeaveController::class, 'adminApprove'])->name('leaves.admin-approve');
+        Route::patch('/leaves/{leave}/reject', [LeaveController::class, 'reject'])->name('leaves.reject');
+
+        // Leave Types Management
+        Route::resource('leave-types', LeaveTypeController::class);
+
+        // Leave Credits Management
+        Route::get('/leave-credits', [LeaveCreditsController::class, 'index'])->name('leave-credits.index');
+        Route::get('/leave-credits/{employee}/edit', [LeaveCreditsController::class, 'edit'])->name('leave-credits.edit');
+        Route::put('/leave-credits/{employee}', [LeaveCreditsController::class, 'update'])->name('leave-credits.update');
+        Route::post('/leave-credits/bulk-allocate', [LeaveCreditsController::class, 'bulkAllocate'])->name('leave-credits.bulk-allocate');
+        Route::post('/leave-credits/carry-over', [LeaveCreditsController::class, 'carryOver'])->name('leave-credits.carry-over');
+        Route::post('/leave-credits/{employee}/adjust', [LeaveCreditsController::class, 'adjust'])->name('leave-credits.adjust');
+        Route::get('/leave-credits/{employee}/history', [LeaveCreditsController::class, 'history'])->name('leave-credits.history');
+
+        // DTR Management
+        Route::get('/manage/dtr', [DTRController::class, 'adminIndex'])->name('dtr.admin-index');
+        Route::get('/manage/dtr/{user}', [DTRController::class, 'show'])->name('dtr.show');
+        Route::get('/manage/dtr/{user}/pdf', [DTRController::class, 'employeePdf'])->name('dtr.employee-pdf');
+        Route::post('/manage/dtr/bulk-pdf', [DTRController::class, 'bulkPdf'])->name('dtr.bulk-pdf');
+
+        // Payroll Management
+        Route::get('/payroll', [PayrollController::class, 'index'])->name('payroll.index');
+        Route::get('/payroll/periods', [PayrollController::class, 'periods'])->name('payroll.periods');
+        Route::get('/payroll/periods/create', [PayrollController::class, 'createPeriod'])->name('payroll.create-period');
+        Route::post('/payroll/periods', [PayrollController::class, 'storePeriod'])->name('payroll.store-period');
+        Route::get('/payroll/periods/{period}', [PayrollController::class, 'showPeriod'])->name('payroll.show-period');
+        Route::post('/payroll/periods/{period}/process', [PayrollController::class, 'processPeriod'])->name('payroll.process-period');
+        Route::post('/payroll/periods/{period}/complete', [PayrollController::class, 'completePeriod'])->name('payroll.complete-period');
+        Route::post('/payroll/periods/{period}/recompute/{user}', [PayrollController::class, 'recompute'])->name('payroll.recompute');
+        Route::post('/payroll/periods/{period}/bulk-release', [PayrollController::class, 'bulkRelease'])->name('payroll.bulk-release');
+        Route::get('/payroll/periods/{period}/report', [PayrollController::class, 'report'])->name('payroll.report');
+        Route::get('/payroll/periods/{period}/generate-report', [PayrollController::class, 'generateReport'])->name('payroll.generate-report');
+        Route::get('/payroll/{payroll}/payslip', [PayrollController::class, 'payslip'])->name('payroll.payslip');
+        Route::get('/payroll/{payroll}/payslip-pdf', [PayrollController::class, 'payslipPdf'])->name('payroll.payslip-pdf');
+        Route::post('/payroll/{payroll}/release', [PayrollController::class, 'release'])->name('payroll.release');
+
+        // Holiday Management
+        Route::resource('holidays', HolidayController::class);
+        Route::post('/holidays/generate-recurring', [HolidayController::class, 'generateRecurring'])->name('holidays.generate-recurring');
+
+        // Reports
+        Route::get('/reports', [ReportController::class, 'index'])->name('reports.index');
+        Route::get('/reports/attendance', [ReportController::class, 'attendance'])->name('reports.attendance');
+        Route::get('/reports/attendance/export', [ReportController::class, 'exportAttendanceCsv'])->name('reports.attendance.export');
+        Route::get('/reports/leaves', [ReportController::class, 'leaves'])->name('reports.leaves');
+        Route::get('/reports/leaves/export', [ReportController::class, 'exportLeavesCsv'])->name('reports.leaves.export');
+        Route::get('/reports/payroll', [ReportController::class, 'payroll'])->name('reports.payroll');
+        Route::get('/reports/payroll/export', [ReportController::class, 'exportPayrollCsv'])->name('reports.payroll.export');
+        Route::get('/reports/employees', [ReportController::class, 'employees'])->name('reports.employees');
+        Route::get('/reports/employees/export', [ReportController::class, 'exportEmployeesCsv'])->name('reports.employees.export');
+
+        // Audit Logs
+        Route::get('/audit-logs', [AuditLogController::class, 'index'])->name('audit-logs.index');
+        Route::get('/audit-logs/{auditLog}', [AuditLogController::class, 'show'])->name('audit-logs.show');
+
+        // PC Management
+        Route::get('/computers', [ComputerController::class, 'index'])->name('computers.index');
+        Route::get('/computers/create', [ComputerController::class, 'create'])->name('computers.create');
+        Route::post('/computers', [ComputerController::class, 'store'])->name('computers.store');
+        Route::get('/computers/{computer}', [ComputerController::class, 'show'])->name('computers.show');
+        Route::get('/computers/{computer}/edit', [ComputerController::class, 'edit'])->name('computers.edit');
+        Route::put('/computers/{computer}', [ComputerController::class, 'update'])->name('computers.update');
+        Route::delete('/computers/{computer}', [ComputerController::class, 'destroy'])->name('computers.destroy');
+        Route::post('/computers/{computer}/assign', [ComputerController::class, 'assignToUser'])->name('computers.assign');
+        Route::post('/computers/{computer}/release', [ComputerController::class, 'adminRelease'])->name('computers.admin-release');
+        Route::get('/computers/active-usage', [ComputerController::class, 'activeUsage'])->name('computers.active-usage');
+
+        // Timekeeping Management (HR)
+        Route::get('/manage/timekeeping', [TimekeepingController::class, 'adminIndex'])->name('timekeeping.admin-index');
+        Route::post('/manage/timekeeping', [TimekeepingController::class, 'adminStore'])->name('timekeeping.admin-store');
+        Route::patch('/timekeeping/{transaction}/void', [TimekeepingController::class, 'void'])->name('timekeeping.void');
+        Route::get('/timekeeping/live-stats', [TimekeepingController::class, 'liveStats'])->name('timekeeping.live-stats');
+
+        // Transactions Management (HR/Admin)
+        Route::get('/manage/transactions', [TransactionController::class, 'adminIndex'])->name('transactions.admin-index');
+        Route::patch('/transactions/{transaction}/hr-approve', [TransactionController::class, 'hrApprove'])->name('transactions.hr-approve');
+        Route::patch('/transactions/{transaction}/admin-approve', [TransactionController::class, 'adminApprove'])->name('transactions.admin-approve');
+        Route::patch('/transactions/{transaction}/reject', [TransactionController::class, 'reject'])->name('transactions.reject');
+    });
+
+    // ============================================
+    // ADMIN ONLY ROUTES
+    // ============================================
+    Route::middleware('admin')->group(function () {
+        // Settings Management
+        Route::get('/settings', [SettingsController::class, 'index'])->name('settings.index');
+        Route::get('/settings/company', [SettingsController::class, 'company'])->name('settings.company');
+        Route::put('/settings/company', [SettingsController::class, 'updateCompany'])->name('settings.company.update');
+        Route::get('/settings/payroll', [SettingsController::class, 'payroll'])->name('settings.payroll');
+        Route::put('/settings/payroll', [SettingsController::class, 'updatePayroll'])->name('settings.payroll.update');
+        Route::get('/settings/attendance', [SettingsController::class, 'attendance'])->name('settings.attendance');
+        Route::put('/settings/attendance', [SettingsController::class, 'updateAttendance'])->name('settings.attendance.update');
+        Route::get('/settings/call-center', [SettingsController::class, 'callCenter'])->name('settings.call-center');
+        Route::put('/settings/call-center', [SettingsController::class, 'updateCallCenter'])->name('settings.call-center.update');
+        Route::get('/settings/leave', [SettingsController::class, 'leave'])->name('settings.leave');
+        Route::put('/settings/leave', [SettingsController::class, 'updateLeave'])->name('settings.leave.update');
+        Route::get('/settings/notifications', [SettingsController::class, 'notifications'])->name('settings.notifications');
+        Route::put('/settings/notifications', [SettingsController::class, 'updateNotifications'])->name('settings.notifications.update');
+        Route::get('/settings/system', [SettingsController::class, 'system'])->name('settings.system');
+        Route::put('/settings/system', [SettingsController::class, 'updateSystem'])->name('settings.system.update');
+
+        // Allowed IPs Management
+        Route::get('/settings/allowed-ips', [AllowedIpController::class, 'index'])->name('settings.allowed-ips');
+        Route::post('/settings/allowed-ips', [AllowedIpController::class, 'store'])->name('settings.allowed-ips.store');
+        Route::put('/settings/allowed-ips/{allowedIp}', [AllowedIpController::class, 'update'])->name('settings.allowed-ips.update');
+        Route::patch('/settings/allowed-ips/{allowedIp}/toggle', [AllowedIpController::class, 'toggle'])->name('settings.allowed-ips.toggle');
+        Route::delete('/settings/allowed-ips/{allowedIp}', [AllowedIpController::class, 'destroy'])->name('settings.allowed-ips.destroy');
+        Route::post('/settings/allowed-ips/add-current', [AllowedIpController::class, 'addCurrentIp'])->name('settings.allowed-ips.add-current');
+
+        // Backup Management
+        Route::get('/backups', [BackupController::class, 'index'])->name('backups.index');
+        Route::post('/backups', [BackupController::class, 'create'])->name('backups.create');
+        Route::get('/backups/{filename}/download', [BackupController::class, 'download'])->name('backups.download');
+        Route::delete('/backups/{filename}', [BackupController::class, 'destroy'])->name('backups.destroy');
+
+        // Concerns/Tickets Management
+        Route::get('/concerns', [ConcernController::class, 'index'])->name('concerns.index');
+        Route::get('/concerns/create', [ConcernController::class, 'create'])->name('concerns.create');
+        Route::post('/concerns', [ConcernController::class, 'store'])->name('concerns.store');
+        Route::get('/concerns/{concern}', [ConcernController::class, 'show'])->name('concerns.show');
+        Route::get('/concerns/{concern}/edit', [ConcernController::class, 'edit'])->name('concerns.edit');
+        Route::put('/concerns/{concern}', [ConcernController::class, 'update'])->name('concerns.update');
+        Route::delete('/concerns/{concern}', [ConcernController::class, 'destroy'])->name('concerns.destroy');
+        Route::patch('/concerns/{concern}/status', [ConcernController::class, 'updateStatus'])->name('concerns.status');
+        Route::patch('/concerns/{concern}/assign', [ConcernController::class, 'assign'])->name('concerns.assign');
+        Route::patch('/concerns/{concern}/priority', [ConcernController::class, 'updatePriority'])->name('concerns.priority');
+        Route::post('/concerns/{concern}/comment', [ConcernController::class, 'addComment'])->name('concerns.comment');
+        Route::get('/concerns-stats', [ConcernController::class, 'stats'])->name('concerns.stats');
+    });
+});
+
+require __DIR__.'/auth.php';
