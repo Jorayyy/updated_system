@@ -1,6 +1,6 @@
 <x-app-layout>
     <x-slot name="header">
-        <h2 class="font-semibold text-xl text-gray-800 leading-tight">
+        <h2 class="font-semibold text-xl text-gray-800 dark:text-gray-200 leading-tight">
             {{ __('Leave Request Management') }}
         </h2>
     </x-slot>
@@ -9,39 +9,39 @@
         <div class="max-w-7xl mx-auto sm:px-6 lg:px-8">
             <!-- Statistics -->
             <div class="grid grid-cols-4 gap-4 mb-6">
-                <div class="bg-white overflow-hidden shadow-sm sm:rounded-lg p-4">
-                    <div class="text-sm text-gray-500">Pending</div>
-                    <div class="text-3xl font-bold text-yellow-600">{{ $stats['pending'] ?? 0 }}</div>
+                <div class="bg-white dark:bg-gray-800 overflow-hidden shadow-sm sm:rounded-lg p-4 transition-colors duration-200">
+                    <div class="text-sm text-gray-500 dark:text-gray-400">Pending</div>
+                    <div class="text-3xl font-bold text-yellow-600 dark:text-yellow-400">{{ $stats['pending'] ?? 0 }}</div>
                 </div>
-                <div class="bg-white overflow-hidden shadow-sm sm:rounded-lg p-4">
-                    <div class="text-sm text-gray-500">Approved</div>
-                    <div class="text-3xl font-bold text-green-600">{{ $stats['approved'] ?? 0 }}</div>
+                <div class="bg-white dark:bg-gray-800 overflow-hidden shadow-sm sm:rounded-lg p-4 transition-colors duration-200">
+                    <div class="text-sm text-gray-500 dark:text-gray-400">Approved</div>
+                    <div class="text-3xl font-bold text-green-600 dark:text-green-400">{{ $stats['approved'] ?? 0 }}</div>
                 </div>
-                <div class="bg-white overflow-hidden shadow-sm sm:rounded-lg p-4">
-                    <div class="text-sm text-gray-500">Rejected</div>
-                    <div class="text-3xl font-bold text-red-600">{{ $stats['rejected'] ?? 0 }}</div>
+                <div class="bg-white dark:bg-gray-800 overflow-hidden shadow-sm sm:rounded-lg p-4 transition-colors duration-200">
+                    <div class="text-sm text-gray-500 dark:text-gray-400">Rejected</div>
+                    <div class="text-3xl font-bold text-red-600 dark:text-red-400">{{ $stats['rejected'] ?? 0 }}</div>
                 </div>
-                <div class="bg-white overflow-hidden shadow-sm sm:rounded-lg p-4">
-                    <div class="text-sm text-gray-500">Total This Month</div>
-                    <div class="text-3xl font-bold text-indigo-600">{{ $stats['total_month'] ?? 0 }}</div>
+                <div class="bg-white dark:bg-gray-800 overflow-hidden shadow-sm sm:rounded-lg p-4 transition-colors duration-200">
+                    <div class="text-sm text-gray-500 dark:text-gray-400">Total This Month</div>
+                    <div class="text-3xl font-bold text-indigo-600 dark:text-indigo-400">{{ $stats['total_month'] ?? 0 }}</div>
                 </div>
             </div>
 
             <!-- Filters -->
-            <div class="bg-white overflow-hidden shadow-sm sm:rounded-lg mb-6">
+            <div class="bg-white dark:bg-gray-800 overflow-hidden shadow-sm sm:rounded-lg mb-6 transition-colors duration-200">
                 <div class="p-6">
                     <form method="GET" class="flex flex-wrap items-center gap-4">
                         <input type="text" name="search" value="{{ request('search') }}" 
                             placeholder="Search employee..."
-                            class="border-gray-300 rounded-md shadow-sm">
-                        <select name="status" class="border-gray-300 rounded-md shadow-sm">
+                            class="border-gray-300 dark:border-gray-600 dark:bg-gray-700 dark:text-white rounded-md shadow-sm">
+                        <select name="status" class="border-gray-300 dark:border-gray-600 dark:bg-gray-700 dark:text-white rounded-md shadow-sm">
                             <option value="">All Status</option>
                             <option value="pending" {{ request('status') == 'pending' ? 'selected' : '' }}>Pending</option>
                             <option value="approved" {{ request('status') == 'approved' ? 'selected' : '' }}>Approved</option>
                             <option value="rejected" {{ request('status') == 'rejected' ? 'selected' : '' }}>Rejected</option>
                             <option value="cancelled" {{ request('status') == 'cancelled' ? 'selected' : '' }}>Cancelled</option>
                         </select>
-                        <select name="leave_type" class="border-gray-300 rounded-md shadow-sm">
+                        <select name="leave_type" class="border-gray-300 dark:border-gray-600 dark:bg-gray-700 dark:text-white rounded-md shadow-sm">
                             <option value="">All Types</option>
                             @foreach($leaveTypes as $type)
                                 <option value="{{ $type->id }}" {{ request('leave_type') == $type->id ? 'selected' : '' }}>
@@ -49,16 +49,16 @@
                                 </option>
                             @endforeach
                         </select>
-                        <select name="department" class="border-gray-300 rounded-md shadow-sm">
+                        <select name="department" class="border-gray-300 dark:border-gray-600 dark:bg-gray-700 dark:text-white rounded-md shadow-sm">
                             <option value="">All Departments</option>
                             @foreach($departments as $dept)
                                 <option value="{{ $dept }}" {{ request('department') == $dept ? 'selected' : '' }}>{{ $dept }}</option>
                             @endforeach
                         </select>
                         <input type="date" name="date_from" value="{{ request('date_from') }}" 
-                            class="border-gray-300 rounded-md shadow-sm">
+                            class="border-gray-300 dark:border-gray-600 dark:bg-gray-700 dark:text-white rounded-md shadow-sm">
                         <input type="date" name="date_to" value="{{ request('date_to') }}" 
-                            class="border-gray-300 rounded-md shadow-sm">
+                            class="border-gray-300 dark:border-gray-600 dark:bg-gray-700 dark:text-white rounded-md shadow-sm">
                         <button type="submit" class="bg-indigo-600 text-white px-4 py-2 rounded-md hover:bg-indigo-700">
                             Filter
                         </button>
@@ -68,31 +68,31 @@
             </div>
 
             <!-- Leave Requests Table -->
-            <div class="bg-white overflow-hidden shadow-sm sm:rounded-lg">
+            <div class="bg-white dark:bg-gray-800 overflow-hidden shadow-sm sm:rounded-lg transition-colors duration-200">
                 <div class="p-6">
                     <div class="overflow-x-auto">
-                        <table class="min-w-full divide-y divide-gray-200">
-                            <thead class="bg-gray-50">
+                        <table class="min-w-full divide-y divide-gray-200 dark:divide-gray-700">
+                            <thead class="bg-gray-50 dark:bg-gray-700">
                                 <tr>
-                                    <th class="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase">Employee</th>
-                                    <th class="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase">Department</th>
-                                    <th class="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase">Leave Type</th>
-                                    <th class="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase">Period</th>
-                                    <th class="px-4 py-3 text-center text-xs font-medium text-gray-500 uppercase">Days</th>
-                                    <th class="px-4 py-3 text-center text-xs font-medium text-gray-500 uppercase">HR</th>
-                                    <th class="px-4 py-3 text-center text-xs font-medium text-gray-500 uppercase">Admin</th>
-                                    <th class="px-4 py-3 text-center text-xs font-medium text-gray-500 uppercase">Status</th>
-                                    <th class="px-4 py-3 text-center text-xs font-medium text-gray-500 uppercase">Actions</th>
+                                    <th class="px-4 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-400 uppercase">Employee</th>
+                                    <th class="px-4 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-400 uppercase">Department</th>
+                                    <th class="px-4 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-400 uppercase">Leave Type</th>
+                                    <th class="px-4 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-400 uppercase">Period</th>
+                                    <th class="px-4 py-3 text-center text-xs font-medium text-gray-500 dark:text-gray-400 uppercase">Days</th>
+                                    <th class="px-4 py-3 text-center text-xs font-medium text-gray-500 dark:text-gray-400 uppercase">HR</th>
+                                    <th class="px-4 py-3 text-center text-xs font-medium text-gray-500 dark:text-gray-400 uppercase">Admin</th>
+                                    <th class="px-4 py-3 text-center text-xs font-medium text-gray-500 dark:text-gray-400 uppercase">Status</th>
+                                    <th class="px-4 py-3 text-center text-xs font-medium text-gray-500 dark:text-gray-400 uppercase">Actions</th>
                                 </tr>
                             </thead>
-                            <tbody class="bg-white divide-y divide-gray-200">
+                            <tbody class="bg-white dark:bg-gray-800 divide-y divide-gray-200 dark:divide-gray-700">
                                 @forelse($leaveRequests as $leave)
-                                    <tr class="{{ $leave->status == 'pending' ? 'bg-yellow-50' : '' }}">
+                                    <tr class="{{ $leave->status == 'pending' ? 'bg-yellow-50 dark:bg-yellow-900/20' : '' }} transition-colors duration-200">
                                         <td class="px-4 py-4 whitespace-nowrap">
-                                            <div class="text-sm font-medium text-gray-900">{{ $leave->user->name }}</div>
-                                            <div class="text-xs text-gray-500">{{ $leave->user->employee_id }}</div>
+                                            <div class="text-sm font-medium text-gray-900 dark:text-white">{{ $leave->user->name }}</div>
+                                            <div class="text-xs text-gray-500 dark:text-gray-400">{{ $leave->user->employee_id }}</div>
                                         </td>
-                                        <td class="px-4 py-4 whitespace-nowrap text-sm text-gray-500">
+                                        <td class="px-4 py-4 whitespace-nowrap text-sm text-gray-500 dark:text-gray-400">
                                             {{ $leave->user->department ?? '-' }}
                                         </td>
                                         <td class="px-4 py-4 whitespace-nowrap">
@@ -112,51 +112,51 @@
                                         </td>
                                         <td class="px-4 py-4 whitespace-nowrap text-center">
                                             <span class="px-2 py-1 text-xs rounded-full 
-                                                @if($leave->hr_status == 'pending') bg-yellow-100 text-yellow-800
-                                                @elseif($leave->hr_status == 'approved') bg-green-100 text-green-800
-                                                @else bg-red-100 text-red-800 @endif">
+                                                @if($leave->hr_status == 'pending') bg-yellow-100 dark:bg-yellow-900/50 text-yellow-800 dark:text-yellow-200
+                                                @elseif($leave->hr_status == 'approved') bg-green-100 dark:bg-green-900/50 text-green-800 dark:text-green-200
+                                                @else bg-red-100 dark:bg-red-900/50 text-red-800 dark:text-red-200 @endif">
                                                 {{ ucfirst($leave->hr_status ?? 'pending') }}
                                             </span>
                                         </td>
                                         <td class="px-4 py-4 whitespace-nowrap text-center">
                                             <span class="px-2 py-1 text-xs rounded-full 
-                                                @if($leave->admin_status == 'pending') bg-yellow-100 text-yellow-800
-                                                @elseif($leave->admin_status == 'approved') bg-purple-100 text-purple-800
-                                                @else bg-red-100 text-red-800 @endif">
+                                                @if($leave->admin_status == 'pending') bg-yellow-100 dark:bg-yellow-900/50 text-yellow-800 dark:text-yellow-200
+                                                @elseif($leave->admin_status == 'approved') bg-purple-100 dark:bg-purple-900/50 text-purple-800 dark:text-purple-200
+                                                @else bg-red-100 dark:bg-red-900/50 text-red-800 dark:text-red-200 @endif">
                                                 {{ ucfirst($leave->admin_status ?? 'pending') }}
                                             </span>
                                         </td>
                                         <td class="px-4 py-4 whitespace-nowrap text-center">
                                             @if($leave->hr_status === 'approved')
-                                                <span class="px-2 py-1 text-xs rounded-full bg-green-100 text-green-800">✓</span>
+                                                <span class="px-2 py-1 text-xs rounded-full bg-green-100 dark:bg-green-900/50 text-green-800 dark:text-green-200">✓</span>
                                             @elseif($leave->hr_status === 'rejected')
-                                                <span class="px-2 py-1 text-xs rounded-full bg-red-100 text-red-800">✗</span>
+                                                <span class="px-2 py-1 text-xs rounded-full bg-red-100 dark:bg-red-900/50 text-red-800 dark:text-red-200">✗</span>
                                             @else
-                                                <span class="px-2 py-1 text-xs rounded-full bg-yellow-100 text-yellow-800">Pending</span>
+                                                <span class="px-2 py-1 text-xs rounded-full bg-yellow-100 dark:bg-yellow-900/50 text-yellow-800 dark:text-yellow-200">Pending</span>
                                             @endif
                                         </td>
                                         <td class="px-4 py-4 whitespace-nowrap text-center">
                                             @if($leave->admin_status === 'approved')
-                                                <span class="px-2 py-1 text-xs rounded-full bg-green-100 text-green-800">✓</span>
+                                                <span class="px-2 py-1 text-xs rounded-full bg-green-100 dark:bg-green-900/50 text-green-800 dark:text-green-200">✓</span>
                                             @elseif($leave->admin_status === 'rejected')
-                                                <span class="px-2 py-1 text-xs rounded-full bg-red-100 text-red-800">✗</span>
+                                                <span class="px-2 py-1 text-xs rounded-full bg-red-100 dark:bg-red-900/50 text-red-800 dark:text-red-200">✗</span>
                                             @else
-                                                <span class="px-2 py-1 text-xs rounded-full bg-yellow-100 text-yellow-800">Pending</span>
+                                                <span class="px-2 py-1 text-xs rounded-full bg-yellow-100 dark:bg-yellow-900/50 text-yellow-800 dark:text-yellow-200">Pending</span>
                                             @endif
                                         </td>
                                         <td class="px-4 py-4 whitespace-nowrap text-center">
                                             <span class="px-2 py-1 text-xs rounded-full 
-                                                @if($leave->status == 'pending') bg-yellow-100 text-yellow-800
-                                                @elseif($leave->status == 'approved') bg-green-100 text-green-800
-                                                @elseif($leave->status == 'rejected') bg-red-100 text-red-800
-                                                @else bg-gray-100 text-gray-800 @endif">
+                                                @if($leave->status == 'pending') bg-yellow-100 dark:bg-yellow-900/50 text-yellow-800 dark:text-yellow-200
+                                                @elseif($leave->status == 'approved') bg-green-100 dark:bg-green-900/50 text-green-800 dark:text-green-200
+                                                @elseif($leave->status == 'rejected') bg-red-100 dark:bg-red-900/50 text-red-800 dark:text-red-200
+                                                @else bg-gray-100 dark:bg-gray-700 text-gray-800 dark:text-gray-200 @endif">
                                                 {{ ucfirst($leave->status) }}
                                             </span>
                                         </td>
                                         <td class="px-4 py-4 whitespace-nowrap text-center">
                                             <div class="flex items-center justify-center gap-2">
                                                 <a href="{{ route('leaves.admin-show', $leave) }}" 
-                                                    class="text-indigo-600 hover:text-indigo-900 text-sm">View</a>
+                                                    class="text-indigo-600 dark:text-indigo-400 hover:text-indigo-900 dark:hover:text-indigo-300 text-sm">View</a>
                                                 @if($leave->status == 'pending')
                                                     @if(auth()->user()->isHr() && $leave->hr_status == 'pending')
                                                         <form action="{{ route('leaves.hr-approve', $leave) }}" method="POST" class="inline">
