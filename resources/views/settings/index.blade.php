@@ -13,6 +13,12 @@
                 </div>
             @endif
 
+            @if(session('error'))
+                <div class="mb-4 p-4 bg-red-100 border border-red-400 text-red-700 rounded">
+                    {{ session('error') }}
+                </div>
+            @endif
+
             <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
                 <!-- Company Settings Card -->
                 <a href="{{ route('settings.company') }}" class="block">

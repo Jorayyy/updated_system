@@ -346,6 +346,31 @@ class DtrApprovalController extends Controller
     }
 
     /**
+     * Bulk approve correction requests (HR/Admin)
+     */
+    public function bulkApproveCorrections(Request $request)
+    {
+        $user = Auth::user();
+
+        if (!in_array($user->role, ['admin', 'hr'])) {
+            return response()->json(['success' => false, 'message' => 'Unauthorized'], 403);
+        }
+
+        $validated = $request->validate([
+            'ids' => 'required|array',
+            'ids.*' => 'exists:daily_time_records,id',
+        ]);
+
+        $result = $this->approvalService->bulkApproveCorrections($validated['ids'], $user->id);
+
+        return response()->json([
+            'success' => true,
+            'message' => "Successfully processed {$result['total']} requests. Approved: {$result['approved']}, Failed: {$result['failed']}",
+            'details' => $result
+        ]);
+    }
+
+    /**
      * Reject correction request (HR/Admin)
      */
     public function rejectCorrection(Request $request, DailyTimeRecord $dailyTimeRecord)
@@ -410,7 +435,11 @@ class DtrApprovalController extends Controller
             ->orderBy('correction_requested_at', 'desc')
             ->paginate(15);
 
-        return view('dtr-approval.corrections', compact('corrections'));
+        $allCorrectionIds = DailyTimeRecord::where('correction_requested', true)
+            ->where('status', 'correction_pending')
+            ->pluck('id');
+
+        return view('dtr-approval.corrections', compact('corrections', 'allCorrectionIds'));
     }
 
     /**
@@ -431,15 +460,13 @@ class DtrApprovalController extends Controller
         ]);
 
         $payrollPeriod = PayrollPeriod::findOrFail($validated['payroll_period_id']);
-        $userIds = $validated['user_ids'] ?? null;
 
-        $result = $this->dtrService->generateDtrForPeriod($payrollPeriod, $userIds);
+        $result = $this->dtrService->generateDtrForPeriod($payrollPeriod);
 
         $message = sprintf(
-            'DTR generation: %d created, %d skipped, %d failed',
-            $result['created'],
-            $result['skipped'],
-            $result['failed']
+            'DTR generation: %d days processed, %d total DTRs created',
+            $result['days_processed'],
+            $result['total_dtrs_created']
         );
 
         if ($request->expectsJson()) {

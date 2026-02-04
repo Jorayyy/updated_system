@@ -34,6 +34,8 @@ class User extends Authenticatable
         'date_hired',
         'birthday',
         'is_active',
+        'site_id',
+        'account_id',
     ];
 
     /**
@@ -103,6 +105,29 @@ class User extends Authenticatable
     /**
      * Get user's attendances
      */
+    /**
+     * Get the site that the user belongs to.
+     */
+    public function site()
+    {
+        return $this->belongsTo(Site::class);
+    }
+
+    /**
+     * Get the account that the user belongs to.
+     */
+    public function account()
+    {
+        return $this->belongsTo(Account::class);
+    }
+
+    public function schedule()
+    {
+        // Assuming an account has one primary active schedule
+        return $this->hasOneThrough(Schedule::class, Account::class, 'id', 'account_id', 'account_id', 'id')
+            ->where('schedules.is_active', true);
+    }
+
     public function attendances(): HasMany
     {
         return $this->hasMany(Attendance::class);

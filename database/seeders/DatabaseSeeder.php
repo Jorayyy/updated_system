@@ -10,6 +10,9 @@ use App\Models\CompanySetting;
 use App\Models\Attendance;
 use App\Models\PayrollPeriod;
 use App\Models\Payroll;
+use App\Models\Site;
+use App\Models\Account;
+use App\Models\Schedule;
 use App\Services\DtrService;
 use Illuminate\Database\Seeder;
 use Illuminate\Support\Facades\Hash;
@@ -22,6 +25,61 @@ class DatabaseSeeder extends Seeder
      */
     public function run(): void
     {
+        // Create Sample Sites
+        $tacloban = Site::create([
+            'name' => 'MEBS Tacloban Main',
+            'location' => 'Tacloban City, Leyte',
+            'description' => 'Main operational hub for MEBS Hiyas',
+            'is_active' => true,
+        ]);
+
+        $cebu = Site::create([
+            'name' => 'MEBS Cebu Branch',
+            'location' => 'IT Park, Cebu City',
+            'description' => 'Satellite office for specialized campaigns',
+            'is_active' => true,
+        ]);
+
+        // Create Sample Accounts (Campaigns)
+        $ecommerce = Account::create([
+            'name' => 'E-Commerce Global Support',
+            'client_name' => 'Nexus Retail Group',
+            'description' => '24/7 Customer Support for Global E-commerce Platform',
+            'is_active' => true,
+        ]);
+
+        $techSupport = Account::create([
+            'name' => 'Premium Tech Solutions',
+            'client_name' => 'Titan Technologies',
+            'description' => 'Level 2 Technical Support for SaaS products',
+            'is_active' => true,
+        ]);
+
+        // Create Schedules for Accounts
+        Schedule::create([
+            'account_id' => $ecommerce->id,
+            'name' => 'Ecommerce Day Shift',
+            'work_start_time' => '08:00:00',
+            'work_end_time' => '17:00:00',
+            'is_active' => true,
+        ]);
+
+        Schedule::create([
+            'account_id' => $ecommerce->id,
+            'name' => 'Ecommerce Night Shift',
+            'work_start_time' => '21:00:00',
+            'work_end_time' => '06:00:00',
+            'is_active' => true,
+        ]);
+
+        Schedule::create([
+            'account_id' => $techSupport->id,
+            'name' => 'Tech Premium Shift',
+            'work_start_time' => '22:00:00',
+            'work_end_time' => '07:00:00',
+            'is_active' => true,
+        ]);
+
         // Create Admin User
         $admin = User::create([
             'name' => 'Admin User',
@@ -34,6 +92,7 @@ class DatabaseSeeder extends Seeder
             'date_hired' => now()->subYears(5),
             'monthly_salary' => 150000,
             'is_active' => true,
+            'site_id' => $tacloban->id,
         ]);
 
         // Create HR User

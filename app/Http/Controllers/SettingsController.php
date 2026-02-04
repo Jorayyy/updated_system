@@ -329,6 +329,8 @@ class SettingsController extends Controller
             'notification_retention_days' => 'required|integer|min:7|max:90',
             'maintenance_mode' => 'nullable',
             'maintenance_message' => 'nullable|string|max:500',
+            'automation_dtr_enabled' => 'nullable|boolean',
+            'automation_dtr_day' => 'nullable|string|max:20',
         ]);
 
         CompanySetting::setValue('system_timezone', $request->system_timezone, 'string', 'system');
@@ -344,6 +346,9 @@ class SettingsController extends Controller
         CompanySetting::setValue('notification_retention_days', $request->notification_retention_days, 'integer', 'system');
         CompanySetting::setValue('maintenance_mode', $request->has('maintenance_mode'), 'boolean', 'system');
         CompanySetting::setValue('maintenance_message', $request->maintenance_message ?? 'We are currently performing scheduled maintenance. Please try again later.', 'string', 'system');
+        
+        CompanySetting::setValue('automation_dtr_enabled', $request->has('automation_dtr_enabled') ? $request->automation_dtr_enabled : true, 'boolean', 'system');
+        CompanySetting::setValue('automation_dtr_day', $request->automation_dtr_day ?? 'Friday', 'string', 'system');
 
         return back()->with('success', 'System settings updated successfully.');
     }

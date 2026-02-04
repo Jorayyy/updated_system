@@ -1,22 +1,95 @@
+<div x-data="{ isBackingUp: false }">
 <x-app-layout>
     <x-slot name="header">
         <div class="flex justify-between items-center">
             <h2 class="font-semibold text-xl text-gray-800 leading-tight">
-                {{ __('Database Backups') }}
+                {{ __('System Backups') }}
             </h2>
-            <form action="{{ route('backups.create') }}" method="POST">
-                @csrf
-                <x-primary-button onclick="return confirm('This will create a new database backup. Continue?')">
-                    <svg class="w-4 h-4 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 6v6m0 0v6m0-6h6m-6 0H6"/>
-                    </svg>
-                    Create Backup
-                </x-primary-button>
-            </form>
+            <div class="flex gap-2">
+                <form action="{{ route('backups.create') }}" method="POST" @submit="isBackingUp = true">
+                    @csrf
+                    <input type="hidden" name="type" value="db">
+                    <x-secondary-button type="submit" onclick="return confirm('Create database backup?')">
+                        <svg class="w-4 h-4 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 7v10c0 2.21 3.582 4 8 4s8-1.79 8-4V7M4 7c0 2.21 3.582 4 8 4s8-1.79 8-4M4 7c0-2.21 3.582-4 8-4s8 1.79 8 4m0 5c0 2.21-3.582 4-8 4s-8-1.79-8-4"/>
+                        </svg>
+                        DB Backup
+                    </x-secondary-button>
+                </form>
+
+                <form action="{{ route('backups.create') }}" method="POST" @submit="isBackingUp = true">
+                    @csrf
+                    <input type="hidden" name="type" value="full">
+                    <x-primary-button type="submit" onclick="return confirm('This will create a full backup of the SOURCE CODE and DATABASE. This may take a minute. Continue?')">
+                        <svg class="w-4 h-4 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 7v8a2 2 0 002 2h6M8 7V5a2 2 0 012-2h4.586a1 1 0 01.707.293l4.414 4.414a1 1 0 01.293.707V15a2 2 0 01-2 2h-2M8 7H6a2 2 0 00-2 2v10a2 2 0 002 2h8a2 2 0 002-2v-2"/>
+                        </svg>
+                        Full System Backup
+                    </x-primary-button>
+                </form>
+            </div>
         </div>
     </x-slot>
 
     <div class="py-4">
+        <!-- Windows-like Backup Animation Overlay -->
+        <div x-show="isBackingUp" 
+             x-transition:enter="transition ease-out duration-300"
+             x-transition:enter-start="opacity-0"
+             x-transition:enter-end="opacity-100"
+             class="fixed inset-0 z-50 flex items-center justify-center bg-gray-900 bg-opacity-75 backdrop-blur-sm"
+             x-cloak>
+            <div class="bg-white rounded-lg shadow-2xl p-8 max-w-md w-full text-center">
+                <!-- Windows-style Folder Animation -->
+                <div class="relative w-32 h-32 mx-auto mb-6">
+                    <!-- The Folder -->
+                    <svg class="w-24 h-24 mx-auto text-blue-500 fill-current" viewBox="0 0 24 24">
+                        <path d="M20 6h-8l-2-2H4c-1.1 0-1.99.9-1.99 2L2 18c0 1.1.9 2 2 2h16c1.1 0 2-.9 2-2V8c0-1.1-.9-2-2-2zm0 12H4V8h16v10z"/>
+                    </svg>
+                    <!-- Floating Paper Animation -->
+                    <div class="absolute top-0 left-1/2 -translate-x-1/2 animate-bounce">
+                        <svg class="w-8 h-8 text-white fill-current bg-blue-600 rounded-sm shadow-md transition-all duration-1000 transform -translate-y-4 paper-animation" viewBox="0 0 24 24">
+                            <path d="M14 2H6c-1.1 0-1.99.9-1.99 2L4 20c0 1.1.89 2 1.99 2H18c1.1 0 2-.9 2-2V8l-6-6zm2 16H8v-2h8v2zm0-4H8v-2h8v2zm-3-5V3.5L18.5 9H13z"/>
+                        </svg>
+                    </div>
+                </div>
+                
+                <h3 class="text-xl font-bold text-gray-900 mb-2">Creating Backup...</h3>
+                <p class="text-gray-600 mb-4 px-4 text-sm">Please wait while the system secures your data. This might take a while for full system backups.</p>
+                
+                <!-- Progress Bar Logic -->
+                <div class="w-full bg-gray-200 rounded-full h-2.5 mb-2 overflow-hidden">
+                    <div class="bg-blue-600 h-2.5 rounded-full animate-progress-stripes" style="width: 100%"></div>
+                </div>
+                <span class="text-xs text-blue-600 font-medium">Securing Source Code & Database</span>
+            </div>
+        </div>
+
+        <style>
+            [x-cloak] { display: none !important; }
+            
+            @keyframes paper-in {
+                0% { transform: translateY(-50px) translateX(-50%) rotate(0deg); opacity: 0; }
+                50% { opacity: 1; }
+                100% { transform: translateY(20px) translateX(-50%) rotate(15deg); opacity: 0; }
+            }
+
+            .paper-animation {
+                animation: paper-in 1.5s infinite linear;
+            }
+
+            @keyframes progress-stripes {
+                0% { background-position: 0 0; }
+                100% { background-position: 40px 0; }
+            }
+
+            .animate-progress-stripes {
+                background-image: linear-gradient(45deg, rgba(255,255,255,.15) 25%, transparent 25%, transparent 50%, rgba(255,255,255,.15) 50%, rgba(255,255,255,.15) 75%, transparent 75%, transparent);
+                background-size: 40px 40px;
+                animation: progress-stripes 1s linear infinite;
+            }
+        </style>
+
         <div class="max-w-full mx-auto sm:px-6 lg:px-8">
             @if(session('success'))
                 <div class="mb-4 p-4 bg-green-100 border border-green-400 text-green-700 rounded">
@@ -39,7 +112,7 @@
                         </svg>
                         Restore from Backup File
                     </h3>
-                    <form action="{{ route('backups.upload') }}" method="POST" enctype="multipart/form-data" class="flex items-end gap-4">
+                    <form action="{{ route('backups.upload') }}" method="POST" enctype="multipart/form-data" class="flex items-end gap-4" @submit="isBackingUp = true">
                         @csrf
                         <div class="flex-1">
                             <label for="backup_file" class="block text-sm font-medium text-gray-700 mb-1">Upload SQL Backup File</label>
@@ -83,6 +156,7 @@
                         <thead class="bg-gray-50">
                             <tr>
                                 <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Filename</th>
+                                <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Type</th>
                                 <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Size</th>
                                 <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Created</th>
                                 <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Actions</th>
@@ -93,11 +167,22 @@
                                 <tr>
                                     <td class="px-6 py-4 whitespace-nowrap">
                                         <div class="flex items-center">
-                                            <svg class="w-5 h-5 text-gray-400 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 7v10c0 2.21 3.582 4 8 4s8-1.79 8-4V7M4 7c0 2.21 3.582 4 8 4s8-1.79 8-4M4 7c0-2.21 3.582-4 8-4s8 1.79 8 4m0 5c0 2.21-3.582 4-8 4s-8-1.79-8-4"/>
-                                            </svg>
+                                            @if(Str::endsWith($backup['filename'], '.zip'))
+                                                <svg class="w-5 h-5 text-indigo-400 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 8h14M5 8a2 2 0 110-4h14a2 2 0 110 4M5 8v10a2 2 0 002 2h10a2 2 0 002-2V8m-9 4h4"/>
+                                                </svg>
+                                            @else
+                                                <svg class="w-5 h-5 text-gray-400 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 7v10c0 2.21 3.582 4 8 4s8-1.79 8-4V7M4 7c0 2.21 3.582 4 8 4s8-1.79 8-4M4 7c0-2.21 3.582-4 8-4s8 1.79 8 4m0 5c0 2.21-3.582 4-8 4s-8-1.79-8-4"/>
+                                                </svg>
+                                            @endif
                                             <span class="text-sm font-medium text-gray-900">{{ $backup['filename'] }}</span>
                                         </div>
+                                    </td>
+                                    <td class="px-6 py-4 whitespace-nowrap">
+                                        <span class="px-2 py-1 text-xs rounded-full {{ $backup['type'] === 'Full System' ? 'bg-indigo-100 text-indigo-800' : 'bg-gray-100 text-gray-800' }}">
+                                            {{ $backup['type'] }}
+                                        </span>
                                     </td>
                                     <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
                                         {{ $backup['size_formatted'] }}
@@ -111,7 +196,7 @@
                                             <a href="{{ route('backups.download', $backup['filename']) }}" class="text-indigo-600 hover:text-indigo-900">
                                                 Download
                                             </a>
-                                            <form action="{{ route('backups.restore', $backup['filename']) }}" method="POST" class="inline">
+                                            <form action="{{ route('backups.restore', $backup['filename']) }}" method="POST" class="inline" @submit="isBackingUp = true">
                                                 @csrf
                                                 <button type="submit" class="text-orange-600 hover:text-orange-900" 
                                                     onclick="return confirm('⚠️ WARNING: This will replace your current database with this backup. This action cannot be undone! Are you sure you want to continue?')">
@@ -145,4 +230,7 @@
             </div>
         </div>
     </div>
+</div>
+</div>
 </x-app-layout>
+</div>

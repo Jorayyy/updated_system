@@ -20,10 +20,14 @@ class DtrApproved
 
     public DailyTimeRecord $dtr;
     public User $approver;
+    public int $approvedBy;
+    public string $approvalLevel;
 
-    public function __construct(DailyTimeRecord $dtr, User $approver)
+    public function __construct(DailyTimeRecord $dtr, User $approver, string $approvalLevel = 'supervisor')
     {
         $this->dtr = $dtr;
         $this->approver = $approver;
+        $this->approvedBy = $approver->id;
+        $this->approvalLevel = $approvalLevel;
     }
 }

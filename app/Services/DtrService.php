@@ -10,6 +10,7 @@ use App\Models\PayrollPeriod;
 use App\Models\User;
 use App\Models\CompanySetting;
 use App\Models\AuditLog;
+use App\Models\Schedule;
 use App\Events\DtrGenerated;
 use App\Events\AttendanceProcessed;
 use Carbon\Carbon;
@@ -33,8 +34,8 @@ class DtrService
 {
     // Default schedule settings (can be overridden by CompanySetting)
     protected int $standardWorkMinutes = 480; // 8 hours
-    protected string $standardTimeIn = '08:00';
-    protected string $standardTimeOut = '17:00';
+    protected string $standardTimeIn = '21:00';
+    protected string $standardTimeOut = '07:00';
     protected int $graceMinutes = 15; // 15-minute grace period
     protected int $lunchMinutes = 60; // 1 hour lunch
     protected int $breakMinutes = 30; // Two 15-minute breaks
@@ -50,12 +51,50 @@ class DtrService
      */
     protected function loadSettings(): void
     {
-        $this->standardWorkMinutes = CompanySetting::getValue('standard_work_minutes', 480);
-        $this->standardTimeIn = CompanySetting::getValue('standard_time_in', '08:00');
-        $this->standardTimeOut = CompanySetting::getValue('standard_time_out', '17:00');
+        $this->standardWorkMinutes = CompanySetting::getValue('regular_work_hours', 8) * 60;
+        $this->standardTimeIn = CompanySetting::getValue('work_start_time', '21:00');
+        $this->standardTimeOut = CompanySetting::getValue('work_end_time', '07:00');
         $this->graceMinutes = CompanySetting::getValue('grace_period_minutes', 15);
         $this->lunchMinutes = CompanySetting::getValue('lunch_break_minutes', 60);
-        $this->breakMinutes = CompanySetting::getValue('break_minutes', 30);
+        $this->breakMinutes = CompanySetting::getValue('short_break_minutes', 15) * 2;
+    }
+
+    /**
+     * Get the effective schedule for an employee
+     */
+    protected function getScheduleForEmployee(User $employee): array
+    {
+        // Try to get account-specific schedule
+        if ($employee->account_id) {
+            $schedule = Schedule::where('account_id', $employee->account_id)
+                ->where('is_active', true)
+                ->first();
+
+            if ($schedule) {
+                // Determine work minutes (diff between start and end)
+                $start = Carbon::parse($schedule->work_start_time);
+                $end = Carbon::parse($schedule->work_end_time);
+                if ($end->lt($start)) {
+                    $end->addDay();
+                }
+                $workMinutes = $start->diffInMinutes($end);
+
+                return [
+                    'work_start_time' => $schedule->work_start_time,
+                    'work_end_time' => $schedule->work_end_time,
+                    'work_minutes' => $workMinutes,
+                    'break_minutes' => $schedule->break_duration_minutes,
+                ];
+            }
+        }
+
+        // Return defaults if no specific schedule found
+        return [
+            'work_start_time' => $this->standardTimeIn,
+            'work_end_time' => $this->standardTimeOut,
+            'work_minutes' => $this->standardWorkMinutes,
+            'break_minutes' => $this->lunchMinutes + $this->breakMinutes,
+        ];
     }
 
     /**
@@ -145,6 +184,9 @@ class DtrService
         // Check for holiday
         $holiday = Holiday::getHoliday($date);
 
+        // Get employee effective schedule
+        $schedule = $this->getScheduleForEmployee($employee);
+
         // Determine day type
         $dayType = $this->determineDayType($date, $holiday);
 
@@ -153,11 +195,12 @@ class DtrService
             $attendance,
             $leaveRequest,
             $holiday,
-            $date
+            $date,
+            $schedule
         );
 
         // Calculate time metrics
-        $metrics = $this->calculateTimeMetrics($attendance, $date);
+        $metrics = $this->calculateTimeMetrics($attendance, $date, $schedule);
 
         // Create or update DTR
         $dtrData = [
@@ -167,7 +210,7 @@ class DtrService
             'date' => $date,
             'time_in' => $attendance?->time_in,
             'time_out' => $attendance?->time_out,
-            'scheduled_minutes' => $this->standardWorkMinutes,
+            'scheduled_minutes' => $schedule['work_minutes'],
             'actual_work_minutes' => $metrics['actual_work_minutes'],
             'total_break_minutes' => $metrics['total_break_minutes'],
             'net_work_minutes' => $metrics['net_work_minutes'],
@@ -241,7 +284,8 @@ class DtrService
         ?Attendance $attendance,
         ?LeaveRequest $leaveRequest,
         ?Holiday $holiday,
-        Carbon $date
+        Carbon $date,
+        ?array $schedule = null
     ): string {
         // If on approved leave
         if ($leaveRequest) {
@@ -273,7 +317,8 @@ class DtrService
         }
 
         // Calculate if late
-        $expectedTimeIn = $date->copy()->setTimeFromTimeString($this->standardTimeIn);
+        $startTimeStr = $schedule ? $schedule['work_start_time'] : $this->standardTimeIn;
+        $expectedTimeIn = $date->copy()->setTimeFromTimeString($startTimeStr);
         $graceTime = $expectedTimeIn->copy()->addMinutes($this->graceMinutes);
         
         if ($attendance->time_in->gt($graceTime)) {
@@ -282,7 +327,8 @@ class DtrService
 
         // Check for half day
         $workMinutes = $attendance->total_work_minutes ?? 0;
-        if ($workMinutes > 0 && $workMinutes < ($this->standardWorkMinutes / 2)) {
+        $standardWorkMin = $schedule ? $schedule['work_minutes'] : $this->standardWorkMinutes;
+        if ($workMinutes > 0 && $workMinutes < ($standardWorkMin / 2)) {
             return DailyTimeRecord::STATUS_HALF_DAY;
         }
 
@@ -292,7 +338,7 @@ class DtrService
     /**
      * Calculate time metrics from attendance
      */
-    protected function calculateTimeMetrics(?Attendance $attendance, Carbon $date): array
+    protected function calculateTimeMetrics(?Attendance $attendance, Carbon $date, ?array $schedule = null): array
     {
         $metrics = [
             'actual_work_minutes' => 0,
@@ -303,9 +349,13 @@ class DtrService
             'overtime_minutes' => 0,
         ];
 
+        $standardWorkMin = $schedule ? $schedule['work_minutes'] : $this->standardWorkMinutes;
+        $startTimeStr = $schedule ? $schedule['work_start_time'] : $this->standardTimeIn;
+        $endTimeStr = $schedule ? $schedule['work_end_time'] : $this->standardTimeOut;
+
         if (!$attendance || !$attendance->time_in) {
             // No attendance - undertime is full day
-            $metrics['undertime_minutes'] = $this->standardWorkMinutes;
+            $metrics['undertime_minutes'] = $standardWorkMin;
             return $metrics;
         }
 
@@ -314,18 +364,22 @@ class DtrService
             $metrics['actual_work_minutes'] = $attendance->time_in->diffInMinutes($attendance->time_out);
         } else {
             // If no time out, calculate up to expected time out
-            $expectedTimeOut = $date->copy()->setTimeFromTimeString($this->standardTimeOut);
+            $expectedTimeOut = $date->copy()->setTimeFromTimeString($endTimeStr);
+            if ($expectedTimeOut->lt($attendance->time_in)) {
+                $expectedTimeOut->addDay();
+            }
             $metrics['actual_work_minutes'] = $attendance->time_in->diffInMinutes($expectedTimeOut);
         }
 
         // Get break minutes from attendance or use default
-        $metrics['total_break_minutes'] = $attendance->total_break_minutes ?? ($this->lunchMinutes + $this->breakMinutes);
+        $defaultBreakMinutes = $schedule ? $schedule['break_minutes'] : ($this->lunchMinutes + $this->breakMinutes);
+        $metrics['total_break_minutes'] = $attendance->total_break_minutes ?? $defaultBreakMinutes;
 
         // Calculate net work minutes (actual - breaks)
         $metrics['net_work_minutes'] = max(0, $metrics['actual_work_minutes'] - $metrics['total_break_minutes']);
 
         // Calculate late minutes
-        $expectedTimeIn = $date->copy()->setTimeFromTimeString($this->standardTimeIn);
+        $expectedTimeIn = $date->copy()->setTimeFromTimeString($startTimeStr);
         $graceTime = $expectedTimeIn->copy()->addMinutes($this->graceMinutes);
         
         if ($attendance->time_in->gt($graceTime)) {
@@ -333,10 +387,10 @@ class DtrService
         }
 
         // Calculate undertime/overtime
-        if ($metrics['net_work_minutes'] < $this->standardWorkMinutes) {
-            $metrics['undertime_minutes'] = $this->standardWorkMinutes - $metrics['net_work_minutes'];
-        } elseif ($metrics['net_work_minutes'] > $this->standardWorkMinutes) {
-            $metrics['overtime_minutes'] = $metrics['net_work_minutes'] - $this->standardWorkMinutes;
+        if ($metrics['net_work_minutes'] < $standardWorkMin) {
+            $metrics['undertime_minutes'] = $standardWorkMin - $metrics['net_work_minutes'];
+        } elseif ($metrics['net_work_minutes'] > $standardWorkMin) {
+            $metrics['overtime_minutes'] = $metrics['net_work_minutes'] - $standardWorkMin;
         }
 
         return $metrics;
@@ -362,6 +416,12 @@ class DtrService
         foreach ($incompleteAttendances as $attendance) {
             // Auto time-out at expected time or current time, whichever is earlier
             $expectedTimeOut = $date->copy()->setTimeFromTimeString($this->standardTimeOut);
+            
+            // Handle night shift crossing midnight
+            if ($expectedTimeOut->lt($attendance->time_in)) {
+                $expectedTimeOut->addDay();
+            }
+            
             $autoTimeOut = now()->lt($expectedTimeOut) ? now() : $expectedTimeOut;
 
             $attendance->update([

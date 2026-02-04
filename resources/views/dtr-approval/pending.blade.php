@@ -7,6 +7,14 @@
     selectedDtrs: [],
     showRejectModal: false,
     rejectId: null,
+    allDtrIds: {{ json_encode($pendingDtrs->pluck('id')) }},
+    toggleAll() {
+        if (this.selectedDtrs.length === this.allDtrIds.length) {
+            this.selectedDtrs = [];
+        } else {
+            this.selectedDtrs = [...this.allDtrIds];
+        }
+    },
     bulkApprove() {
         if (this.selectedDtrs.length === 0) return;
         if (confirm(`Approve ${this.selectedDtrs.length} selected DTR record(s)?`)) {
@@ -24,24 +32,46 @@
                 method: 'POST',
                 headers: {
                     'Content-Type': 'application/json',
+                    'Accept': 'application/json',
                     'X-CSRF-TOKEN': '{{ csrf_token() }}'
                 }
             };
             if (data) options.body = JSON.stringify(data);
             
             const response = await fetch(url, options);
-            const result = await response.json();
+            const isJson = response.headers.get('content-type')?.includes('application/json');
+            const result = isJson ? await response.json() : null;
             
-            if (result.success) {
+            if (response.ok && result?.success) {
                 location.reload();
             } else {
-                alert(result.message || 'Action failed');
+                alert(result?.message || `Error (${response.status}): ${response.statusText}`);
             }
         } catch (e) {
-            alert('An error occurred');
+            console.error('Action failed:', e);
+            alert('An error occurred: ' + e.message);
         }
     }
 }">
+    <!-- Session Messages -->
+    @if(session('success'))
+        <div class="mb-6 p-4 bg-green-50 border-l-4 border-green-500 text-green-700 rounded-r-xl shadow-sm flex items-center">
+            <svg class="w-5 h-5 mr-3 text-green-500" fill="currentColor" viewBox="0 0 20 20">
+                <path fill-rule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zm3.707-9.293a1 1 0 00-1.414-1.414L9 10.586 7.707 9.293a1 1 0 00-1.414 1.414l2 2a1 1 0 001.414 0l4-4z" clip-rule="evenodd"></path>
+            </svg>
+            <span class="font-medium">{{ session('success') }}</span>
+        </div>
+    @endif
+
+    @if(session('error'))
+        <div class="mb-6 p-4 bg-red-50 border-l-4 border-red-500 text-red-700 rounded-r-xl shadow-sm flex items-center">
+            <svg class="w-5 h-5 mr-3 text-red-500" fill="currentColor" viewBox="0 0 20 20">
+                <path fill-rule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zM8.707 7.293a1 1 0 00-1.414 1.414L8.586 10l-1.293 1.293a1 1 0 101.414 1.414L10 11.414l1.293 1.293a1 1 0 001.414-1.414L11.414 10l1.293-1.293a1 1 0 00-1.414-1.414L10 8.586 8.707 7.293z" clip-rule="evenodd"></path>
+            </svg>
+            <span class="font-medium">{{ session('error') }}</span>
+        </div>
+    @endif
+
     <!-- Header Section -->
     <div class="flex flex-col md:flex-row md:items-center justify-between gap-4 mb-8">
         <div>
@@ -171,7 +201,15 @@
                 <table class="w-full text-left border-collapse">
                     <thead>
                         <tr class="bg-gray-50 text-gray-600 uppercase text-xs font-bold border-b border-gray-100">
-                            <th class="px-6 py-4">Select</th>
+                            <th class="px-6 py-4">
+                                <div class="flex items-center">
+                                    <input type="checkbox" 
+                                           @click="toggleAll()" 
+                                           :checked="selectedDtrs.length === allDtrIds.length && allDtrIds.length > 0"
+                                           class="rounded border-gray-300 text-blue-600 focus:ring-blue-500 mr-2">
+                                    Select
+                                </div>
+                            </th>
                             <th class="px-6 py-4">Employee</th>
                             <th class="px-6 py-4">Date</th>
                             <th class="px-6 py-4">Logs</th>
@@ -294,73 +332,3 @@
 
 @endsection
 
-@push('scripts')
-<script>
-document.addEventListener('DOMContentLoaded', function() {
-    const checkboxes = document.querySelectorAll('.dtr-checkbox');
-    const approveBtn = document.getElementById('approveSelectedBtn');
-
-    function updateButton() {
-        const selectedCount = document.querySelectorAll('.dtr-checkbox:checked').length;
-        
-        if (approveBtn) {
-            approveBtn.disabled = selectedCount === 0;
-            
-            // Update the text and count
-            const baseText = '<svg class="w-4 h-4 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"></path></svg>Approve Selected';
-            approveBtn.innerHTML = selectedCount > 0 ? `${baseText} (${selectedCount})` : baseText;
-        }
-    }
-
-    checkboxes.forEach(cb => {
-        cb.addEventListener('change', updateButton);
-    });
-
-    // Initial check
-    updateButton();
-
-    // Single approve action
-    document.querySelectorAll('.approve-btn').forEach(btn => {
-        btn.addEventListener('click', function() {
-            if (confirm('Approve this DTR record?')) {
-                const id = this.dataset.id;
-                performAction(`/dtr-approval/${id}/approve`);
-            }
-        });
-    });
-
-    // Bulk approve action
-    approveBtn?.addEventListener('click', function() {
-        const selectedIds = Array.from(document.querySelectorAll('.dtr-checkbox:checked')).map(cb => cb.value);
-        if (selectedIds.length === 0) return;
-
-        if (confirm(`Approve ${selectedIds.length} selected DTR record(s)?`)) {
-            performAction('/dtr-approval/bulk-approve', { dtr_ids: selectedIds });
-        }
-    });
-
-    function performAction(url, data = null) {
-        const options = {
-            method: 'POST',
-            headers: {
-                'Content-Type': 'application/json',
-                'X-CSRF-TOKEN': '{{ csrf_token() }}'
-            }
-        };
-        
-        if (data) options.body = JSON.stringify(data);
-
-        fetch(url, options)
-            .then(res => res.json())
-            .then(data => {
-                if (data.success) {
-                    location.reload();
-                } else {
-                    alert(data.message || 'Action failed.');
-                }
-            })
-            .catch(err => alert('An error occurred. Please try again.'));
-    }
-});
-</script>
-@endpush

@@ -25,6 +25,9 @@ use App\Http\Controllers\TransactionController;
 use App\Http\Controllers\AnalyticsController;
 use App\Http\Controllers\DtrApprovalController;
 use App\Http\Controllers\AutomationController;
+use App\Http\Controllers\SiteController;
+use App\Http\Controllers\AccountController;
+use App\Http\Controllers\ScheduleController;
 use Illuminate\Support\Facades\Route;
 
 /*
@@ -136,9 +139,16 @@ Route::middleware('auth')->group(function () {
     // HR & ADMIN ROUTES
     // ============================================
     Route::middleware('hr')->group(function () {
+        // Sites & Accounts Management
+        Route::resource('sites', SiteController::class);
+        Route::resource('accounts', AccountController::class);
+        Route::resource('schedules', ScheduleController::class);
+
         // Employees Management
         Route::resource('employees', EmployeeController::class);
         Route::post('/employees/{employee}/toggle-status', [EmployeeController::class, 'toggleStatus'])->name('employees.toggle-status');
+        Route::post('/employees/bulk-assign-site', [EmployeeController::class, 'bulkAssignSite'])->name('employees.bulk-assign-site');
+        Route::post('/employees/bulk-assign-account', [EmployeeController::class, 'bulkAssignAccount'])->name('employees.bulk-assign-account');
 
         // Attendance Management
         Route::get('/manage/attendance', [AttendanceController::class, 'manage'])->name('attendance.manage');
@@ -188,6 +198,7 @@ Route::middleware('auth')->group(function () {
             Route::post('/{dailyTimeRecord}/approve-correction', [DtrApprovalController::class, 'approveCorrection'])->name('approve-correction');
             Route::post('/{dailyTimeRecord}/reject-correction', [DtrApprovalController::class, 'rejectCorrection'])->name('reject-correction');
             Route::post('/bulk-approve', [DtrApprovalController::class, 'bulkApprove'])->name('bulk-approve');
+            Route::post('/bulk-approve-corrections', [DtrApprovalController::class, 'bulkApproveCorrections'])->name('bulk-approve-corrections');
             Route::post('/period/{payrollPeriod}/approve-all', [DtrApprovalController::class, 'approveAllForPeriod'])->name('approve-all-period');
             Route::post('/generate', [DtrApprovalController::class, 'generateDtrs'])->name('generate');
         });

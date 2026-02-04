@@ -3,6 +3,8 @@
 namespace App\Http\Controllers;
 
 use App\Models\User;
+use App\Models\Site;
+use App\Models\Account;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Hash;
 use Illuminate\Validation\Rules;
@@ -41,13 +43,26 @@ class EmployeeController extends Controller
             $query->where('is_active', $request->status === 'active');
         }
 
+        // Site filter
+        if ($request->filled('site_id')) {
+            $query->where('site_id', $request->site_id);
+        }
+
+        // Account filter
+        if ($request->filled('account_id')) {
+            $query->where('account_id', $request->account_id);
+        }
+
         $employees = $query->orderBy('name')->paginate(15);
         
         $departments = User::whereNotNull('department')
             ->distinct()
             ->pluck('department');
+        
+        $allSites = Site::where('is_active', true)->get();
+        $allAccounts = Account::where('is_active', true)->get();
 
-        return view('employees.index', compact('employees', 'departments'));
+        return view('employees.index', compact('employees', 'departments', 'allSites', 'allAccounts'));
     }
 
     /**
@@ -55,7 +70,9 @@ class EmployeeController extends Controller
      */
     public function create()
     {
-        return view('employees.create');
+        $sites = Site::where('is_active', true)->get();
+        $accounts = Account::where('is_active', true)->get();
+        return view('employees.create', compact('sites', 'accounts'));
     }
 
     /**
@@ -75,6 +92,8 @@ class EmployeeController extends Controller
             'daily_rate' => 'nullable|numeric|min:0',
             'monthly_salary' => 'nullable|numeric|min:0',
             'date_hired' => 'nullable|date',
+            'site_id' => 'nullable|exists:sites,id',
+            'account_id' => 'nullable|exists:accounts,id',
         ]);
 
         User::create([
@@ -89,6 +108,8 @@ class EmployeeController extends Controller
             'daily_rate' => $request->daily_rate ?? 0,
             'monthly_salary' => $request->monthly_salary ?? 0,
             'date_hired' => $request->date_hired,
+            'site_id' => $request->site_id,
+            'account_id' => $request->account_id,
             'is_active' => true,
         ]);
 
@@ -115,7 +136,9 @@ class EmployeeController extends Controller
      */
     public function edit(User $employee)
     {
-        return view('employees.edit', compact('employee'));
+        $sites = Site::all();
+        $accounts = Account::all();
+        return view('employees.edit', compact('employee', 'sites', 'accounts'));
     }
 
     /**
@@ -129,6 +152,8 @@ class EmployeeController extends Controller
             'email' => 'required|string|email|max:255|unique:users,email,' . $employee->id,
             'password' => ['nullable', 'confirmed', Rules\Password::defaults()],
             'role' => 'required|in:admin,hr,employee',
+            'site_id' => 'nullable|exists:sites,id',
+            'account_id' => 'nullable|exists:accounts,id',
             'department' => 'nullable|string|max:100',
             'position' => 'nullable|string|max:100',
             'hourly_rate' => 'nullable|numeric|min:0',
@@ -143,6 +168,8 @@ class EmployeeController extends Controller
             'name' => $request->name,
             'email' => $request->email,
             'role' => $request->role,
+            'site_id' => $request->site_id,
+            'account_id' => $request->account_id,
             'department' => $request->department,
             'position' => $request->position,
             'hourly_rate' => $request->hourly_rate ?? 0,
@@ -195,5 +222,41 @@ class EmployeeController extends Controller
         $status = $employee->is_active ? 'activated' : 'deactivated';
         return redirect()->route('employees.index')
             ->with('success', "Employee {$status} successfully.");
+    }
+
+    /**
+     * Bulk assign employees to a site
+     */
+    public function bulkAssignSite(Request $request)
+    {
+        $request->validate([
+            'employee_ids' => 'required|array',
+            'employee_ids.*' => 'exists:users,id',
+            'site_id' => 'required|exists:sites,id',
+        ]);
+
+        User::whereIn('id', $request->employee_ids)
+            ->update(['site_id' => $request->site_id]);
+
+        return redirect()->route('employees.index')
+            ->with('success', count($request->employee_ids) . ' employees assigned to site successfully.');
+    }
+
+    /**
+     * Bulk assign employees to an account
+     */
+    public function bulkAssignAccount(Request $request)
+    {
+        $request->validate([
+            'employee_ids' => 'required|array',
+            'employee_ids.*' => 'exists:users,id',
+            'account_id' => 'required|exists:accounts,id',
+        ]);
+
+        User::whereIn('id', $request->employee_ids)
+            ->update(['account_id' => $request->account_id]);
+
+        return redirect()->route('employees.index')
+            ->with('success', count($request->employee_ids) . ' employees assigned to account successfully.');
     }
 }

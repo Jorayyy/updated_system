@@ -136,7 +136,7 @@ class AttendanceController extends Controller
         $statusFilter = $request->get('status');
         $searchTerm = $request->get('search');
 
-        $query = Attendance::with(['user'])
+        $query = Attendance::with(['user.account', 'user.site', 'user.account.activeSchedule'])
             ->whereDate('date', $date);
 
         if ($departmentFilter) {
@@ -201,7 +201,8 @@ class AttendanceController extends Controller
      */
     public function create()
     {
-        $employees = User::where('is_active', true)
+        $employees = User::with(['account.activeSchedule', 'site'])
+            ->where('is_active', true)
             ->where('role', 'employee')
             ->orderBy('name')
             ->get();
@@ -218,14 +219,23 @@ class AttendanceController extends Controller
             'user_id' => 'required|exists:users,id',
             'date' => 'required|date',
             'time_in' => 'required|date_format:H:i',
-            'time_out' => 'nullable|date_format:H:i|after:time_in',
+            'time_out' => 'nullable|date_format:H:i',
             'status' => 'required|in:present,absent,late,half_day,on_leave',
             'remarks' => 'nullable|string|max:500',
         ]);
 
         $date = Carbon::parse($request->date);
         $timeIn = $date->copy()->setTimeFromTimeString($request->time_in);
-        $timeOut = $request->time_out ? $date->copy()->setTimeFromTimeString($request->time_out) : null;
+        
+        $timeOut = null;
+        if ($request->time_out) {
+            $timeOut = $date->copy()->setTimeFromTimeString($request->time_out);
+            
+            // Handle cross-day night shift
+            if ($timeOut->lte($timeIn)) {
+                $timeOut->addDay();
+            }
+        }
 
         // Check for existing attendance
         $existing = Attendance::where('user_id', $request->user_id)
@@ -238,21 +248,31 @@ class AttendanceController extends Controller
                 ->with('error', 'Attendance record already exists for this employee on this date.');
         }
 
-        $totalWorkMinutes = 0;
-        if ($timeIn && $timeOut) {
-            $totalWorkMinutes = $timeIn->diffInMinutes($timeOut);
-        }
-
-        Attendance::create([
+        $attendance = new Attendance([
             'user_id' => $request->user_id,
             'date' => $date,
             'time_in' => $timeIn,
             'time_out' => $timeOut,
             'status' => $request->status,
             'current_step' => $timeOut ? 'completed' : 'time_in',
-            'total_work_minutes' => $totalWorkMinutes,
             'remarks' => $request->remarks,
         ]);
+
+        // Calculate work minutes and OT/UT using schedule logic
+        if ($timeOut) {
+            $attendance->total_work_minutes = $attendance->calculateWorkMinutes();
+            
+            $standardWorkMinutes = 480;
+            if ($attendance->total_work_minutes > $standardWorkMinutes) {
+                $attendance->overtime_minutes = $attendance->total_work_minutes - $standardWorkMinutes;
+                $attendance->undertime_minutes = 0;
+            } else {
+                $attendance->undertime_minutes = $standardWorkMinutes - $attendance->total_work_minutes;
+                $attendance->overtime_minutes = 0;
+            }
+        }
+
+        $attendance->save();
 
         return redirect()->route('attendance.manage')
             ->with('success', 'Attendance record created successfully.');
@@ -284,6 +304,10 @@ class AttendanceController extends Controller
             'second_break_in' => 'nullable|date_format:H:i',
             'status' => 'required|in:present,absent,late,half_day,on_leave',
             'remarks' => 'nullable|string|max:500',
+            'total_work_minutes' => 'nullable|integer|min:0',
+            'total_break_minutes' => 'nullable|integer|min:0',
+            'overtime_minutes' => 'nullable|integer|min:0',
+            'undertime_minutes' => 'nullable|integer|min:0',
         ]);
 
         $date = $attendance->date;
@@ -303,9 +327,32 @@ class AttendanceController extends Controller
 
         $attendance->update($updateData);
         
-        // Recalculate totals
-        $attendance->total_break_minutes = $attendance->calculateBreakMinutes();
-        $attendance->total_work_minutes = $attendance->calculateWorkMinutes();
+        // Recalculate totals using model methods (handles schedule breaks)
+        // If the user manually provided work minutes in the request, prioritize that
+        if ($request->has('total_work_minutes') && $request->filled('total_work_minutes')) {
+            $attendance->total_work_minutes = $request->total_work_minutes;
+            $attendance->total_break_minutes = $request->total_break_minutes ?? $attendance->calculateBreakMinutes();
+        } else {
+            $attendance->total_break_minutes = $attendance->calculateBreakMinutes();
+            $attendance->total_work_minutes = $attendance->calculateWorkMinutes();
+        }
+        
+        // Calculate overtime/undertime based on 8 hours (480 mins)
+        // Check if override for OT/UT was provided
+        if ($request->has('overtime_minutes') && $request->has('undertime_minutes')) {
+            $attendance->overtime_minutes = $request->overtime_minutes;
+            $attendance->undertime_minutes = $request->undertime_minutes;
+        } else {
+            $standardWorkMinutes = 480;
+            if ($attendance->total_work_minutes > $standardWorkMinutes) {
+                $attendance->overtime_minutes = $attendance->total_work_minutes - $standardWorkMinutes;
+                $attendance->undertime_minutes = 0;
+            } else {
+                $attendance->undertime_minutes = $standardWorkMinutes - $attendance->total_work_minutes;
+                $attendance->overtime_minutes = 0;
+            }
+        }
+
         $attendance->save();
 
         return redirect()->route('attendance.manage')

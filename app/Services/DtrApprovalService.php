@@ -74,7 +74,7 @@ class DtrApprovalService
 
             // Fire event if fully approved
             if ($dtr->fresh()->status === 'approved') {
-                event(new DtrApproved($dtr, $approverId, $approvalLevel));
+                event(new DtrApproved($dtr, $approver, $approvalLevel));
                 
                 // Check if all DTRs for payroll period are approved
                 $this->checkAllDtrsApproved($dtr);
@@ -364,6 +364,36 @@ class DtrApprovalService
     }
 
     /**
+     * Bulk approve DTR corrections
+     */
+    public function bulkApproveCorrections(array $ids, int $approverId): array
+    {
+        $results = [
+            'total' => count($ids),
+            'approved' => 0,
+            'failed' => 0,
+        ];
+
+        foreach ($ids as $id) {
+            $dtr = DailyTimeRecord::find($id);
+            if (!$dtr) {
+                $results['failed']++;
+                continue;
+            }
+
+            $response = $this->approveCorrection($dtr, $approverId);
+            
+            if ($response['success']) {
+                $results['approved']++;
+            } else {
+                $results['failed']++;
+            }
+        }
+
+        return $results;
+    }
+
+    /**
      * Reject DTR correction
      */
     public function rejectCorrection(
@@ -457,38 +487,12 @@ class DtrApprovalService
      */
     protected function getApprovalUpdateData(int $approverId, string $level, ?string $remarks): array
     {
-        $data = [];
-
-        switch ($level) {
-            case 'supervisor':
-                $data = [
-                    'supervisor_approved_by' => $approverId,
-                    'supervisor_approved_at' => now(),
-                    'supervisor_remarks' => $remarks,
-                    'status' => 'approved', // Single-level: direct approval
-                ];
-                break;
-
-            case 'hr':
-                $data = [
-                    'hr_approved_by' => $approverId,
-                    'hr_approved_at' => now(),
-                    'hr_remarks' => $remarks,
-                    'status' => 'approved',
-                ];
-                break;
-
-            case 'final':
-                $data = [
-                    'approved_by' => $approverId,
-                    'approved_at' => now(),
-                    'approval_remarks' => $remarks,
-                    'status' => 'approved',
-                ];
-                break;
-        }
-
-        return $data;
+        return [
+            'approved_by' => $approverId,
+            'approved_at' => now(),
+            'approval_remarks' => $remarks,
+            'status' => 'approved',
+        ];
     }
 
     /**

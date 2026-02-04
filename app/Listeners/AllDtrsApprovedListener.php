@@ -30,7 +30,7 @@ class AllDtrsApprovedListener implements ShouldQueue
      */
     public function handle(AllDtrsApproved $event): void
     {
-        $payrollPeriod = $event->payrollPeriod;
+        $payrollPeriod = $event->period;
 
         Log::channel('payroll')->info('All DTRs Approved Event Triggered', [
             'payroll_period_id' => $payrollPeriod->id,

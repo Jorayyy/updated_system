@@ -8,6 +8,7 @@ use App\Models\User;
 use App\Models\AuditLog;
 use App\Models\AllowedIp;
 use App\Models\CompanySetting;
+use App\Models\Schedule;
 use Carbon\Carbon;
 use Illuminate\Support\Facades\DB;
 
@@ -58,12 +59,8 @@ class AttendanceService
             ];
         }
 
-        $today = today();
-        
-        // Get or create attendance for today
-        $attendance = Attendance::where('user_id', $user->id)
-            ->whereDate('date', $today)
-            ->first();
+        // Get or create attendance for the current active shift
+        $attendance = $this->getCurrentAttendance($user);
         
         // If no attendance record, create one and do time in
         if (!$attendance) {
@@ -72,6 +69,10 @@ class AttendanceService
         
         // If already completed, return error
         if ($attendance->isCompleted()) {
+            // If it's the next day and we completed yesterday's shift, we might want to start a new one
+            // But usually the user wants to see "Already completed" if they just finished.
+            // If we are here, getCurrentAttendance returned a COMPLETED record which means 
+            // no incomplete records were found for today or recently.
             return [
                 'success' => false,
                 'message' => 'You have already completed your attendance for today.',
@@ -89,6 +90,44 @@ class AttendanceService
         }
         
         return $this->executeStep($attendance, $nextStep, $user);
+    }
+
+    /**
+     * Helper to get the current active or most recent attendance record
+     * Handles night shifts by looking back at previous day if currently early morning.
+     */
+    protected function getCurrentAttendance(User $user): ?Attendance
+    {
+        $now = now();
+        $today = today();
+        
+        // 1. Check for an incomplete attendance record from today
+        $attendance = Attendance::where('user_id', $user->id)
+            ->whereDate('date', $today)
+            ->where('current_step', '!=', 'completed')
+            ->first();
+            
+        if ($attendance) {
+            return $attendance;
+        }
+        
+        // 2. If it's early morning (before 12 PM), check for an incomplete record from yesterday
+        if ($now->hour < 12) {
+            $yesterday = $today->copy()->subDay();
+            $yesterdayAttendance = Attendance::where('user_id', $user->id)
+                ->whereDate('date', $yesterday)
+                ->where('current_step', '!=', 'completed')
+                ->first();
+                
+            if ($yesterdayAttendance) {
+                return $yesterdayAttendance;
+            }
+        }
+        
+        // 3. Fallback to just today's record (even if completed) for status display
+        return Attendance::where('user_id', $user->id)
+            ->whereDate('date', $today)
+            ->first();
     }
 
     /**
@@ -173,32 +212,37 @@ class AttendanceService
             ];
         }
 
-        $today = today();
+        $now = now();
+        $schedule = $this->getScheduleForUser($user);
+        $workStartTime = $schedule['work_start_time'];
         
-        // Check if already timed in today
-        $attendance = Attendance::where('user_id', $user->id)
-            ->whereDate('date', $today)
-            ->first();
+        // Logical business date: shift starts at e.g. 9 PM, so if it's currently early morning,
+        // we are likely clocking in late for "yesterday's" shift.
+        // We use a threshold (if shift starts late night and it's early morning)
+        $logicalDate = today();
+        if ($now->hour < 10 && Carbon::parse($workStartTime)->hour >= 12) {
+            $logicalDate = today()->subDay();
+        }
+        
+        $attendance = $this->getCurrentAttendance($user);
         
         if ($attendance && $attendance->hasTimedIn()) {
             return [
                 'success' => false,
-                'message' => 'You have already timed in today.',
+                'message' => 'You have already timed in for this shift.',
             ];
         }
 
         DB::beginTransaction();
         try {
-            $now = now();
-            
             $attendance = Attendance::updateOrCreate(
                 [
                     'user_id' => $user->id,
-                    'date' => $today,
+                    'date' => $logicalDate,
                 ],
                 [
                     'time_in' => $now,
-                    'status' => $this->determineStatus($now),
+                    'status' => $this->determineStatus($now, $user),
                     'current_step' => 'time_in',
                 ]
             );
@@ -233,21 +277,19 @@ class AttendanceService
      */
     public function skipToTimeOut(User $user, ?string $reason = null): array
     {
-        $attendance = Attendance::where('user_id', $user->id)
-            ->whereDate('date', today())
-            ->first();
+        $attendance = $this->getCurrentAttendance($user);
 
         if (!$attendance || !$attendance->hasTimedIn()) {
             return [
                 'success' => false,
-                'message' => 'You have not timed in today.',
+                'message' => 'You have not timed in.',
             ];
         }
 
         if ($attendance->hasTimedOut()) {
             return [
                 'success' => false,
-                'message' => 'You have already timed out today.',
+                'message' => 'You have already timed out.',
             ];
         }
 
@@ -307,9 +349,7 @@ class AttendanceService
      */
     public function getTodayStatus(User $user): array
     {
-        $attendance = Attendance::where('user_id', $user->id)
-            ->whereDate('date', today())
-            ->first();
+        $attendance = $this->getCurrentAttendance($user);
 
         if (!$attendance) {
             return [
@@ -365,11 +405,45 @@ class AttendanceService
     /**
      * Determine attendance status based on time in
      */
-    protected function determineStatus(Carbon $timeIn): string
+    /**
+     * Get the effective schedule for a user
+     */
+    protected function getScheduleForUser(User $user): array
     {
-        // Assuming work starts at 8:00 AM
-        $workStart = today()->setHour(8)->setMinute(0)->setSecond(0);
-        $lateThreshold = today()->setHour(8)->setMinute(15)->setSecond(0); // 15 min grace period
+        if ($user->account_id) {
+            $schedule = Schedule::where('account_id', $user->account_id)
+                ->where('is_active', true)
+                ->first();
+
+            if ($schedule) {
+                return [
+                    'work_start_time' => $schedule->work_start_time,
+                    'work_end_time' => $schedule->work_end_time,
+                ];
+            }
+        }
+
+        return [
+            'work_start_time' => CompanySetting::getValue('work_start_time', '21:00'),
+            'work_end_time' => CompanySetting::getValue('work_end_time', '07:00'),
+        ];
+    }
+
+    protected function determineStatus(Carbon $timeIn, User $user): string
+    {
+        $schedule = $this->getScheduleForUser($user);
+        $workStartTime = $schedule['work_start_time'];
+        $gracePeriod = CompanySetting::getValue('grace_period_minutes', 15);
+        
+        $workStart = $timeIn->copy()->setTimeFromTimeString($workStartTime);
+        
+        // If it's early morning and we are clocking in for a night shift that started yesterday
+        // we need to adjust $workStart to yesterday
+        if ($timeIn->hour < 10 && Carbon::parse($workStartTime)->hour >= 12) {
+            $workStart->subDay();
+        }
+        
+        $lateThreshold = $workStart->copy()->addMinutes($gracePeriod);
 
         if ($timeIn->gt($lateThreshold)) {
             return 'late';

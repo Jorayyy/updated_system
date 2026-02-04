@@ -52,6 +52,15 @@ class DailyTimeRecord extends Model
         'is_payroll_processed',
         'payroll_processed_at',
         'remarks',
+        'correction_requested',
+        'correction_data',
+        'correction_reason',
+        'correction_requested_at',
+        'correction_approved_by',
+        'correction_approved_at',
+        'correction_rejected_by',
+        'correction_rejected_at',
+        'correction_rejection_reason',
     ];
 
     protected $casts = [
@@ -65,6 +74,11 @@ class DailyTimeRecord extends Model
         'is_auto_generated' => 'boolean',
         'is_manually_adjusted' => 'boolean',
         'is_payroll_processed' => 'boolean',
+        'correction_requested' => 'boolean',
+        'correction_requested_at' => 'datetime',
+        'correction_approved_at' => 'datetime',
+        'correction_rejected_at' => 'datetime',
+        'correction_data' => 'array',
     ];
 
     // Day Types

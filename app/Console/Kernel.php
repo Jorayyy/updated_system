@@ -39,6 +39,14 @@ class Kernel extends ConsoleKernel
             ->appendOutputTo(storage_path('logs/leave-allocation.log'))
             ->emailOutputOnFailure(config('mail.admin_email'));
 
+        // Automated weekly DTR generation
+        // Runs mid-morning to ensure all night shifts are completed
+        $schedule->command('dtr:generate-weekly')
+            ->dailyAt('10:00')
+            ->withoutOverlapping()
+            ->onOneServer()
+            ->appendOutputTo(storage_path('logs/dtr-automation.log'));
+
         // Optional: Run early morning to catch overnight shifts
         // $schedule->command('attendance:process-eod --date=' . now()->subDay()->toDateString())
         //     ->dailyAt('06:00')

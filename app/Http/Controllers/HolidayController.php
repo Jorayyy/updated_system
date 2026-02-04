@@ -16,7 +16,7 @@ class HolidayController extends Controller
         
         $holidays = Holiday::whereYear('date', $year)
             ->orderBy('date')
-            ->paginate(20);
+            ->get();
 
         return view('holidays.index', compact('holidays', 'year'));
     }

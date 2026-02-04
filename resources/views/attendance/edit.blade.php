@@ -47,6 +47,54 @@
                                 <x-input-error :messages="$errors->get('time_out')" class="mt-2" />
                             </div>
 
+                            <!-- Breaks Section -->
+                            <div class="border-t border-b py-4 space-y-4 bg-blue-50/30 px-4 rounded-lg">
+                                <h3 class="font-bold text-sm text-blue-800 uppercase tracking-widest flex items-center">
+                                    <svg class="w-4 h-4 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z"></path>
+                                    </svg>
+                                    Break Management
+                                </h3>
+                                
+                                <div class="grid grid-cols-2 gap-4">
+                                    <!-- 1st Break -->
+                                    <div class="space-y-2">
+                                        <label class="text-xs font-bold text-gray-700">1st Break OUT</label>
+                                        <x-text-input type="time" name="first_break_out" class="block w-full text-sm" 
+                                            :value="old('first_break_out', $attendance->first_break_out ? $attendance->first_break_out->format('H:i') : '')" />
+                                    </div>
+                                    <div class="space-y-2">
+                                        <label class="text-xs font-bold text-gray-700">1st Break IN</label>
+                                        <x-text-input type="time" name="first_break_in" class="block w-full text-sm" 
+                                            :value="old('first_break_in', $attendance->first_break_in ? $attendance->first_break_in->format('H:i') : '')" />
+                                    </div>
+
+                                    <!-- Lunch Break -->
+                                    <div class="space-y-2">
+                                        <label class="text-xs font-bold text-gray-700">Lunch Break OUT</label>
+                                        <x-text-input type="time" name="lunch_break_out" class="block w-full text-sm" 
+                                            :value="old('lunch_break_out', $attendance->lunch_break_out ? $attendance->lunch_break_out->format('H:i') : '')" />
+                                    </div>
+                                    <div class="space-y-2">
+                                        <label class="text-xs font-bold text-gray-700">Lunch Break IN</label>
+                                        <x-text-input type="time" name="lunch_break_in" class="block w-full text-sm" 
+                                            :value="old('lunch_break_in', $attendance->lunch_break_in ? $attendance->lunch_break_in->format('H:i') : '')" />
+                                    </div>
+
+                                    <!-- 2nd Break -->
+                                    <div class="space-y-2">
+                                        <label class="text-xs font-bold text-gray-700">2nd Break OUT</label>
+                                        <x-text-input type="time" name="second_break_out" class="block w-full text-sm" 
+                                            :value="old('second_break_out', $attendance->second_break_out ? $attendance->second_break_out->format('H:i') : '')" />
+                                    </div>
+                                    <div class="space-y-2">
+                                        <label class="text-xs font-bold text-gray-700">2nd Break IN</label>
+                                        <x-text-input type="time" name="second_break_in" class="block w-full text-sm" 
+                                            :value="old('second_break_in', $attendance->second_break_in ? $attendance->second_break_in->format('H:i') : '')" />
+                                    </div>
+                                </div>
+                            </div>
+
                             <!-- Status -->
                             <div>
                                 <x-input-label for="status" :value="__('Status')" />

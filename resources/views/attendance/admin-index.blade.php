@@ -82,7 +82,7 @@
                             <thead class="bg-gray-50">
                                 <tr>
                                     <th class="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase">Employee</th>
-                                    <th class="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase">Department</th>
+                                    <th class="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase">Account/Site</th>
                                     <th class="px-4 py-3 text-center text-xs font-medium text-gray-500 uppercase">Time In</th>
                                     <th class="px-4 py-3 text-center text-xs font-medium text-gray-500 uppercase">Time Out</th>
                                     <th class="px-4 py-3 text-center text-xs font-medium text-gray-500 uppercase">Breaks</th>
@@ -97,10 +97,11 @@
                                     <tr>
                                         <td class="px-4 py-4 whitespace-nowrap">
                                             <div class="text-sm font-medium text-gray-900">{{ $attendance->user->name }}</div>
-                                            <div class="text-xs text-gray-500">{{ $attendance->user->employee_id }}</div>
+                                            <div class="text-xs text-gray-500">{{ $attendance->user->employee_id }} • {{ $attendance->user->department ?? '-' }}</div>
                                         </td>
-                                        <td class="px-4 py-4 whitespace-nowrap text-sm text-gray-500">
-                                            {{ $attendance->user->department ?? '-' }}
+                                        <td class="px-4 py-4 whitespace-nowrap">
+                                            <div class="text-xs font-bold text-indigo-600 uppercase">{{ $attendance->user->account->name ?? '-' }}</div>
+                                            <div class="text-[10px] text-gray-400 uppercase tracking-tighter">{{ $attendance->user->site->name ?? '-' }}</div>
                                         </td>
                                         <td class="px-4 py-4 whitespace-nowrap text-sm text-center">
                                             @if($attendance->time_in)
@@ -119,10 +120,49 @@
                                             @endif
                                         </td>
                                         <td class="px-4 py-4 whitespace-nowrap text-sm text-center">
-                                            {{ $attendance->breaks->count() }}
-                                            @if($attendance->total_break_minutes > 0)
-                                                <span class="text-xs text-gray-500">({{ round($attendance->total_break_minutes) }}m)</span>
-                                            @endif
+                                            <div class="group relative inline-block">
+                                                <span class="cursor-help border-b border-dotted border-gray-400">
+                                                    @php
+                                                        $breakCount = 0;
+                                                        if($attendance->first_break_out) $breakCount++;
+                                                        if($attendance->lunch_break_out) $breakCount++;
+                                                        if($attendance->second_break_out) $breakCount++;
+                                                    @endphp
+                                                    {{ $breakCount }}
+                                                    @if($attendance->total_break_minutes > 0)
+                                                        <span class="text-xs text-gray-500">({{ round($attendance->total_break_minutes) }}m)</span>
+                                                    @endif
+                                                </span>
+                                                <!-- Custom Tooltip -->
+                                                <div class="hidden group-hover:block absolute z-50 w-48 p-2 mt-1 -ml-20 text-xs text-white bg-gray-800 rounded-lg shadow-xl">
+                                                    <div class="space-y-1">
+                                                        <div class="flex justify-between border-b border-gray-600 pb-1 mb-1">
+                                                            <span class="font-bold">Break Details</span>
+                                                        </div>
+                                                        @if($attendance->first_break_out)
+                                                            <div class="flex justify-between">
+                                                                <span>1st:</span>
+                                                                <span>{{ $attendance->first_break_out->format('H:i') }} - {{ $attendance->first_break_in ? $attendance->first_break_in->format('H:i') : '...' }}</span>
+                                                            </div>
+                                                        @endif
+                                                        @if($attendance->lunch_break_out)
+                                                            <div class="flex justify-between">
+                                                                <span>Lunch:</span>
+                                                                <span>{{ $attendance->lunch_break_out->format('H:i') }} - {{ $attendance->lunch_break_in ? $attendance->lunch_break_in->format('H:i') : '...' }}</span>
+                                                            </div>
+                                                        @endif
+                                                        @if($attendance->second_break_out)
+                                                            <div class="flex justify-between">
+                                                                <span>2nd:</span>
+                                                                <span>{{ $attendance->second_break_out->format('H:i') }} - {{ $attendance->second_break_in ? $attendance->second_break_in->format('H:i') : '...' }}</span>
+                                                            </div>
+                                                        @endif
+                                                        @if(!$attendance->first_break_out && !$attendance->lunch_break_out && !$attendance->second_break_out)
+                                                            <div class="text-gray-400 italic">No breaks recorded</div>
+                                                        @endif
+                                                    </div>
+                                                </div>
+                                            </div>
                                         </td>
                                         <td class="px-4 py-4 whitespace-nowrap text-sm text-center font-medium">
                                             {{ number_format($attendance->total_work_minutes / 60, 1) }} hrs

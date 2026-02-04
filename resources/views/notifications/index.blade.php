@@ -142,13 +142,13 @@
                                     <div class="flex items-start justify-between gap-4">
                                         <div class="flex-1">
                                             <p class="text-sm font-semibold text-gray-900">
-                                                {{ $notification->data['title'] ?? 'Notification' }}
+                                                {{ $notification->title ?? 'Notification' }}
                                                 @if(!$notification->read_at)
                                                     <span class="ml-2 inline-block w-2 h-2 bg-red-500 rounded-full"></span>
                                                 @endif
                                             </p>
                                             <p class="text-sm text-gray-700 mt-1">
-                                                {{ $notification->data['message'] ?? '' }}
+                                                {{ $notification->message ?? '' }}
                                             </p>
                                             <p class="text-xs text-gray-500 mt-2">
                                                 {{ $notification->created_at->diffForHumans() }}

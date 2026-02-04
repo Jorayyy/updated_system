@@ -33,14 +33,14 @@ class CalculateLateUndertime extends Command
     protected $description = 'Calculate/recalculate late and undertime minutes for attendance records';
 
     protected int $standardWorkMinutes = 480;
-    protected string $standardTimeIn = '08:00';
+    protected string $standardTimeIn = '21:00';
     protected int $graceMinutes = 15;
 
     public function handle(): int
     {
         // Load settings
-        $this->standardWorkMinutes = CompanySetting::getValue('standard_work_minutes', 480);
-        $this->standardTimeIn = CompanySetting::getValue('standard_time_in', '08:00');
+        $this->standardWorkMinutes = CompanySetting::getValue('regular_work_hours', 8) * 60;
+        $this->standardTimeIn = CompanySetting::getValue('work_start_time', '21:00');
         $this->graceMinutes = CompanySetting::getValue('grace_period_minutes', 15);
 
         $this->info("Settings: Work={$this->standardWorkMinutes}min, TimeIn={$this->standardTimeIn}, Grace={$this->graceMinutes}min");

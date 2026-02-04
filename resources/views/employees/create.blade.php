@@ -57,6 +57,40 @@
                                 @enderror
                             </div>
 
+                            <!-- Account -->
+                            <div>
+                                <label for="account_id" class="block text-sm font-medium text-gray-700">Account</label>
+                                <select name="account_id" id="account_id"
+                                    class="mt-1 block w-full border-gray-300 rounded-md shadow-sm focus:border-indigo-500 focus:ring-indigo-500">
+                                    <option value="">Select Account</option>
+                                    @foreach($accounts as $account)
+                                        <option value="{{ $account->id }}" {{ old('account_id') == $account->id ? 'selected' : '' }}>
+                                            {{ $account->name }}
+                                        </option>
+                                    @endforeach
+                                </select>
+                                @error('account_id')
+                                    <p class="mt-1 text-sm text-red-600">{{ $message }}</p>
+                                @enderror
+                            </div>
+
+                            <!-- Site -->
+                            <div>
+                                <label for="site_id" class="block text-sm font-medium text-gray-700">Site</label>
+                                <select name="site_id" id="site_id"
+                                    class="mt-1 block w-full border-gray-300 rounded-md shadow-sm focus:border-indigo-500 focus:ring-indigo-500">
+                                    <option value="">Select Site</option>
+                                    @foreach($sites as $site)
+                                        <option value="{{ $site->id }}" {{ old('site_id') == $site->id ? 'selected' : '' }}>
+                                            {{ $site->name }}
+                                        </option>
+                                    @endforeach
+                                </select>
+                                @error('site_id')
+                                    <p class="mt-1 text-sm text-red-600">{{ $message }}</p>
+                                @enderror
+                            </div>
+
                             <!-- Department -->
                             <div>
                                 <label for="department" class="block text-sm font-medium text-gray-700">Department</label>

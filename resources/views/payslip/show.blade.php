@@ -1,86 +1,102 @@
 <x-app-layout>
     <x-slot name="header">
-        <div class="flex justify-between items-center">
-            <h2 class="font-semibold text-xl text-gray-800 leading-tight">
-                {{ __('Payslip Details') }}
-            </h2>
-            <a href="{{ route('payslip.index') }}" class="text-indigo-600 hover:text-indigo-900">
-                ← Back to My Payslips
-            </a>
+        <div class="flex flex-col md:flex-row md:items-center md:justify-between gap-4">
+            <div class="flex items-center gap-4">
+                <a href="{{ route('payslip.index') }}" 
+                   class="p-2 bg-white border border-slate-200 rounded-lg text-slate-400 hover:text-indigo-600 hover:border-indigo-100 transition shadow-sm">
+                    <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10 19l-7-7m0 0l7-7m-7 7h18"></path></svg>
+                </a>
+                <div>
+                    <h2 class="text-xl font-black text-slate-900 leading-tight tracking-tight">
+                        {{ __('Statement of Account') }}
+                    </h2>
+                    <p class="text-xs font-bold text-slate-400 uppercase tracking-widest mt-0.5">Reference #PAY-ORD-{{ str_pad($payroll->id, 6, '0', STR_PAD_LEFT) }}</p>
+                </div>
+            </div>
+            
+            <div class="flex items-center gap-2">
+                <a href="{{ route('payslip.download', $payroll) }}" 
+                   class="inline-flex items-center px-4 py-2 bg-indigo-600 text-white text-sm font-bold rounded-lg shadow-md shadow-indigo-100 hover:bg-indigo-700 transition transform hover:-translate-y-0.5">
+                    <svg class="w-4 h-4 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 16v1a2 2 0 002 2h12a2 2 0 002-2v-1m-4-4l-4 4m0 0l-4-4m4 4V4"></path></svg>
+                    Export Statement
+                </a>
+            </div>
         </div>
     </x-slot>
 
-    <div class="py-12">
-        <div class="max-w-4xl mx-auto sm:px-6 lg:px-8">
-            {{-- Period Info Card --}}
-            <div class="bg-gradient-to-r from-indigo-500 to-purple-600 rounded-lg shadow-lg text-white p-6 mb-6">
-                <div class="flex justify-between items-center">
-                    <div>
-                        <p class="text-indigo-200 text-sm">Pay Period</p>
-                        <p class="text-2xl font-bold">
-                            {{ $payroll->payrollPeriod->start_date->format('M d') }} - {{ $payroll->payrollPeriod->end_date->format('M d, Y') }}
-                        </p>
-                        <p class="text-indigo-200 text-sm mt-1">Pay Date: {{ $payroll->payrollPeriod->pay_date->format('F d, Y') }}</p>
-                        @if($payroll->is_manually_adjusted)
-                            <div class="mt-2 text-xs font-semibold uppercase tracking-wider text-amber-200">
-                                <span class="bg-indigo-700 bg-opacity-30 px-2 py-1 rounded border border-indigo-400">
-                                    <i class="fas fa-edit mr-1"></i> Manually Adjusted
-                                </span>
-                            </div>
-                        @endif
+    <div class="py-8 bg-slate-50 min-h-screen">
+        <div class="max-w-5xl mx-auto px-4 sm:px-6 lg:px-8">
+            
+            {{-- Summary Header --}}
+            <div class="bg-white rounded-3xl shadow-sm border border-slate-200 overflow-hidden mb-8">
+                <div class="bg-slate-900 px-8 py-10 text-white relative overflow-hidden">
+                    <div class="absolute top-0 right-0 p-8 opacity-10">
+                        <svg class="w-48 h-48" fill="currentColor" viewBox="0 0 24 24"><path d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm1 15h-2v-2h2v2zm0-4h-2V7h2v6z"></path></svg>
                     </div>
-                    <div class="text-right">
-                        <a href="{{ route('payslip.download', $payroll) }}" 
-                           class="inline-flex items-center px-4 py-2 bg-white text-indigo-600 rounded-lg font-semibold text-sm hover:bg-indigo-50 transition">
-                            <svg class="w-5 h-5 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 10v6m0 0l-3-3m3 3l3-3m2 8H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"></path>
-                            </svg>
-                            Download PDF
-                        </a>
+                    <div class="relative z-10 flex flex-col md:flex-row justify-between items-end md:items-center gap-6">
+                        <div>
+                            <span class="px-3 py-1 bg-white/10 rounded-full text-[10px] font-black uppercase tracking-widest text-indigo-300 border border-white/10 mb-4 inline-block">Period Overview</span>
+                            <p class="text-3xl font-black tracking-tight">
+                                {{ $payroll->payrollPeriod->start_date->format('F d') }} — {{ $payroll->payrollPeriod->end_date->format('d, Y') }}
+                            </p>
+                            <p class="text-slate-400 font-medium mt-2 flex items-center">
+                                <svg class="w-4 h-4 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z"></path></svg>
+                                Release Date: {{ $payroll->payrollPeriod->payout_date->format('F d, Y') }}
+                            </p>
+                        </div>
+                        <div class="text-right">
+                            <p class="text-xs font-black text-slate-400 uppercase tracking-widest mb-1">Net Compensation</p>
+                            <p class="text-5xl font-black text-indigo-400 leading-none">₱{{ number_format($payroll->net_pay, 2) }}</p>
+                        </div>
                     </div>
                 </div>
             </div>
 
-            <div class="grid grid-cols-1 lg:grid-cols-3 gap-6">
-                {{-- Main Content --}}
-                <div class="lg:col-span-2 space-y-6">
-                    {{-- Work Summary --}}
-                    <div class="bg-white overflow-hidden shadow-sm rounded-lg">
-                        <div class="p-6 border-b border-gray-200">
-                            <h3 class="text-lg font-semibold text-gray-700">Work Summary</h3>
+            <div class="grid grid-cols-1 lg:grid-cols-3 gap-8">
+                {{-- Main Breakdown --}}
+                <div class="lg:col-span-2 space-y-8">
+                    {{-- Performance Metrics --}}
+                    <div class="bg-white rounded-2xl border border-slate-200 shadow-sm overflow-hidden">
+                        <div class="px-6 py-4 border-b border-slate-100 bg-slate-50 flex items-center justify-between">
+                            <h3 class="text-sm font-black text-slate-800 uppercase tracking-widest">Attendance & Performance</h3>
+                            <svg class="w-5 h-5 text-slate-300" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z"></path></svg>
                         </div>
                         <div class="p-6">
-                            <div class="grid grid-cols-2 md:grid-cols-4 gap-4">
-                                <div class="text-center p-3 bg-gray-50 rounded-lg">
-                                    <p class="text-2xl font-bold text-gray-900">{{ $payroll->days_worked ?? 0 }}</p>
-                                    <p class="text-sm text-gray-500">Days Worked</p>
+                            <div class="grid grid-cols-2 md:grid-cols-4 gap-6">
+                                <div class="bg-slate-50 rounded-2xl p-4 border border-slate-100">
+                                    <p class="text-[10px] font-bold text-slate-400 uppercase tracking-widest mb-1">Days Present</p>
+                                    <p class="text-2xl font-black text-slate-900">{{ $payroll->total_work_days ?? 0 }}</p>
                                 </div>
-                                <div class="text-center p-3 bg-gray-50 rounded-lg">
-                                    <p class="text-2xl font-bold text-gray-900">{{ number_format($payroll->hours_worked ?? 0, 1) }}</p>
-                                    <p class="text-sm text-gray-500">Hours Worked</p>
+                                <div class="bg-slate-50 rounded-2xl p-4 border border-slate-100">
+                                    <p class="text-[10px] font-bold text-slate-400 uppercase tracking-widest mb-1">Total Hours</p>
+                                    <p class="text-2xl font-black text-slate-900">{{ number_format(($payroll->total_work_minutes ?? 0) / 60, 1) }}</p>
                                 </div>
-                                <div class="text-center p-3 bg-blue-50 rounded-lg">
-                                    <p class="text-2xl font-bold text-blue-600">{{ number_format($payroll->overtime_hours ?? 0, 1) }}</p>
-                                    <p class="text-sm text-gray-500">OT Hours</p>
+                                <div class="bg-indigo-50/50 rounded-2xl p-4 border border-indigo-100/50">
+                                    <p class="text-[10px] font-bold text-indigo-400 uppercase tracking-widest mb-1">OT Earned</p>
+                                    <p class="text-2xl font-black text-indigo-600">{{ number_format(($payroll->total_overtime_minutes ?? 0) / 60, 1) }}h</p>
                                 </div>
-                                <div class="text-center p-3 bg-red-50 rounded-lg">
-                                    <p class="text-2xl font-bold text-red-600">{{ $payroll->late_minutes ?? 0 }}</p>
-                                    <p class="text-sm text-gray-500">Late (mins)</p>
+                                <div class="bg-rose-50/50 rounded-2xl p-4 border border-rose-100/50">
+                                    <p class="text-[10px] font-bold text-rose-400 uppercase tracking-widest mb-1">Mins Late</p>
+                                    <p class="text-2xl font-black text-rose-600">{{ $payroll->total_late_minutes ?? 0 }}m</p>
                                 </div>
                             </div>
                         </div>
                     </div>
 
-                    {{-- Earnings --}}
-                    <div class="bg-white overflow-hidden shadow-sm rounded-lg">
-                        <div class="p-6 border-b border-gray-200 bg-green-50">
-                            <h3 class="text-lg font-semibold text-green-700">Earnings</h3>
+                    {{-- Earnings Detail --}}
+                    <div class="bg-white rounded-2xl border border-slate-200 shadow-sm overflow-hidden">
+                        <div class="px-6 py-4 border-b border-slate-100 bg-emerald-50/30 flex items-center justify-between">
+                            <h3 class="text-sm font-black text-emerald-800 uppercase tracking-widest">Income Breakdown</h3>
+                            <svg class="w-5 h-5 text-emerald-400" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path d="M12 8c-1.657 0-3 .895-3 2s1.343 2 3 2 3 .895 3 2-1.343 2-3 2m0-8c1.11 0 2.08.402 2.599 1M12 8V7m0 1v8m0 0v1m0-1c-1.11 0-2.08-.402-2.599-1M21 12a9 9 0 11-18 0 9 9 0 0118 0z"></path></svg>
                         </div>
                         <div class="p-6">
-                            <div class="space-y-3">
-                                <div class="flex justify-between items-center py-2 border-b border-gray-100">
-                                    <span class="text-gray-600">Basic Pay</span>
-                                    <span class="font-medium">₱{{ number_format($payroll->basic_pay ?? 0, 2) }}</span>
+                            <div class="space-y-4">
+                                <div class="flex justify-between items-center group">
+                                    <div class="flex flex-col">
+                                        <span class="text-sm font-bold text-slate-700">Base Compensation</span>
+                                        <span class="text-[10px] font-medium text-slate-400 tracking-wide">Standard hourly rate x actual hours</span>
+                                    </div>
+                                    <span class="text-base font-bold text-slate-900 group-hover:text-indigo-600 transition-colors">₱{{ number_format($payroll->basic_pay ?? 0, 2) }}</span>
                                 </div>
                                 @if(($payroll->overtime_pay ?? 0) > 0)
                                     <div class="flex justify-between items-center py-2 border-b border-gray-100">

@@ -38,6 +38,10 @@ class AnalyticsController extends Controller
         // Leave distribution data for the view
         $leaveData = $this->getLeaveDistribution();
         
+        // Account & Site distribution
+        $accountData = $this->getAccountDistribution();
+        $siteData = $this->getSiteDistribution();
+        
         // Turnover data
         $turnoverData = $this->getTurnoverData();
         
@@ -51,15 +55,62 @@ class AnalyticsController extends Controller
         $birthdays = $this->getUpcomingBirthdays();
         $anniversaries = $this->getUpcomingAnniversaries();
 
+        // Attendance Trends for the line chart
+        $attendanceData = $this->getAttendanceTrends();
+
         return view('analytics.index', compact(
             'stats', 
             'leaveData', 
+            'accountData',
+            'siteData',
             'turnoverData', 
             'payrollData', 
             'departmentData',
             'birthdays',
-            'anniversaries'
+            'anniversaries',
+            'attendanceData'
         ));
+    }
+
+    /**
+     * Get attendance trends for the last 30 days
+     */
+    private function getAttendanceTrends()
+    {
+        $endDate = now();
+        $startDate = now()->subDays(30);
+        $totalEmployees = User::where('is_active', true)->count();
+
+        $attendance = Attendance::select(
+                DB::raw('DATE(date) as day'),
+                DB::raw('COUNT(CASE WHEN status IN ("present", "late") THEN 1 END) as present_count')
+            )
+            ->whereBetween('date', [$startDate, $endDate])
+            ->groupBy('day')
+            ->orderBy('day')
+            ->get();
+
+        $labels = [];
+        $data = [];
+
+        // Fill in missing days with 0/reasonable defaults
+        for ($date = $startDate->copy(); $date->lte($endDate); $date->addDay()) {
+            $dateStr = $date->toDateString();
+            $labels[] = $date->format('M d');
+            
+            $dayData = $attendance->firstWhere('day', $dateStr);
+            if ($dayData && $totalEmployees > 0) {
+                $rate = ($dayData->present_count / $totalEmployees) * 100;
+                $data[] = min(round($rate, 1), 100);
+            } else {
+                $data[] = 0;
+            }
+        }
+
+        return [
+            'labels' => $labels,
+            'data' => $data,
+        ];
     }
 
     /**
@@ -78,16 +129,15 @@ class AnalyticsController extends Controller
     }
 
     /**
-     * Get average work hours
+     * Get average work hours (Last 30 days)
      */
     private function getAvgWorkHours()
     {
-        $avg = Attendance::whereMonth('date', now()->month)
-            ->whereYear('date', now()->year)
+        $avg = Attendance::where('date', '>=', now()->subDays(30))
             ->whereNotNull('total_hours')
             ->avg('total_hours');
         
-        return round($avg ?? 0, 1);
+        return round($avg ?? 8.0, 1);
     }
 
     /**
@@ -250,6 +300,56 @@ class AnalyticsController extends Controller
     }
 
     /**
+     * Get account distribution
+     */
+    private function getAccountDistribution()
+    {
+        $accounts = User::select('account_id', DB::raw('COUNT(*) as count'))
+            ->where('is_active', true)
+            ->whereNotNull('account_id')
+            ->groupBy('account_id')
+            ->with('account')
+            ->get();
+
+        if ($accounts->isEmpty()) {
+            return [
+                'labels' => ['General'],
+                'data' => [User::where('is_active', true)->count()],
+            ];
+        }
+
+        return [
+            'labels' => $accounts->map(fn($a) => $a->account->name ?? 'Unknown')->toArray(),
+            'data' => $accounts->pluck('count')->map(fn($v) => (int)$v)->toArray(),
+        ];
+    }
+
+    /**
+     * Get site distribution
+     */
+    private function getSiteDistribution()
+    {
+        $sites = User::select('site_id', DB::raw('COUNT(*) as count'))
+            ->where('is_active', true)
+            ->whereNotNull('site_id')
+            ->groupBy('site_id')
+            ->with('site')
+            ->get();
+
+        if ($sites->isEmpty()) {
+            return [
+                'labels' => ['Main Office'],
+                'data' => [User::where('is_active', true)->count()],
+            ];
+        }
+
+        return [
+            'labels' => $sites->map(fn($s) => $s->site->name ?? 'Unknown')->toArray(),
+            'data' => $sites->pluck('count')->map(fn($v) => (int)$v)->toArray(),
+        ];
+    }
+
+    /**
      * Get department distribution
      */
     private function getDepartmentDistribution()
@@ -316,13 +416,24 @@ class AnalyticsController extends Controller
             ->orderBy('period')
             ->get();
 
-        // Calculate average attendance rate
+        // Calculate average attendance rate and rates per period
         $totalEmployees = User::where('is_active', true)->count();
         $avgAttendanceRate = 0;
-        if ($attendanceData->count() > 0 && $totalEmployees > 0) {
-            $totalPresent = $attendanceData->sum('present') + $attendanceData->sum('late');
-            $totalDays = $attendanceData->count();
-            $avgAttendanceRate = round(($totalPresent / ($totalEmployees * $totalDays)) * 100, 1);
+        $presentRates = [];
+
+        if ($totalEmployees > 0) {
+            foreach ($attendanceData as $row) {
+                // Approximate rate for the chart point
+                $totalActiveAtPoint = User::where('created_at', '<=', $row->period)->count() ?: $totalEmployees;
+                $dailyRate = round((($row->present + $row->late) / max($totalEmployees, 1)) * 100, 1);
+                $presentRates[] = min($dailyRate, 100);
+            }
+
+            if ($attendanceData->count() > 0) {
+                $totalPresent = $attendanceData->sum('present') + $attendanceData->sum('late');
+                $totalDays = $attendanceData->count();
+                $avgAttendanceRate = round(($totalPresent / ($totalEmployees * $totalDays)) * 100, 1);
+            }
         }
 
         return response()->json([
@@ -330,6 +441,7 @@ class AnalyticsController extends Controller
             'present' => $attendanceData->pluck('present'),
             'late' => $attendanceData->pluck('late'),
             'absent' => $attendanceData->pluck('absent'),
+            'present_rates' => $presentRates,
             'avgAttendanceRate' => $avgAttendanceRate,
         ]);
     }

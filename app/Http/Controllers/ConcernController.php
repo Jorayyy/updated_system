@@ -131,11 +131,13 @@ class ConcernController extends Controller
 
             // Log assignment if assigned
             if ($concern->assigned_to) {
+                // Ensure assignee is loaded
+                $concern->load('assignee');
                 ConcernActivity::create([
                     'concern_id' => $concern->id,
                     'user_id' => Auth::id(),
                     'action' => 'assigned',
-                    'description' => 'Assigned to ' . $concern->assignee->name,
+                    'description' => 'Assigned to ' . ($concern->assignee->name ?? 'User'),
                     'new_values' => ['assigned_to' => $concern->assigned_to],
                 ]);
             }
@@ -298,7 +300,7 @@ class ConcernController extends Controller
                 'concern_id' => $concern->id,
                 'user_id' => Auth::id(),
                 'action' => $action,
-                'description' => 'Changed status from ' . Concern::STATUSES[$oldStatus] . ' to ' . Concern::STATUSES[$validated['status']],
+                'description' => 'Changed status from ' . (Concern::STATUSES[$oldStatus] ?? $oldStatus) . ' to ' . (Concern::STATUSES[$validated['status']] ?? $validated['status']),
                 'old_values' => ['status' => $oldStatus],
                 'new_values' => ['status' => $validated['status']],
             ]);
@@ -330,7 +332,9 @@ class ConcernController extends Controller
             $concern->assigned_to = $validated['assigned_to'];
             $concern->save();
 
-            $newAssigneeName = $concern->fresh()->assignee ? $concern->assignee->name : 'Unassigned';
+            // Refresh the concern to get new assignee name
+            $concern->refresh();
+            $newAssigneeName = $concern->assignee ? $concern->assignee->name : 'Unassigned';
 
             // Log activity
             ConcernActivity::create([
@@ -385,7 +389,7 @@ class ConcernController extends Controller
                 'concern_id' => $concern->id,
                 'user_id' => Auth::id(),
                 'comment' => $validated['comment'],
-                'is_internal' => $validated['is_internal'] ?? false,
+                'is_internal' => $request->boolean('is_internal'),
             ]);
 
             // Log activity
@@ -393,7 +397,7 @@ class ConcernController extends Controller
                 'concern_id' => $concern->id,
                 'user_id' => Auth::id(),
                 'action' => 'commented',
-                'description' => $validated['is_internal'] ? 'Added internal note' : 'Added comment',
+                'description' => $request->boolean('is_internal') ? 'Added internal note' : 'Added comment',
             ]);
 
             DB::commit();
@@ -425,7 +429,7 @@ class ConcernController extends Controller
                 'concern_id' => $concern->id,
                 'user_id' => Auth::id(),
                 'action' => 'priority_changed',
-                'description' => 'Changed priority from ' . Concern::PRIORITIES[$oldPriority] . ' to ' . Concern::PRIORITIES[$validated['priority']],
+                'description' => 'Changed priority from ' . (Concern::PRIORITIES[$oldPriority] ?? $oldPriority) . ' to ' . (Concern::PRIORITIES[$validated['priority']] ?? $validated['priority']),
                 'old_values' => ['priority' => $oldPriority],
                 'new_values' => ['priority' => $validated['priority']],
             ]);
@@ -467,8 +471,8 @@ class ConcernController extends Controller
             'total' => Concern::count(),
             'open' => Concern::open()->count(),
             'in_progress' => Concern::where('status', 'in_progress')->count(),
-            'pending' => Concern::where('status', 'pending')->count(),
-            'on_hold' => Concern::where('status', 'on_hold')->count(),
+            'pending_info' => Concern::where('status', 'pending_info')->count(),
+            'escalated' => Concern::where('status', 'escalated')->count(),
             'resolved' => Concern::where('status', 'resolved')->count(),
             'closed' => Concern::where('status', 'closed')->count(),
             'cancelled' => Concern::where('status', 'cancelled')->count(),

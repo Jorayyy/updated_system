@@ -20,6 +20,12 @@
                 </div>
             @endif
 
+            @if(session('error'))
+                <div class="mb-4 p-4 bg-red-100 border border-red-400 text-red-700 rounded">
+                    {{ session('error') }}
+                </div>
+            @endif
+
             <form action="{{ route('settings.leave.update') }}" method="POST">
                 @csrf
                 @method('PUT')

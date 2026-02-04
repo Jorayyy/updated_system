@@ -20,6 +20,12 @@
                 </div>
             @endif
 
+            @if(session('error'))
+                <div class="mb-4 p-4 bg-red-100 border border-red-400 text-red-700 rounded">
+                    {{ session('error') }}
+                </div>
+            @endif
+
             <form action="{{ route('settings.system.update') }}" method="POST">
                 @csrf
                 @method('PUT')
@@ -202,6 +208,41 @@
                             <div>
                                 <label class="block text-sm font-medium text-gray-700 mb-2">Maintenance Message</label>
                                 <textarea name="maintenance_message" rows="3" class="w-full rounded-md border-gray-300 shadow-sm focus:border-yellow-500 focus:ring-yellow-500" placeholder="We are currently performing scheduled maintenance. Please try again later.">{{ $settings['maintenance_message'] ?? 'We are currently performing scheduled maintenance. Please try again later.' }}</textarea>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Automation Settings -->
+                <div class="bg-white overflow-hidden shadow-sm sm:rounded-lg mb-6">
+                    <div class="p-6 border-b border-gray-200">
+                        <h3 class="text-lg font-medium text-gray-900 flex items-center">
+                            <svg class="h-5 w-5 mr-2 text-purple-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 10V3L4 14h7v7l9-11h-7z"/>
+                            </svg>
+                            Automation Settings
+                        </h3>
+                        <p class="text-sm text-gray-500 mt-1">Configure automated DTR and payroll processes</p>
+                    </div>
+                    <div class="p-6">
+                        <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+                            <div>
+                                <label class="block text-sm font-medium text-gray-700 mb-2">Automated DTR Generation</label>
+                                <select name="automation_dtr_enabled" class="w-full rounded-md border-gray-300 shadow-sm focus:border-gray-500 focus:ring-gray-500">
+                                    <option value="1" {{ ($settings['automation_dtr_enabled'] ?? '1') == '1' ? 'selected' : '' }}>Enabled</option>
+                                    <option value="0" {{ ($settings['automation_dtr_enabled'] ?? '1') == '0' ? 'selected' : '' }}>Disabled</option>
+                                </select>
+                                <p class="text-xs text-gray-500 mt-1">Automatically create weekly DTR records for approval</p>
+                            </div>
+                            <div>
+                                <label class="block text-sm font-medium text-gray-700 mb-2">DTR Generation Day</label>
+                                <select name="automation_dtr_day" class="w-full rounded-md border-gray-300 shadow-sm focus:border-gray-500 focus:ring-gray-500">
+                                    <option value="Friday" {{ ($settings['automation_dtr_day'] ?? 'Friday') == 'Friday' ? 'selected' : '' }}>Friday</option>
+                                    <option value="Saturday" {{ ($settings['automation_dtr_day'] ?? 'Friday') == 'Saturday' ? 'selected' : '' }}>Saturday</option>
+                                    <option value="Sunday" {{ ($settings['automation_dtr_day'] ?? 'Friday') == 'Sunday' ? 'selected' : '' }}>Sunday</option>
+                                    <option value="Monday" {{ ($settings['automation_dtr_day'] ?? 'Friday') == 'Monday' ? 'selected' : '' }}>Monday</option>
+                                </select>
+                                <p class="text-xs text-gray-500 mt-1">The day when previous week's DTRs are generated</p>
                             </div>
                         </div>
                     </div>

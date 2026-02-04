@@ -17,11 +17,18 @@
                             <div>
                                 <x-input-label for="user_id" :value="__('Employee')" />
                                 <select name="user_id" id="user_id" required
-                                    class="mt-1 block w-full border-gray-300 rounded-md shadow-sm focus:border-indigo-500 focus:ring-indigo-500">
+                                    class="mt-1 block w-full border-gray-300 rounded-md shadow-sm focus:border-indigo-500 focus:ring-indigo-500 select2">
                                     <option value="">Select Employee</option>
                                     @foreach($employees as $employee)
                                         <option value="{{ $employee->id }}" {{ old('user_id') == $employee->id ? 'selected' : '' }}>
-                                            {{ $employee->name }} ({{ $employee->employee_id }})
+                                            {{ $employee->name }} ({{ $employee->employee_id }}) 
+                                            @if($employee->account)
+                                                - ACC: {{ $employee->account->name }}
+                                                @if($employee->account->activeSchedule)
+                                                    [{{ \Carbon\Carbon::parse($employee->account->activeSchedule->work_start_time)->format('h:i A') }} - 
+                                                     {{ \Carbon\Carbon::parse($employee->account->activeSchedule->work_end_time)->format('h:i A') }}]
+                                                @endif
+                                            @endif
                                         </option>
                                     @endforeach
                                 </select>

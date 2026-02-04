@@ -3,6 +3,7 @@
     sidebarOpen: localStorage.getItem('sidebarOpen') !== 'false',
     appLoading: false,
     notifications: [],
+    unreadCount: 0,
     showDebugModal: false,
     debugContent: '',
     addNotification(type, message, debugData = null) {
@@ -15,20 +16,19 @@
     openDebug(data) {
         this.debugContent = typeof data === 'object' ? JSON.stringify(data, null, 2) : data;
         this.showDebugModal = true;
+    },
+    fetchUnreadCount() {
+        fetch('{{ route('notifications.unread-count') }}')
+            .then(r => r.json())
+            .then(d => this.unreadCount = d.count);
     }
 }" x-init="
     $watch('sidebarOpen', val => localStorage.setItem('sidebarOpen', val));
+    fetchUnreadCount();
+    setInterval(() => fetchUnreadCount(), 30000);
     
-    @if(session('success')) addNotification('success', '{{ session('success') }}'); @endif
-    @if(session('error')) 
-        addNotification('error', '{{ session('error') }}', @if(config('app.debug')) '{{ session('debug_data') ?? 'Technical details hidden.' }}' @else null @endif); 
-    @endif
-    @if(session('warning')) addNotification('warning', '{{ session('warning') }}'); @endif
     @if(session('info')) addNotification('info', '{{ session('info') }}'); @endif
-    @if($errors->any()) 
-        addNotification('error', 'Form validation failed.', @if(config('app.debug')) {!! json_encode($errors->all()) !!} @else null @endif); 
-    @endif
-">">
+">
     <head>
         <meta charset="utf-8">
         <meta name="viewport" content="width=device-width, initial-scale=1">
@@ -276,86 +276,30 @@
                                 <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M11 19l-7-7 7-7m8 14l-7-7 7-7"/>
                             </svg>
                         </button>
-                        <!-- Notification Bell -->
-                        <div x-data="{ notifOpen: false, unreadCount: 0, notifications: [] }" 
-                             x-init="
-                                fetch('{{ route('notifications.unread-count') }}')
-                                    .then(r => r.json())
-                                    .then(d => unreadCount = d.count);
-                                setInterval(() => {
-                                    fetch('{{ route('notifications.unread-count') }}')
-                                        .then(r => r.json())
-                                        .then(d => unreadCount = d.count);
-                                }, 30000);
-                             "
-                             class="relative">
-                            <button @click="notifOpen = !notifOpen; if(notifOpen) { fetch('{{ route('notifications.recent') }}').then(r => r.json()).then(d => notifications = d); }" 
-                                    class="relative p-2 rounded-lg hover:bg-gray-700 transition text-gray-300 hover:text-white">
-                                <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 17h5l-1.405-1.405A2.032 2.032 0 0118 14.158V11a6.002 6.002 0 00-4-5.659V5a2 2 0 10-4 0v.341C7.67 6.165 6 8.388 6 11v3.159c0 .538-.214 1.055-.595 1.436L4 17h5m6 0v1a3 3 0 11-6 0v-1m6 0H9"/>
-                                </svg>
-                                <span x-show="unreadCount > 0" x-cloak
-                                      class="absolute -top-1 -right-1 w-5 h-5 bg-red-500 text-white text-xs rounded-full flex items-center justify-center font-bold"
-                                      x-text="unreadCount > 9 ? '9+' : unreadCount"></span>
-                            </button>
-                            
-                            <!-- Notification Dropdown -->
-                            <div x-show="notifOpen" 
-                                 x-cloak
-                                 @click.away="notifOpen = false"
-                                 x-transition
-                                 class="absolute right-0 mt-2 w-80 bg-white rounded-xl shadow-xl border border-gray-200 overflow-hidden z-50">
-                                <div class="px-4 py-3 border-b border-gray-200 flex justify-between items-center">
-                                    <h3 class="font-semibold text-gray-900">Notifications</h3>
-                                    <a href="{{ route('notifications.index') }}" class="text-sm text-blue-600 hover:text-blue-700">View All</a>
-                                </div>
-                                <div class="max-h-80 overflow-y-auto">
-                                    <template x-if="notifications.length === 0">
-                                        <div class="px-4 py-8 text-center text-gray-500">
-                                            <svg class="w-8 h-8 mx-auto mb-2 text-gray-300" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 17h5l-1.405-1.405A2.032 2.032 0 0118 14.158V11a6.002 6.002 0 00-4-5.659V5a2 2 0 10-4 0v.341C7.67 6.165 6 8.388 6 11v3.159c0 .538-.214 1.055-.595 1.436L4 17h5m6 0v1a3 3 0 11-6 0v-1m6 0H9"/>
-                                            </svg>
-                                            <p class="text-sm">No notifications</p>
-                                        </div>
-                                    </template>
-                                    <template x-for="notif in notifications" :key="notif.id">
-                                        <a :href="notif.action_url || '{{ route('notifications.index') }}'" 
-                                           class="block px-4 py-3 hover:bg-gray-50 border-b border-gray-100 last:border-0"
-                                           :class="{ 'bg-blue-50 !notif.read_at }">
-                                            <div class="flex items-start gap-3">
-                                                <div class="w-8 h-8 rounded-full flex items-center justify-center flex-shrink-0"
-                                                     :class="{
-                                                         'bg-blue-100 text-blue-600 notif.icon_color === 'blue',
-                                                         'bg-green-100 text-green-600 notif.icon_color === 'green',
-                                                         'bg-red-100 text-red-600 notif.icon_color === 'red',
-                                                         'bg-yellow-100 text-yellow-600 notif.icon_color === 'yellow',
-                                                     }">
-                                                    <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 17h5l-1.405-1.405A2.032 2.032 0 0118 14.158V11a6.002 6.002 0 00-4-5.659V5a2 2 0 10-4 0v.341C7.67 6.165 6 8.388 6 11v3.159c0 .538-.214 1.055-.595 1.436L4 17h5m6 0v1a3 3 0 11-6 0v-1m6 0H9"/>
-                                                    </svg>
-                                                </div>
-                                                <div class="flex-1 min-w-0">
-                                                    <p class="text-sm font-medium text-gray-900 truncate" x-text="notif.title"></p>
-                                                    <p class="text-xs text-gray-500 truncate" x-text="notif.message"></p>
-                                                </div>
-                                            </div>
-                                        </a>
-                                    </template>
-                                </div>
-                                <div class="px-4 py-2 border-t border-gray-200 bg-gray-50">
-                                    <form action="{{ route('notifications.mark-all-read') }}" method="POST">
-                                        @csrf
-                                        <button type="submit" class="text-sm text-blue-600 hover:text-blue-700">Mark all as read</button>
-                                    </form>
-                                </div>
-                            </div>
-                        </div>
                         
                     </div>
                 </div>
 
                 <!-- Navigation Links -->
                 <nav id="sidebar-nav" class="flex-1 px-3 py-4 space-y-1 overflow-y-auto">
+                    <!-- Notifications -->
+                    <div class="relative nav-item">
+                        <a href="{{ route('notifications.index') }}" class="flex items-center gap-3 px-3 py-2.5 rounded-lg transition {{ request()->routeIs('notifications.*') ? 'bg-blue-600 text-white' : 'text-gray-300 hover:bg-gray-700 hover:text-white' }}">
+                            <div class="w-8 h-8 flex items-center justify-center flex-shrink-0 relative">
+                                <svg class="w-5 h-5 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 17h5l-1.405-1.405A2.032 2.032 0 0118 14.158V11a6.002 6.002 0 00-4-5.659V5a2 2 0 10-4 0v.341C7.67 6.165 6 8.388 6 11v3.159c0 .538-.214 1.055-.595 1.436L4 17h5m6 0v1a3 3 0 11-6 0v-1m6 0H9"/>
+                                </svg>
+                                <template x-if="unreadCount > 0">
+                                    <span class="absolute top-0 right-0 flex h-4 w-4 items-center justify-center rounded-full bg-red-500 text-[10px] font-bold text-white shadow-sm">
+                                        <span x-text="unreadCount > 99 ? '99+' : unreadCount"></span>
+                                    </span>
+                                </template>
+                            </div>
+                            <span x-show="sidebarOpen" x-cloak class="sidebar-text" :class="sidebarOpen ? 'sidebar-text-visible' : 'sidebar-text-hidden'">Notifications</span>
+                        </a>
+                        <div x-show="!sidebarOpen" class="tooltip">Notifications</div>
+                    </div>
+
                     <!-- Dashboard -->
                     <div class="relative nav-item">
                         <a href="{{ route('dashboard') }}" class="flex items-center gap-3 px-3 py-2.5 rounded-lg transition {{ request()->routeIs('dashboard') ? 'bg-blue-600 text-white' : 'text-gray-300 hover:bg-gray-700 hover:text-white' }}">
@@ -439,6 +383,45 @@
                         <div class="pt-4 mt-4 border-t border-gray-700">
                             <p x-show="sidebarOpen" x-cloak class="px-3 text-xs font-semibold text-gray-400 uppercase tracking-wider mb-2 sidebar-text" :class="sidebarOpen ? 'sidebar-text-visible' : 'sidebar-text-hidden'">HR Management</p>
                             <p x-show="!sidebarOpen" x-cloak class="px-3 text-center mb-2">👥</p>
+                        </div>
+
+                        <!-- Sites -->
+                        <div class="relative nav-item">
+                            <a href="{{ route('sites.index') }}" class="flex items-center gap-3 px-3 py-2.5 rounded-lg transition {{ request()->routeIs('sites.*') ? 'bg-blue-600 text-white' : 'text-gray-300 hover:bg-gray-700 hover:text-white' }}">
+                                <div class="w-8 h-8 flex items-center justify-center flex-shrink-0">
+                                    <svg class="w-5 h-5 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 21V5a2 2 0 00-2-2H7a2 2 0 00-2 2v16m14 0h2m-2 0h-5m-9 0H3m2 0h5M9 7h1m-1 4h1m4-4h1m-1 4h1m-5 10v-5a1 1 0 011-1h2a1 1 0 011 1v5m-4 0h4"/>
+                                    </svg>
+                                </div>
+                                <span x-show="sidebarOpen" x-cloak class="sidebar-text" :class="sidebarOpen ? 'sidebar-text-visible' : 'sidebar-text-hidden'">Sites</span>
+                            </a>
+                            <div x-show="!sidebarOpen" class="tooltip">Sites</div>
+                        </div>
+
+                        <!-- Accounts -->
+                        <div class="relative nav-item">
+                            <a href="{{ route('accounts.index') }}" class="flex items-center gap-3 px-3 py-2.5 rounded-lg transition {{ request()->routeIs('accounts.*') ? 'bg-blue-600 text-white' : 'text-gray-300 hover:bg-gray-700 hover:text-white' }}">
+                                <div class="w-8 h-8 flex items-center justify-center flex-shrink-0">
+                                    <svg class="w-5 h-5 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 20h5v-2a3 3 0 00-5.356-1.857M17 20H7m10 0v-2c0-.656-.126-1.283-.356-1.857M7 20H2v-2a3 3 0 015.356-1.857M7 20v-2c0-.656.126-1.283.356-1.857m0 0a5.002 5.002 0 019.288 0M15 7a3 3 0 11-6 0 3 3 0 016 0zm6 3a2 2 0 11-4 0 2 2 0 014 0zM7 10a2 2 0 11-4 0 2 2 0 014 0z"/>
+                                    </svg>
+                                </div>
+                                <span x-show="sidebarOpen" x-cloak class="sidebar-text" :class="sidebarOpen ? 'sidebar-text-visible' : 'sidebar-text-hidden'">Accounts</span>
+                            </a>
+                            <div x-show="!sidebarOpen" class="tooltip">Accounts</div>
+                        </div>
+
+                        <!-- Schedules -->
+                        <div class="relative nav-item">
+                            <a href="{{ route('schedules.index') }}" class="flex items-center gap-3 px-3 py-2.5 rounded-lg transition {{ request()->routeIs('schedules.*') ? 'bg-blue-600 text-white' : 'text-gray-300 hover:bg-gray-700 hover:text-white' }}">
+                                <div class="w-8 h-8 flex items-center justify-center flex-shrink-0">
+                                    <svg class="w-5 h-5 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z"/>
+                                    </svg>
+                                </div>
+                                <span x-show="sidebarOpen" x-cloak class="sidebar-text" :class="sidebarOpen ? 'sidebar-text-visible' : 'sidebar-text-hidden'">Schedules</span>
+                            </a>
+                            <div x-show="!sidebarOpen" class="tooltip">Schedules</div>
                         </div>
 
                         <!-- Employees -->
@@ -681,17 +664,6 @@
                             </div>
                         @endif
                     @endif
-
-                    <!-- Notifications (All Users) -->
-                    <div class="pt-4 mt-4 border-t border-gray-700 relative nav-item">
-                        <a href="{{ route('notifications.index') }}" class="flex items-center gap-3 px-3 py-2.5 rounded-lg transition {{ request()->routeIs('notifications.*') ? 'bg-blue-600 text-white' : 'text-gray-300 hover:bg-gray-700 hover:text-white' }}">
-                            <svg class="w-5 h-5 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 17h5l-1.405-1.405A2.032 2.032 0 0118 14.158V11a6.002 6.002 0 00-4-5.659V5a2 2 0 10-4 0v.341C7.67 6.165 6 8.388 6 11v3.159c0 .538-.214 1.055-.595 1.436L4 17h5m6 0v1a3 3 0 11-6 0v-1m6 0H9"/>
-                            </svg>
-                            <span x-show="sidebarOpen" x-cloak class="sidebar-text" :class="sidebarOpen ? 'sidebar-text-visible' : 'sidebar-text-hidden'">Notifications</span>
-                        </a>
-                        <div x-show="!sidebarOpen" class="tooltip">Notifications</div>
-                    </div>
                 </nav>
 
                 <!-- User Section at Bottom -->

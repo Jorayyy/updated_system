@@ -1,66 +1,42 @@
-<p align="center"><a href="https://laravel.com" target="_blank"><img src="https://raw.githubusercontent.com/laravel/art/master/logo-lockup/5%20SVG/2%20CMYK/1%20Full%20Color/laravel-logolockup-cmyk-red.svg" width="400" alt="Laravel Logo"></a></p>
+# MEBS Hiyas HR & Payroll System
 
-<p align="center">
-<a href="https://github.com/laravel/framework/actions"><img src="https://github.com/laravel/framework/workflows/tests/badge.svg" alt="Build Status"></a>
-<a href="https://packagist.org/packages/laravel/framework"><img src="https://img.shields.io/packagist/dt/laravel/framework" alt="Total Downloads"></a>
-<a href="https://packagist.org/packages/laravel/framework"><img src="https://img.shields.io/packagist/v/laravel/framework" alt="Latest Stable Version"></a>
-<a href="https://packagist.org/packages/laravel/framework"><img src="https://img.shields.io/packagist/l/laravel/framework" alt="License"></a>
-</p>
+A comprehensive HR and Payroll management system designed for BPO and call center environments, featuring multi-site support, account-specific scheduling, and automated DTR processing.
 
-## About Laravel
+## 🚀 Quick Start (Any Windows PC)
 
-Laravel is a web application framework with expressive, elegant syntax. We believe development must be an enjoyable and creative experience to be truly fulfilling. Laravel takes the pain out of development by easing common tasks used in many web projects, such as:
+If you have just downloaded the system or restored it from a full backup, you can set up the entire environment automatically:
 
-- [Simple, fast routing engine](https://laravel.com/docs/routing).
-- [Powerful dependency injection container](https://laravel.com/docs/container).
-- Multiple back-ends for [session](https://laravel.com/docs/session) and [cache](https://laravel.com/docs/cache) storage.
-- Expressive, intuitive [database ORM](https://laravel.com/docs/eloquent).
-- Database agnostic [schema migrations](https://laravel.com/docs/migrations).
-- [Robust background job processing](https://laravel.com/docs/queues).
-- [Real-time event broadcasting](https://laravel.com/docs/broadcasting).
+1.  Ensure you have **XAMPP** (or PHP 8.1+ and MySQL), **Node.js**, and **Composer** installed.
+2.  Open PowerShell in the project directory.
+3.  Run the setup script:
+    ```powershell
+    ./setup-environment.ps1
+    ```
+4.  Follow the prompts to install dependencies, generate keys, and initialize the database.
 
-Laravel is accessible, powerful, and provides tools required for large, robust applications.
+## 📦 Backup & Recovery
 
-## Learning Laravel
+The system includes a built-in Backup Manager:
+- **Database Backups**: `.sql` snapshots of your data.
+- **Full System Backups**: `.zip` files containing both the **Database** and the **Source Code**.
+  - *Note: Huge folders like `vendor` and `node_modules` are excluded from the zip to save space. They are automatically re-created when you run the setup script.*
 
-Laravel has the most extensive and thorough [documentation](https://laravel.com/docs) and video tutorial library of all modern web application frameworks, making it a breeze to get started with the framework.
+## 🛠 Key Features
 
-You may also try the [Laravel Bootcamp](https://bootcamp.laravel.com), where you will be guided through building a modern Laravel application from scratch.
+- **Multi-Site Management**: Categorize employees by physical site (e.g., Tacloban, Cebu).
+- **Account-Based Scheduling**: Different campaigns (Accounts) can have their own unique work hours.
+- **Night Shift Logic**: Native support for shifts spanning across midnight (e.g., 9:00 PM - 6:00 AM) with accurate logical dating.
+- **Automated DTR**: Calculates lates, undertimes, and overtime based on the account's assigned schedule.
+- **Bulk Operations**: Move large groups of employees between sites or accounts with one click.
+- **Ticketing System**: Internal concern and ticket management with tracking.
 
-If you don't feel like reading, [Laracasts](https://laracasts.com) can help. Laracasts contains thousands of video tutorials on a range of topics including Laravel, modern PHP, unit testing, and JavaScript. Boost your skills by digging into our comprehensive video library.
+## 💻 Tech Stack
 
-## Laravel Sponsors
+- **Backend**: Laravel 10/11
+- **Frontend**: Blade, Alpine.js, Tailwind CSS
+- **Database**: MySQL / MariaDB
 
-We would like to extend our thanks to the following sponsors for funding Laravel development. If you are interested in becoming a sponsor, please visit the [Laravel Partners program](https://partners.laravel.com).
+## 👥 Default Credentials
 
-### Premium Partners
-
-- **[Vehikl](https://vehikl.com/)**
-- **[Tighten Co.](https://tighten.co)**
-- **[WebReinvent](https://webreinvent.com/)**
-- **[Kirschbaum Development Group](https://kirschbaumdevelopment.com)**
-- **[64 Robots](https://64robots.com)**
-- **[Curotec](https://www.curotec.com/services/technologies/laravel/)**
-- **[Cyber-Duck](https://cyber-duck.co.uk)**
-- **[DevSquad](https://devsquad.com/hire-laravel-developers)**
-- **[Jump24](https://jump24.co.uk)**
-- **[Redberry](https://redberry.international/laravel/)**
-- **[Active Logic](https://activelogic.com)**
-- **[byte5](https://byte5.de)**
-- **[OP.GG](https://op.gg)**
-
-## Contributing
-
-Thank you for considering contributing to the Laravel framework! The contribution guide can be found in the [Laravel documentation](https://laravel.com/docs/contributions).
-
-## Code of Conduct
-
-In order to ensure that the Laravel community is welcoming to all, please review and abide by the [Code of Conduct](https://laravel.com/docs/contributions#code-of-conduct).
-
-## Security Vulnerabilities
-
-If you discover a security vulnerability within Laravel, please send an e-mail to Taylor Otwell via [taylor@laravel.com](mailto:taylor@laravel.com). All security vulnerabilities will be promptly addressed.
-
-## License
-
-The Laravel framework is open-sourced software licensed under the [MIT license](https://opensource.org/licenses/MIT).
+- **Admin**: admin@mebs.com / password
+- **HR**: hr@mebs.com / password

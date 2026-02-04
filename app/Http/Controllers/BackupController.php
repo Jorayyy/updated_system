@@ -6,6 +6,7 @@ use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Storage;
 use Illuminate\Support\Facades\Artisan;
 use Illuminate\Support\Facades\DB;
+use Illuminate\Support\Str;
 use Carbon\Carbon;
 
 class BackupController extends Controller
@@ -18,10 +19,14 @@ class BackupController extends Controller
     public function index()
     {
         $backups = collect(Storage::disk('local')->files($this->backupPath))
+            ->filter(function ($file) {
+                return Str::endsWith($file, ['.sql', '.zip']);
+            })
             ->map(function ($file) {
                 return [
                     'filename' => basename($file),
                     'path' => $file,
+                    'type' => Str::endsWith($file, '.zip') ? 'Full System' : 'Database Only',
                     'size' => Storage::disk('local')->size($file),
                     'size_formatted' => $this->formatBytes(Storage::disk('local')->size($file)),
                     'last_modified' => Carbon::createFromTimestamp(Storage::disk('local')->lastModified($file)),
@@ -36,12 +41,18 @@ class BackupController extends Controller
     /**
      * Create a new backup
      */
-    public function create()
+    public function create(Request $request)
     {
         try {
             // Ensure backup directory exists
             if (!Storage::disk('local')->exists($this->backupPath)) {
                 Storage::disk('local')->makeDirectory($this->backupPath);
+            }
+
+            $type = $request->get('type', 'db');
+            
+            if ($type === 'full') {
+                return $this->createFullBackup();
             }
 
             $filename = 'backup_' . date('Y-m-d_His') . '.sql';
@@ -57,10 +68,76 @@ class BackupController extends Controller
                 $this->createPhpBackup($path);
             }
 
-            return back()->with('success', "Backup created successfully: {$filename}");
+            return back()->with('success', "Database backup created successfully: {$filename}");
         } catch (\Exception $e) {
             return back()->with('error', 'Backup failed: ' . $e->getMessage());
         }
+    }
+
+    /**
+     * Create a full system backup (Database + Source Code)
+     */
+    protected function createFullBackup()
+    {
+        set_time_limit(300);
+        $date = date('Y-m-d_His');
+        $dbFilename = 'db_snap_' . $date . '.sql';
+        $zipFilename = 'full_system_' . $date . '.zip';
+        
+        $dbPath = storage_path('app/' . $this->backupPath . '/' . $dbFilename);
+        $zipPath = storage_path('app/' . $this->backupPath . '/' . $zipFilename);
+
+        // 1. Create DB Backup
+        $driver = DB::getDriverName();
+        if ($driver === 'mysql') {
+            $this->createMysqlBackup($dbPath, $dbFilename);
+        } else {
+            $this->createPhpBackup($dbPath);
+        }
+
+        // 2. Create Zip of code
+        $zip = new \ZipArchive();
+        if ($zip->open($zipPath, \ZipArchive::CREATE | \ZipArchive::OVERWRITE) === TRUE) {
+            $rootPath = base_path();
+            $files = new \RecursiveIteratorIterator(
+                new \RecursiveDirectoryIterator($rootPath),
+                \RecursiveIteratorIterator::LEAVES_ONLY
+            );
+
+            foreach ($files as $name => $file) {
+                // Skip directories (they would be added automatically)
+                if (!$file->isDir()) {
+                    $filePath = $file->getRealPath();
+                    $relativePath = substr($filePath, strlen($rootPath) + 1);
+
+                    // Skip vendor, node_modules, storage/logs, storage/framework, and .git
+                    if (strpos($relativePath, 'vendor' . DIRECTORY_SEPARATOR) === 0 || 
+                        strpos($relativePath, 'node_modules' . DIRECTORY_SEPARATOR) === 0 ||
+                        strpos($relativePath, 'storage' . DIRECTORY_SEPARATOR . 'logs') === 0 ||
+                        strpos($relativePath, 'storage' . DIRECTORY_SEPARATOR . 'framework') === 0 ||
+                        strpos($relativePath, '.git' . DIRECTORY_SEPARATOR) === 0 ||
+                        strpos($relativePath, 'storage' . DIRECTORY_SEPARATOR . 'app' . DIRECTORY_SEPARATOR . 'backups') === 0) {
+                        continue;
+                    }
+
+                    $zip->addFile($filePath, $relativePath);
+                }
+            }
+            
+            // Add the database backup we just created to the zip too
+            if (file_exists($dbPath)) {
+                $zip->addFile($dbPath, 'database_dump.sql');
+            }
+
+            $zip->close();
+            
+            // Optionally delete the temporary SQL file outside the zip
+            // unlink($dbPath);
+
+            return back()->with('success', "Full system backup (Code + DB) created: {$zipFilename}");
+        }
+
+        return back()->with('error', 'Failed to create system zip backup.');
     }
 
     /**

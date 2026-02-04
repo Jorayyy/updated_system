@@ -7,46 +7,71 @@
     selectedDtrs: [],
     showRejectModal: false,
     rejectId: null,
+    allDtrIds: {{ json_encode($allCorrectionIds) }},
+    toggleAll() {
+        if (this.selectedDtrs.length === this.allDtrIds.length) {
+            this.selectedDtrs = [];
+        } else {
+            this.selectedDtrs = [...this.allDtrIds];
+        }
+    },
     bulkApprove() {
-        if (!confirm('Approve ' + this.selectedDtrs.length + ' correction requests?')) return;
-        
-        fetch('{{ route('dtr-approval.bulk-approve-corrections') }}', {
-            method: 'POST',
-            headers: {
-                'Content-Type': 'application/json',
-                'X-CSRF-TOKEN': '{{ csrf_token() }}'
-            },
-            body: JSON.stringify({ ids: this.selectedDtrs })
-        })
-        .then(res => res.json())
-        .then(data => {
-            if (data.success) {
-                location.reload();
-            } else {
-                alert(data.message || 'Error approving corrections');
-            }
-        });
+        if (this.selectedDtrs.length === 0) return;
+        if (confirm(`Approve ${this.selectedDtrs.length} selected correction request(s)? This will update the attendance records immediately.`)) {
+            this.performAction('{{ route('dtr-approval.bulk-approve-corrections') }}', { ids: this.selectedDtrs });
+        }
     },
     approveSingle(id) {
-        if (!confirm('Approve this correction request?')) return;
-        
-        fetch(`/dtr-approval/${id}/approve-correction`, {
-            method: 'POST',
-            headers: {
-                'Content-Type': 'application/json',
-                'X-CSRF-TOKEN': '{{ csrf_token() }}'
-            }
-        })
-        .then(res => res.json())
-        .then(data => {
-            if (data.success) {
+        if (confirm('Approve this correction request? This will update the DTR record immediately.')) {
+            this.performAction(`/dtr-approval/${id}/approve-correction`);
+        }
+    },
+    async performAction(url, data = null) {
+        try {
+            const options = {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                    'Accept': 'application/json',
+                    'X-CSRF-TOKEN': '{{ csrf_token() }}'
+                }
+            };
+            if (data) options.body = JSON.stringify(data);
+            
+            const response = await fetch(url, options);
+            const isJson = response.headers.get('content-type')?.includes('application/json');
+            const result = isJson ? await response.json() : null;
+            
+            if (response.ok && result?.success) {
                 location.reload();
             } else {
-                alert(data.message);
+                alert(result?.message || `Error (${response.status}): ${response.statusText}`);
             }
-        });
+        } catch (e) {
+            console.error('Action failed:', e);
+            alert('An error occurred: ' + e.message);
+        }
     }
 }">
+    <!-- Session Messages -->
+    @if(session('success'))
+        <div class="mb-6 p-4 bg-green-50 border-l-4 border-green-500 text-green-700 rounded-r-xl shadow-sm flex items-center">
+            <svg class="w-5 h-5 mr-3 text-green-500" fill="currentColor" viewBox="0 0 20 20">
+                <path fill-rule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zm3.707-9.293a1 1 0 00-1.414-1.414L9 10.586 7.707 9.293a1 1 0 00-1.414 1.414l2 2a1 1 0 001.414 0l4-4z" clip-rule="evenodd"></path>
+            </svg>
+            <span class="font-medium">{{ session('success') }}</span>
+        </div>
+    @endif
+
+    @if(session('error'))
+        <div class="mb-6 p-4 bg-red-50 border-l-4 border-red-500 text-red-700 rounded-r-xl shadow-sm flex items-center">
+            <svg class="w-5 h-5 mr-3 text-red-500" fill="currentColor" viewBox="0 0 20 20">
+                <path fill-rule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zM8.707 7.293a1 1 0 00-1.414 1.414L8.586 10l-1.293 1.293a1 1 0 101.414 1.414L10 11.414l1.293 1.293a1 1 0 001.414-1.414L11.414 10l1.293-1.293a1 1 0 00-1.414-1.414L10 8.586 8.707 7.293z" clip-rule="evenodd"></path>
+            </svg>
+            <span class="font-medium">{{ session('error') }}</span>
+        </div>
+    @endif
+
     <!-- Header Section -->
     <div class="flex flex-col md:flex-row md:items-center justify-between gap-4 mb-8">
         <div>
@@ -75,6 +100,15 @@
                 Correction Queue
                 <span class="ml-2 px-3 py-0.5 rounded-full text-xs font-bold bg-indigo-100 text-indigo-800">{{ $corrections->total() }}</span>
             </h2>
+            <button type="button" 
+                    class="inline-flex items-center px-4 py-2 bg-indigo-600 border border-transparent rounded-xl font-bold text-xs text-white uppercase tracking-widest hover:bg-indigo-700 active:bg-indigo-900 focus:outline-none focus:ring ring-indigo-300 disabled:opacity-25 transition shadow-lg shadow-indigo-100"
+                    @click="bulkApprove()"
+                    :disabled="selectedDtrs.length === 0">
+                <svg class="w-4 h-4 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"></path>
+                </svg>
+                Approve Selected <template x-if="selectedDtrs.length > 0"><span x-text="'(' + selectedDtrs.length + ')'"></span></template>
+            </button>
         </div>
 
         <div class="overflow-x-auto">
@@ -92,6 +126,15 @@
                 <table class="w-full text-left border-collapse">
                     <thead>
                         <tr class="bg-gray-50 text-gray-600 uppercase text-xs font-bold border-b border-gray-100">
+                            <th class="px-6 py-4">
+                                <div class="flex items-center">
+                                    <input type="checkbox" 
+                                           @click="toggleAll()" 
+                                           :checked="selectedDtrs.length === allDtrIds.length && allDtrIds.length > 0"
+                                           class="rounded border-gray-300 text-indigo-600 focus:ring-indigo-500 mr-2">
+                                    Select
+                                </div>
+                            </th>
                             <th class="px-6 py-4">Employee</th>
                             <th class="px-6 py-4">DTR Date</th>
                             <th class="px-6 py-4">Changes Requested</th>
@@ -104,6 +147,9 @@
                         @foreach($corrections as $dtr)
                             @php $correctionData = json_decode($dtr->correction_data, true) ?? []; @endphp
                             <tr class="hover:bg-gray-50 transition-colors">
+                                <td class="px-6 py-4">
+                                    <input type="checkbox" x-model="selectedDtrs" value="{{ $dtr->id }}" class="rounded border-gray-300 text-indigo-600 focus:ring-indigo-500">
+                                </td>
                                 <td class="px-6 py-4">
                                     <div class="flex flex-col">
                                         <span class="font-bold text-gray-900">{{ $dtr->user->name ?? 'N/A' }}</span>
@@ -197,32 +243,3 @@
 
 @endsection
 
-@push('scripts')
-<script>
-document.addEventListener('DOMContentLoaded', function() {
-    // Approve correction
-    document.querySelectorAll('.approve-correction').forEach(btn => {
-        btn.addEventListener('click', function() {
-            if (confirm('Approve this correction request? This will update the DTR record immediately.')) {
-                const id = this.dataset.id;
-                fetch(`/dtr-approval/${id}/approve-correction`, {
-                    method: 'POST',
-                    headers: {
-                        'Content-Type': 'application/json',
-                        'X-CSRF-TOKEN': '{{ csrf_token() }}'
-                    }
-                })
-                .then(res => res.json())
-                .then(data => {
-                    if (data.success) {
-                        location.reload();
-                    } else {
-                        alert(data.message);
-                    }
-                });
-            }
-        });
-    });
-});
-</script>
-@endpush

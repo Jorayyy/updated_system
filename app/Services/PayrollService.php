@@ -142,11 +142,13 @@ class PayrollService
         $undertimeMinutes = $attendances->sum('undertime_minutes');
         $absentDays = $attendances->where('status', 'absent')->count();
 
-        // Calculate late minutes (time in after 8:15 AM)
+        // Calculate late minutes 
         $lateMinutes = 0;
+        $workStartTime = CompanySetting::getValue('work_start_time', '21:00');
+
         foreach ($attendances->where('status', 'late') as $attendance) {
             if ($attendance->time_in) {
-                $expectedTimeIn = $attendance->date->copy()->setHour(8)->setMinute(0);
+                $expectedTimeIn = $attendance->date->copy()->setTimeFromTimeString($workStartTime);
                 if ($attendance->time_in->gt($expectedTimeIn)) {
                     $lateMinutes += $expectedTimeIn->diffInMinutes($attendance->time_in);
                 }

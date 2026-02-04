@@ -7,13 +7,29 @@
 
     <div class="py-4">
         <div class="max-w-4xl mx-auto sm:px-6 lg:px-8">
+            @if(session('success'))
+                <div class="mb-4 p-4 bg-green-100 border border-green-400 text-green-700 rounded shadow-sm">
+                    {{ session('success') }}
+                </div>
+            @endif
+
+            @if(session('error'))
+                <div class="mb-4 p-4 bg-red-100 border border-red-400 text-red-700 rounded shadow-sm">
+                    {{ session('error') }}
+                </div>
+            @endif
+
             <!-- Current Status Card -->
             <div class="bg-white overflow-hidden shadow-sm sm:rounded-lg mb-6">
                 <div class="p-6">
                     <div class="flex justify-between items-start mb-6">
                         <div>
                             <h3 class="text-lg font-semibold text-gray-900">
-                                Today - {{ now()->format('l, F d, Y') }}
+                                @if($status['attendance'])
+                                    Attendance for {{ $status['attendance']->date->format('l, F d, Y') }}
+                                @else
+                                    Today - {{ now()->format('l, F d, Y') }}
+                                @endif
                             </h3>
                             <p class="text-gray-500">
                                 Current Time: <span id="currentTime" class="font-mono">{{ now()->format('h:i:s A') }}</span>

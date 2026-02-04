@@ -146,7 +146,17 @@ class Attendance extends Model
         }
 
         $totalMinutes = $this->time_in->diffInMinutes($this->time_out);
-        $breakMinutes = $this->calculateBreakMinutes();
+        
+        // If the user has a schedule, use its break duration
+        $user = $this->user;
+        $breakMinutes = 0;
+        
+        if ($user && $user->account && $user->account->activeSchedule) {
+            $breakMinutes = $user->account->activeSchedule->break_duration_minutes;
+        } else {
+            // Fallback to manual breaks if no active schedule found
+            $breakMinutes = $this->calculateBreakMinutes();
+        }
 
         return max(0, $totalMinutes - $breakMinutes);
     }
