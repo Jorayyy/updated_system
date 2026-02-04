@@ -4,19 +4,13 @@
             <h2 class="font-semibold text-xl text-gray-800 leading-tight">
                 {{ __('Leave Request Details') }}
             </h2>
-            @if(auth()->user()->isHr() || auth()->user()->isAdmin())
-                <a href="{{ route('leaves.manage') }}" class="text-gray-600 hover:text-gray-800">
-                    &larr; Back to List
-                </a>
-            @else
-                <a href="{{ route('leaves.index') }}" class="text-gray-600 hover:text-gray-800">
-                    &larr; Back to List
-                </a>
-            @endif
+            <a href="javascript:window.history.back()" class="text-gray-600 hover:text-gray-800">
+                &larr; Back to List
+            </a>
         </div>
     </x-slot>
 
-    <div class="py-12">
+    <div class="py-4">
         <div class="max-w-3xl mx-auto sm:px-6 lg:px-8">
             <div class="bg-white overflow-hidden shadow-sm sm:rounded-lg">
                 <div class="p-6">

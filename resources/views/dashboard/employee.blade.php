@@ -1,51 +1,51 @@
 <x-app-layout>
     <x-slot name="header">
-        <h2 class="font-semibold text-xl text-gray-800 dark:text-gray-200 leading-tight">
+        <h2 class="font-semibold text-xl text-gray-800 leading-tight">
             {{ __('My Dashboard') }}
         </h2>
     </x-slot>
 
-    <div class="py-12">
-        <div class="max-w-7xl mx-auto sm:px-6 lg:px-8">
+    <div class="py-4">
+        <div class="max-w-full mx-auto sm:px-6 lg:px-8">
             <!-- Today's Attendance Status -->
-            <div class="bg-white dark:bg-gray-800 overflow-hidden shadow-sm sm:rounded-lg mb-6">
+            <div class="bg-white overflow-hidden shadow-sm sm:rounded-lg mb-6">
                 <div class="p-4 sm:p-6">
-                    <h3 class="text-lg font-semibold text-gray-900 dark:text-white mb-4">Today's Attendance</h3>
+                    <h3 class="text-lg font-semibold text-gray-900 mb-4">Today's Attendance</h3>
                     @if($todayAttendance)
                         <div class="grid grid-cols-2 md:grid-cols-4 gap-4">
-                            <div class="p-3 bg-gray-50 dark:bg-gray-700/50 rounded-lg">
-                                <div class="text-xs text-gray-500 dark:text-gray-400 uppercase">Time In</div>
-                                <div class="text-xl font-bold text-gray-900 dark:text-white">
+                            <div class="p-3 bg-gray-50 rounded-lg">
+                                <div class="text-xs text-gray-500 uppercase">Time In</div>
+                                <div class="text-xl font-bold text-gray-900">
                                     {{ $todayAttendance->time_in ? $todayAttendance->time_in->format('h:i A') : '-' }}
                                 </div>
                             </div>
-                            <div class="p-3 bg-gray-50 dark:bg-gray-700/50 rounded-lg">
-                                <div class="text-xs text-gray-500 dark:text-gray-400 uppercase">Time Out</div>
-                                <div class="text-xl font-bold text-gray-900 dark:text-white">
+                            <div class="p-3 bg-gray-50 rounded-lg">
+                                <div class="text-xs text-gray-500 uppercase">Time Out</div>
+                                <div class="text-xl font-bold text-gray-900">
                                     {{ $todayAttendance->time_out ? $todayAttendance->time_out->format('h:i A') : '-' }}
                                 </div>
                             </div>
-                            <div class="p-3 bg-gray-50 dark:bg-gray-700/50 rounded-lg">
-                                <div class="text-xs text-gray-500 dark:text-gray-400 uppercase">Status</div>
+                            <div class="p-3 bg-gray-50 rounded-lg">
+                                <div class="text-xs text-gray-500 uppercase">Status</div>
                                 <div class="mt-1">
                                     <span class="px-2 py-1 text-sm rounded-full 
-                                        @if($todayAttendance->status == 'present') bg-green-100 dark:bg-green-900/50 text-green-800 dark:text-green-300
-                                        @elseif($todayAttendance->status == 'late') bg-yellow-100 dark:bg-yellow-900/50 text-yellow-800 dark:text-yellow-300
-                                        @else bg-gray-100 dark:bg-gray-600 text-gray-800 dark:text-gray-300 @endif">
+                                        @if($todayAttendance->status == 'present') bg-green-100 text-green-800
+                                        @elseif($todayAttendance->status == 'late') bg-yellow-100 text-yellow-800
+                                        @else bg-gray-100 text-gray-800 @endif">
                                         {{ ucfirst($todayAttendance->status) }}
                                     </span>
                                 </div>
                             </div>
-                            <div class="p-3 bg-gray-50 dark:bg-gray-700/50 rounded-lg">
-                                <div class="text-xs text-gray-500 dark:text-gray-400 uppercase">Work Time</div>
-                                <div class="text-xl font-bold text-gray-900 dark:text-white">{{ $todayAttendance->formatted_work_time }}</div>
+                            <div class="p-3 bg-gray-50 rounded-lg">
+                                <div class="text-xs text-gray-500 uppercase">Work Time</div>
+                                <div class="text-xl font-bold text-gray-900">{{ $todayAttendance->formatted_work_time }}</div>
                             </div>
                         </div>
                     @else
-                        <p class="text-gray-500 dark:text-gray-400">You haven't timed in today.</p>
+                        <p class="text-gray-500">You haven't timed in today.</p>
                     @endif
-                    <div class="mt-4 pt-4 border-t border-gray-200 dark:border-gray-700">
-                        <a href="{{ route('attendance.index') }}" class="text-indigo-600 dark:text-indigo-400 hover:text-indigo-900 dark:hover:text-indigo-300 font-medium">
+                    <div class="mt-4 pt-4 border-t border-gray-200">
+                        <a href="{{ route('attendance.index') }}" class="text-indigo-600 hover:text-indigo-900 font-medium">
                             Go to Attendance →
                         </a>
                     </div>
@@ -55,68 +55,68 @@
             <!-- Monthly Summary -->
             <div x-data="{ expanded: true }" class="mb-6">
                 <div class="flex justify-between items-center mb-4 cursor-pointer" @click="expanded = !expanded">
-                    <h3 class="text-lg font-semibold text-gray-900 dark:text-white">Monthly Summary</h3>
+                    <h3 class="text-lg font-semibold text-gray-900">Monthly Summary</h3>
                     <svg :class="{ 'rotate-180': expanded }" class="w-5 h-5 text-gray-500 transform transition-transform" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                         <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7"/>
                     </svg>
                 </div>
                 <div x-show="expanded" x-collapse class="grid grid-cols-2 md:grid-cols-4 gap-4">
-                    <div class="bg-white dark:bg-gray-800 overflow-hidden shadow-sm sm:rounded-lg">
+                    <div class="bg-white overflow-hidden shadow-sm sm:rounded-lg">
                         <div class="p-4 sm:p-6">
                             <div class="flex items-center">
-                                <div class="p-3 rounded-full bg-green-100 dark:bg-green-900/50">
-                                    <svg class="w-6 h-6 text-green-600 dark:text-green-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <div class="p-3 rounded-full bg-green-100">
+                                    <svg class="w-6 h-6 text-green-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                                         <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z"/>
                                     </svg>
                                 </div>
                                 <div class="ml-4">
-                                    <div class="text-xs font-medium text-gray-500 dark:text-gray-400 uppercase">Present</div>
-                                    <div class="text-2xl font-bold text-green-600 dark:text-green-400">{{ $daysPresent }}</div>
+                                    <div class="text-xs font-medium text-gray-500 uppercase">Present</div>
+                                    <div class="text-2xl font-bold text-green-600">{{ $daysPresent }}</div>
                                 </div>
                             </div>
                         </div>
                     </div>
-                    <div class="bg-white dark:bg-gray-800 overflow-hidden shadow-sm sm:rounded-lg">
+                    <div class="bg-white overflow-hidden shadow-sm sm:rounded-lg">
                         <div class="p-4 sm:p-6">
                             <div class="flex items-center">
-                                <div class="p-3 rounded-full bg-yellow-100 dark:bg-yellow-900/50">
-                                    <svg class="w-6 h-6 text-yellow-600 dark:text-yellow-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <div class="p-3 rounded-full bg-yellow-100">
+                                    <svg class="w-6 h-6 text-yellow-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                                         <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z"/>
                                     </svg>
                                 </div>
                                 <div class="ml-4">
-                                    <div class="text-xs font-medium text-gray-500 dark:text-gray-400 uppercase">Late</div>
-                                    <div class="text-2xl font-bold text-yellow-600 dark:text-yellow-400">{{ $daysLate }}</div>
+                                    <div class="text-xs font-medium text-gray-500 uppercase">Late</div>
+                                    <div class="text-2xl font-bold text-yellow-600">{{ $daysLate }}</div>
                                 </div>
                             </div>
                         </div>
                     </div>
-                    <div class="bg-white dark:bg-gray-800 overflow-hidden shadow-sm sm:rounded-lg">
+                    <div class="bg-white overflow-hidden shadow-sm sm:rounded-lg">
                         <div class="p-4 sm:p-6">
                             <div class="flex items-center">
-                                <div class="p-3 rounded-full bg-red-100 dark:bg-red-900/50">
-                                    <svg class="w-6 h-6 text-red-600 dark:text-red-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <div class="p-3 rounded-full bg-red-100">
+                                    <svg class="w-6 h-6 text-red-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                                         <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10 14l2-2m0 0l2-2m-2 2l-2-2m2 2l2 2m7-2a9 9 0 11-18 0 9 9 0 0118 0z"/>
                                     </svg>
                                 </div>
                                 <div class="ml-4">
-                                    <div class="text-xs font-medium text-gray-500 dark:text-gray-400 uppercase">Absent</div>
-                                    <div class="text-2xl font-bold text-red-600 dark:text-red-400">{{ $daysAbsent }}</div>
+                                    <div class="text-xs font-medium text-gray-500 uppercase">Absent</div>
+                                    <div class="text-2xl font-bold text-red-600">{{ $daysAbsent }}</div>
                                 </div>
                             </div>
                         </div>
                     </div>
-                    <div class="bg-white dark:bg-gray-800 overflow-hidden shadow-sm sm:rounded-lg">
+                    <div class="bg-white overflow-hidden shadow-sm sm:rounded-lg">
                         <div class="p-4 sm:p-6">
                             <div class="flex items-center">
-                                <div class="p-3 rounded-full bg-blue-100 dark:bg-blue-900/50">
-                                    <svg class="w-6 h-6 text-blue-600 dark:text-blue-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <div class="p-3 rounded-full bg-blue-100">
+                                    <svg class="w-6 h-6 text-blue-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                                         <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z"/>
                                     </svg>
                                 </div>
                                 <div class="ml-4">
-                                    <div class="text-xs font-medium text-gray-500 dark:text-gray-400 uppercase">Hours</div>
-                                    <div class="text-2xl font-bold text-blue-600 dark:text-blue-400">{{ $totalWorkHours }}</div>
+                                    <div class="text-xs font-medium text-gray-500 uppercase">Hours</div>
+                                    <div class="text-2xl font-bold text-blue-600">{{ $totalWorkHours }}</div>
                                 </div>
                             </div>
                         </div>
@@ -126,12 +126,12 @@
 
             <div class="grid grid-cols-1 lg:grid-cols-2 gap-6">
                 <!-- Leave Balances -->
-                <div x-data="{ expanded: true }" class="bg-white dark:bg-gray-800 overflow-hidden shadow-sm sm:rounded-lg">
+                <div x-data="{ expanded: true }" class="bg-white overflow-hidden shadow-sm sm:rounded-lg">
                     <div class="p-4 sm:p-6">
                         <div class="flex justify-between items-center cursor-pointer" @click="expanded = !expanded">
-                            <h3 class="text-lg font-semibold text-gray-900 dark:text-white">
+                            <h3 class="text-lg font-semibold text-gray-900">
                                 Leave Balances ({{ date('Y') }})
-                                <span class="ml-2 text-sm font-normal text-gray-500 dark:text-gray-400">({{ $leaveBalances->count() }})</span>
+                                <span class="ml-2 text-sm font-normal text-gray-500">({{ $leaveBalances->count() }})</span>
                             </h3>
                             <svg :class="{ 'rotate-180': expanded }" class="w-5 h-5 text-gray-500 transform transition-transform" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                                 <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7"/>
@@ -141,25 +141,25 @@
                             @if($leaveBalances->count() > 0)
                                 <div class="mt-4 space-y-3 max-h-64 overflow-y-auto">
                                     @foreach($leaveBalances as $balance)
-                                        <div class="flex justify-between items-center p-3 bg-gray-50 dark:bg-gray-700/50 rounded-lg">
+                                        <div class="flex justify-between items-center p-3 bg-gray-50 rounded-lg">
                                             <div>
-                                                <div class="font-medium text-gray-900 dark:text-white">{{ $balance->leaveType->name }}</div>
-                                                <div class="text-sm text-gray-500 dark:text-gray-400">
+                                                <div class="font-medium text-gray-900">{{ $balance->leaveType->name }}</div>
+                                                <div class="text-sm text-gray-500">
                                                     Used: {{ $balance->used_days }} / {{ $balance->allocated_days }} days
                                                 </div>
                                             </div>
                                             <div class="text-right">
-                                                <div class="text-2xl font-bold text-indigo-600 dark:text-indigo-400">{{ $balance->remaining_days }}</div>
-                                                <div class="text-xs text-gray-500 dark:text-gray-400">remaining</div>
+                                                <div class="text-2xl font-bold text-indigo-600">{{ $balance->remaining_days }}</div>
+                                                <div class="text-xs text-gray-500">remaining</div>
                                             </div>
                                         </div>
                                     @endforeach
                                 </div>
                             @else
-                                <p class="mt-4 text-gray-500 dark:text-gray-400">No leave balances found.</p>
+                                <p class="mt-4 text-gray-500">No leave balances found.</p>
                             @endif
-                            <div class="mt-4 pt-4 border-t border-gray-200 dark:border-gray-700">
-                                <a href="{{ route('leaves.create') }}" class="text-indigo-600 dark:text-indigo-400 hover:text-indigo-900 dark:hover:text-indigo-300 font-medium">
+                            <div class="mt-4 pt-4 border-t border-gray-200">
+                                <a href="{{ route('leaves.create') }}" class="text-indigo-600 hover:text-indigo-900 font-medium">
                                     Request Leave →
                                 </a>
                             </div>
@@ -168,12 +168,12 @@
                 </div>
 
                 <!-- Recent Leave Requests -->
-                <div x-data="{ expanded: true }" class="bg-white dark:bg-gray-800 overflow-hidden shadow-sm sm:rounded-lg">
+                <div x-data="{ expanded: true }" class="bg-white overflow-hidden shadow-sm sm:rounded-lg">
                     <div class="p-4 sm:p-6">
                         <div class="flex justify-between items-center cursor-pointer" @click="expanded = !expanded">
-                            <h3 class="text-lg font-semibold text-gray-900 dark:text-white">
+                            <h3 class="text-lg font-semibold text-gray-900">
                                 Recent Leave Requests
-                                <span class="ml-2 text-sm font-normal text-gray-500 dark:text-gray-400">({{ $recentLeaveRequests->count() }})</span>
+                                <span class="ml-2 text-sm font-normal text-gray-500">({{ $recentLeaveRequests->count() }})</span>
                             </h3>
                             <svg :class="{ 'rotate-180': expanded }" class="w-5 h-5 text-gray-500 transform transition-transform" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                                 <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7"/>
@@ -183,27 +183,27 @@
                             @if($recentLeaveRequests->count() > 0)
                                 <div class="mt-4 space-y-3 max-h-64 overflow-y-auto">
                                     @foreach($recentLeaveRequests as $request)
-                                        <div class="flex justify-between items-center p-3 bg-gray-50 dark:bg-gray-700/50 rounded-lg">
+                                        <div class="flex justify-between items-center p-3 bg-gray-50 rounded-lg">
                                             <div>
-                                                <div class="font-medium text-gray-900 dark:text-white">{{ $request->leaveType->name }}</div>
-                                                <div class="text-sm text-gray-500 dark:text-gray-400">
+                                                <div class="font-medium text-gray-900">{{ $request->leaveType->name }}</div>
+                                                <div class="text-sm text-gray-500">
                                                     {{ $request->start_date->format('M d') }} - {{ $request->end_date->format('M d, Y') }}
                                                 </div>
                                             </div>
                                             <span class="px-2 py-1 text-xs rounded-full 
-                                                @if($request->status == 'approved') bg-green-100 dark:bg-green-900/50 text-green-800 dark:text-green-300
-                                                @elseif($request->status == 'pending') bg-yellow-100 dark:bg-yellow-900/50 text-yellow-800 dark:text-yellow-300
-                                                @else bg-red-100 dark:bg-red-900/50 text-red-800 dark:text-red-300 @endif">
+                                                @if($request->status == 'approved') bg-green-100 text-green-800
+                                                @elseif($request->status == 'pending') bg-yellow-100 text-yellow-800
+                                                @else bg-red-100 text-red-800 @endif">
                                                 {{ ucfirst($request->status) }}
                                             </span>
                                         </div>
                                     @endforeach
                                 </div>
                             @else
-                                <p class="mt-4 text-gray-500 dark:text-gray-400">No leave requests.</p>
+                                <p class="mt-4 text-gray-500">No leave requests.</p>
                             @endif
-                            <div class="mt-4 pt-4 border-t border-gray-200 dark:border-gray-700">
-                                <a href="{{ route('leaves.index') }}" class="text-indigo-600 dark:text-indigo-400 hover:text-indigo-900 dark:hover:text-indigo-300 font-medium">
+                            <div class="mt-4 pt-4 border-t border-gray-200">
+                                <a href="{{ route('leaves.index') }}" class="text-indigo-600 hover:text-indigo-900 font-medium">
                                     View all leave requests →
                                 </a>
                             </div>
@@ -213,10 +213,10 @@
             </div>
 
             <!-- Quick Actions -->
-            <div x-data="{ expanded: true }" class="mt-6 bg-white dark:bg-gray-800 overflow-hidden shadow-sm sm:rounded-lg">
+            <div x-data="{ expanded: true }" class="mt-6 bg-white overflow-hidden shadow-sm sm:rounded-lg">
                 <div class="p-4 sm:p-6">
                     <div class="flex justify-between items-center cursor-pointer" @click="expanded = !expanded">
-                        <h3 class="text-lg font-semibold text-gray-900 dark:text-white">Quick Actions</h3>
+                        <h3 class="text-lg font-semibold text-gray-900">Quick Actions</h3>
                         <svg :class="{ 'rotate-180': expanded }" class="w-5 h-5 text-gray-500 transform transition-transform" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                             <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7"/>
                         </svg>

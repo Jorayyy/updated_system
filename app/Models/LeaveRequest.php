@@ -80,6 +80,14 @@ class LeaveRequest extends Model
     }
 
     /**
+     * Get the DTR entries created from this leave request
+     */
+    public function dtrEntries(): \Illuminate\Database\Eloquent\Relations\HasMany
+    {
+        return $this->hasMany(DailyTimeRecord::class, 'leave_request_id');
+    }
+
+    /**
      * Check if request is pending
      */
     public function isPending(): bool

@@ -38,6 +38,14 @@ class PayrollPeriod extends Model
     }
 
     /**
+     * Get daily time records for this period
+     */
+    public function dailyTimeRecords(): HasMany
+    {
+        return $this->hasMany(DailyTimeRecord::class);
+    }
+
+    /**
      * Get the processor
      */
     public function processor(): BelongsTo

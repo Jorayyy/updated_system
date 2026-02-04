@@ -9,6 +9,8 @@ use App\Models\AuditLog;
 use App\Models\Notification;
 use App\Models\User;
 use App\Models\Holiday;
+use App\Events\LeaveApproved;
+use App\Events\LeaveCancelled;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
 
@@ -230,8 +232,71 @@ class LeaveController extends Controller
 
         $leave->update(['status' => 'cancelled']);
 
+        // Fire LeaveCancelled event (wasApproved = false since it was pending)
+        LeaveCancelled::dispatch($leave, $user, 'User cancelled', false);
+
         return redirect()->route('leaves.index')
             ->with('success', 'Leave request cancelled successfully.');
+    }
+
+    /**
+     * Admin/HR: Cancel an approved leave request
+     */
+    public function adminCancel(Request $request, LeaveRequest $leave)
+    {
+        $user = auth()->user();
+        
+        if (!$user->isAdmin() && !$user->isHr()) {
+            abort(403);
+        }
+
+        $request->validate([
+            'cancel_reason' => 'required|string|max:500',
+        ]);
+
+        $wasApproved = $leave->status === 'approved';
+        
+        DB::beginTransaction();
+        try {
+            $oldStatus = $leave->status;
+            
+            $leave->update([
+                'status' => 'cancelled',
+                'rejection_reason' => $request->cancel_reason,
+            ]);
+
+            AuditLog::log(
+                'leave_cancelled_by_admin',
+                LeaveRequest::class,
+                $leave->id,
+                ['status' => $oldStatus],
+                ['status' => 'cancelled', 'reason' => $request->cancel_reason],
+                'Leave request cancelled by ' . ($user->isAdmin() ? 'Admin' : 'HR')
+            );
+
+            // Fire LeaveCancelled event - triggers automation to revert DTR if was approved
+            LeaveCancelled::dispatch($leave, $user, $request->cancel_reason, $wasApproved);
+
+            // Notify the employee
+            Notification::send(
+                $leave->user_id,
+                'leave_cancelled_by_admin',
+                'Leave Request Cancelled',
+                "Your {$leave->leaveType->name} request ({$leave->start_date->format('M d')} - {$leave->end_date->format('M d, Y')}) has been cancelled. Reason: {$request->cancel_reason}",
+                route('leaves.show', $leave),
+                'x-circle',
+                'red'
+            );
+
+            DB::commit();
+
+            return redirect()->back()
+                ->with('success', 'Leave request cancelled successfully.' . ($wasApproved ? ' DTR entries will be reverted.' : ''));
+        } catch (\Exception $e) {
+            DB::rollBack();
+            return redirect()->back()
+                ->with('error', 'Failed to cancel leave request: ' . $e->getMessage());
+        }
     }
 
     /**
@@ -274,7 +339,7 @@ class LeaveController extends Controller
             $query->where('end_date', '<=', $request->date_to);
         }
 
-        $leaveRequests = $query->orderBy('created_at', 'desc')->paginate(15);
+        $leaveRequests = $query->orderBy('created_at', 'desc')->get();
         $leaveTypes = LeaveType::all();
         $departments = \App\Models\User::distinct()->pluck('department')->filter();
 
@@ -452,6 +517,10 @@ class LeaveController extends Controller
         if ($balance) {
             $balance->deductDays($leave->total_days);
         }
+
+        // Fire LeaveApproved event - triggers automation
+        // This will create DTR entries, send notifications, etc.
+        LeaveApproved::dispatch($leave, auth()->user(), 'full');
 
         // Notify the employee about full approval
         Notification::send(

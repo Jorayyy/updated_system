@@ -28,7 +28,11 @@ class User extends Authenticatable
         'hourly_rate',
         'daily_rate',
         'monthly_salary',
+        'meal_allowance',
+        'transportation_allowance',
+        'communication_allowance',
         'date_hired',
+        'birthday',
         'is_active',
     ];
 
@@ -51,9 +55,13 @@ class User extends Authenticatable
         'email_verified_at' => 'datetime',
         'password' => 'hashed',
         'date_hired' => 'date',
+        'birthday' => 'date',
         'hourly_rate' => 'decimal:2',
         'daily_rate' => 'decimal:2',
         'monthly_salary' => 'decimal:2',
+        'meal_allowance' => 'decimal:2',
+        'transportation_allowance' => 'decimal:2',
+        'communication_allowance' => 'decimal:2',
         'is_active' => 'boolean',
     ];
 
@@ -125,6 +133,22 @@ class User extends Authenticatable
     }
 
     /**
+     * Get user's daily time records
+     */
+    public function dailyTimeRecords(): HasMany
+    {
+        return $this->hasMany(DailyTimeRecord::class);
+    }
+
+    /**
+     * Get user's payslips
+     */
+    public function payslips(): HasMany
+    {
+        return $this->hasMany(Payslip::class);
+    }
+
+    /**
      * Get user's notifications
      */
     public function notifications(): HasMany
@@ -146,5 +170,13 @@ class User extends Authenticatable
     public function todayAttendance()
     {
         return $this->attendances()->whereDate('date', today())->first();
+    }
+
+    /**
+     * Get today's DTR record
+     */
+    public function todayDtr()
+    {
+        return $this->dailyTimeRecords()->whereDate('date', today())->first();
     }
 }

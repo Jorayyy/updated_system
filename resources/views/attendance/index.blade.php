@@ -1,33 +1,33 @@
 <x-app-layout>
     <x-slot name="header">
-        <h2 class="font-semibold text-xl text-gray-800 dark:text-gray-200 leading-tight">
+        <h2 class="font-semibold text-xl text-gray-800 leading-tight">
             {{ __('Attendance') }}
         </h2>
     </x-slot>
 
-    <div class="py-12">
+    <div class="py-4">
         <div class="max-w-4xl mx-auto sm:px-6 lg:px-8">
             <!-- Current Status Card -->
-            <div class="bg-white dark:bg-gray-800 overflow-hidden shadow-sm sm:rounded-lg mb-6">
+            <div class="bg-white overflow-hidden shadow-sm sm:rounded-lg mb-6">
                 <div class="p-6">
                     <div class="flex justify-between items-start mb-6">
                         <div>
-                            <h3 class="text-lg font-semibold text-gray-900 dark:text-white">
+                            <h3 class="text-lg font-semibold text-gray-900">
                                 Today - {{ now()->format('l, F d, Y') }}
                             </h3>
-                            <p class="text-gray-500 dark:text-gray-400">
+                            <p class="text-gray-500">
                                 Current Time: <span id="currentTime" class="font-mono">{{ now()->format('h:i:s A') }}</span>
                             </p>
                         </div>
                         <div class="text-right">
                             @if($status['status'] === 'not_started')
-                                <span class="px-3 py-1 bg-gray-100 dark:bg-gray-700 text-gray-800 dark:text-gray-300 rounded-full text-sm">Not Started</span>
+                                <span class="px-3 py-1 bg-gray-100 text-gray-800 rounded-full text-sm">Not Started</span>
                             @elseif($status['status'] === 'working')
-                                <span class="px-3 py-1 bg-green-100 dark:bg-green-900/50 text-green-800 dark:text-green-300 rounded-full text-sm">Working</span>
+                                <span class="px-3 py-1 bg-green-100 text-green-800 rounded-full text-sm">Working</span>
                             @elseif($status['status'] === 'on_break')
-                                <span class="px-3 py-1 bg-yellow-100 dark:bg-yellow-900/50 text-yellow-800 dark:text-yellow-300 rounded-full text-sm">On Break</span>
+                                <span class="px-3 py-1 bg-yellow-100 text-yellow-800 rounded-full text-sm">On Break</span>
                             @elseif($status['status'] === 'completed')
-                                <span class="px-3 py-1 bg-blue-100 dark:bg-blue-900/50 text-blue-800 dark:text-blue-300 rounded-full text-sm">Day Completed</span>
+                                <span class="px-3 py-1 bg-blue-100 text-blue-800 rounded-full text-sm">Day Completed</span>
                             @endif
                         </div>
                     </div>
@@ -39,36 +39,36 @@
                                 @if($step['is_completed'])
                                     @switch($step['color'])
                                         @case('blue')
-                                            bg-blue-50 dark:bg-blue-900/30 border-blue-300 dark:border-blue-700
+                                            bg-blue-50 border-blue-300
                                             @break
                                         @case('yellow')
-                                            bg-yellow-50 dark:bg-yellow-900/30 border-yellow-300 dark:border-yellow-700
+                                            bg-yellow-50 border-yellow-300
                                             @break
                                         @case('green')
-                                            bg-green-50 dark:bg-green-900/30 border-green-300 dark:border-green-700
+                                            bg-green-50 border-green-300
                                             @break
                                         @case('orange')
-                                            bg-orange-50 dark:bg-orange-900/30 border-orange-300 dark:border-orange-700
+                                            bg-orange-50 border-orange-300
                                             @break
                                         @case('pink')
-                                            bg-pink-50 dark:bg-pink-900/30 border-pink-300 dark:border-pink-700
+                                            bg-pink-50 border-pink-300
                                             @break
                                         @case('cyan')
-                                            bg-cyan-50 dark:bg-cyan-900/30 border-cyan-300 dark:border-cyan-700
+                                            bg-cyan-50 border-cyan-300
                                             @break
                                         @case('lime')
-                                            bg-lime-50 dark:bg-lime-900/30 border-lime-300 dark:border-lime-700
+                                            bg-lime-50 border-lime-300
                                             @break
                                         @case('red')
-                                            bg-red-50 dark:bg-red-900/30 border-red-300 dark:border-red-700
+                                            bg-red-50 border-red-300
                                             @break
                                         @default
-                                            bg-gray-50 dark:bg-gray-700/30 border-gray-300 dark:border-gray-600
+                                            bg-gray-50 border-gray-300
                                     @endswitch
                                 @elseif($step['is_next'])
-                                    bg-white dark:bg-gray-700 border-indigo-400 dark:border-indigo-500 shadow-md
+                                    bg-white border-indigo-400 shadow-md
                                 @else
-                                    bg-gray-50 dark:bg-gray-800 border-gray-200 dark:border-gray-700 opacity-60
+                                    bg-gray-50 border-gray-200 opacity-60
                                 @endif
                             ">
                                 <div class="flex items-center gap-3">
@@ -106,7 +106,7 @@
                                         @elseif($step['is_next'])
                                             bg-indigo-500 text-white animate-pulse
                                         @else
-                                            bg-gray-200 dark:bg-gray-600 text-gray-500 dark:text-gray-400
+                                            bg-gray-200 text-gray-500
                                         @endif
                                     ">
                                         @if($step['is_completed'])
@@ -120,9 +120,9 @@
                                     
                                     <!-- Step label -->
                                     <div>
-                                        <div class="font-semibold text-gray-900 dark:text-white">{{ $step['label'] }}</div>
+                                        <div class="font-semibold text-gray-900">{{ $step['label'] }}</div>
                                         @if($step['time'])
-                                            <div class="text-sm text-gray-500 dark:text-gray-400">{{ $step['time'] }}</div>
+                                            <div class="text-sm text-gray-500">{{ $step['time'] }}</div>
                                         @endif
                                     </div>
                                 </div>
@@ -139,31 +139,31 @@
                                     <span class="text-sm font-medium 
                                         @switch($step['color'])
                                             @case('blue')
-                                                text-blue-600 dark:text-blue-400
+                                                text-blue-600
                                                 @break
                                             @case('yellow')
-                                                text-yellow-600 dark:text-yellow-400
+                                                text-yellow-600
                                                 @break
                                             @case('green')
-                                                text-green-600 dark:text-green-400
+                                                text-green-600
                                                 @break
                                             @case('orange')
-                                                text-orange-600 dark:text-orange-400
+                                                text-orange-600
                                                 @break
                                             @case('pink')
-                                                text-pink-600 dark:text-pink-400
+                                                text-pink-600
                                                 @break
                                             @case('cyan')
-                                                text-cyan-600 dark:text-cyan-400
+                                                text-cyan-600
                                                 @break
                                             @case('lime')
-                                                text-lime-600 dark:text-lime-400
+                                                text-lime-600
                                                 @break
                                             @case('red')
-                                                text-red-600 dark:text-red-400
+                                                text-red-600
                                                 @break
                                             @default
-                                                text-gray-600 dark:text-gray-400
+                                                text-gray-600
                                         @endswitch
                                     ">✓ Done</span>
                                 @endif
@@ -173,10 +173,10 @@
 
                     <!-- Quick Time Out Button (skip all remaining steps) -->
                     @if($status['status'] === 'working' || $status['status'] === 'on_break')
-                        <div class="mt-6 pt-6 border-t border-gray-200 dark:border-gray-700">
+                        <div class="mt-6 pt-6 border-t border-gray-200">
                             <form action="{{ route('attendance.time-out') }}" method="POST" class="flex items-center justify-between">
                                 @csrf
-                                <div class="text-sm text-gray-500 dark:text-gray-400">
+                                <div class="text-sm text-gray-500">
                                     Need to leave early?
                                 </div>
                                 <button type="submit" 
@@ -190,33 +190,33 @@
 
                     <!-- Summary (when completed) -->
                     @if($status['status'] === 'completed' && $status['attendance'])
-                        <div class="mt-6 pt-6 border-t border-gray-200 dark:border-gray-700">
-                            <h4 class="font-semibold text-gray-900 dark:text-white mb-4">Today's Summary</h4>
+                        <div class="mt-6 pt-6 border-t border-gray-200">
+                            <h4 class="font-semibold text-gray-900 mb-4">Today's Summary</h4>
                             <div class="grid grid-cols-2 md:grid-cols-4 gap-4">
-                                <div class="bg-gray-50 dark:bg-gray-700/50 p-3 rounded-lg">
-                                    <div class="text-xs text-gray-500 dark:text-gray-400 uppercase">Work Time</div>
-                                    <div class="text-lg font-bold text-gray-900 dark:text-white">
+                                <div class="bg-gray-50 p-3 rounded-lg">
+                                    <div class="text-xs text-gray-500 uppercase">Work Time</div>
+                                    <div class="text-lg font-bold text-gray-900">
                                         {{ $status['attendance']->formatted_work_time }}
                                     </div>
                                 </div>
-                                <div class="bg-gray-50 dark:bg-gray-700/50 p-3 rounded-lg">
-                                    <div class="text-xs text-gray-500 dark:text-gray-400 uppercase">Break Time</div>
-                                    <div class="text-lg font-bold text-gray-900 dark:text-white">
+                                <div class="bg-gray-50 p-3 rounded-lg">
+                                    <div class="text-xs text-gray-500 uppercase">Break Time</div>
+                                    <div class="text-lg font-bold text-gray-900">
                                         {{ $status['attendance']->formatted_break_time }}
                                     </div>
                                 </div>
                                 @if($status['attendance']->overtime_minutes > 0)
-                                <div class="bg-green-50 dark:bg-green-900/30 p-3 rounded-lg">
-                                    <div class="text-xs text-green-600 dark:text-green-400 uppercase">Overtime</div>
-                                    <div class="text-lg font-bold text-green-700 dark:text-green-300">
+                                <div class="bg-green-50 p-3 rounded-lg">
+                                    <div class="text-xs text-green-600 uppercase">Overtime</div>
+                                    <div class="text-lg font-bold text-green-700">
                                         {{ floor($status['attendance']->overtime_minutes / 60) }}h {{ $status['attendance']->overtime_minutes % 60 }}m
                                     </div>
                                 </div>
                                 @endif
                                 @if($status['attendance']->undertime_minutes > 0)
-                                <div class="bg-red-50 dark:bg-red-900/30 p-3 rounded-lg">
-                                    <div class="text-xs text-red-600 dark:text-red-400 uppercase">Undertime</div>
-                                    <div class="text-lg font-bold text-red-700 dark:text-red-300">
+                                <div class="bg-red-50 p-3 rounded-lg">
+                                    <div class="text-xs text-red-600 uppercase">Undertime</div>
+                                    <div class="text-lg font-bold text-red-700">
                                         {{ floor($status['attendance']->undertime_minutes / 60) }}h {{ $status['attendance']->undertime_minutes % 60 }}m
                                     </div>
                                 </div>
@@ -228,53 +228,53 @@
             </div>
 
             <!-- This Week's Attendance -->
-            <div class="bg-white dark:bg-gray-800 overflow-hidden shadow-sm sm:rounded-lg">
+            <div class="bg-white overflow-hidden shadow-sm sm:rounded-lg">
                 <div class="p-6">
                     <div class="flex justify-between items-center mb-4">
-                        <h3 class="text-lg font-semibold text-gray-900 dark:text-white">This Week's Attendance</h3>
-                        <a href="{{ route('attendance.history') }}" class="text-indigo-600 dark:text-indigo-400 hover:text-indigo-900 dark:hover:text-indigo-300 text-sm">
+                        <h3 class="text-lg font-semibold text-gray-900">This Week's Attendance</h3>
+                        <a href="{{ route('attendance.history') }}" class="text-indigo-600 hover:text-indigo-900 text-sm">
                             View Full History →
                         </a>
                     </div>
                     <div class="overflow-x-auto">
-                        <table class="min-w-full divide-y divide-gray-200 dark:divide-gray-700">
-                            <thead class="bg-gray-50 dark:bg-gray-700">
+                        <table class="min-w-full divide-y divide-gray-200">
+                            <thead class="bg-gray-50">
                                 <tr>
-                                    <th class="px-4 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-400 uppercase">Date</th>
-                                    <th class="px-4 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-400 uppercase">IN</th>
-                                    <th class="px-4 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-400 uppercase">OUT</th>
-                                    <th class="px-4 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-400 uppercase">Work</th>
-                                    <th class="px-4 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-400 uppercase">Status</th>
+                                    <th class="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase">Date</th>
+                                    <th class="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase">IN</th>
+                                    <th class="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase">OUT</th>
+                                    <th class="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase">Work</th>
+                                    <th class="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase">Status</th>
                                 </tr>
                             </thead>
-                            <tbody class="bg-white dark:bg-gray-800 divide-y divide-gray-200 dark:divide-gray-700">
+                            <tbody class="bg-white divide-y divide-gray-200">
                                 @forelse($weeklyAttendance as $attendance)
                                     <tr>
-                                        <td class="px-4 py-3 whitespace-nowrap text-sm font-medium text-gray-900 dark:text-white">
+                                        <td class="px-4 py-3 whitespace-nowrap text-sm font-medium text-gray-900">
                                             {{ $attendance->date->format('D, M d') }}
                                         </td>
-                                        <td class="px-4 py-3 whitespace-nowrap text-sm text-gray-500 dark:text-gray-400">
+                                        <td class="px-4 py-3 whitespace-nowrap text-sm text-gray-500">
                                             {{ $attendance->time_in ? $attendance->time_in->format('h:i A') : '-' }}
                                         </td>
-                                        <td class="px-4 py-3 whitespace-nowrap text-sm text-gray-500 dark:text-gray-400">
+                                        <td class="px-4 py-3 whitespace-nowrap text-sm text-gray-500">
                                             {{ $attendance->time_out ? $attendance->time_out->format('h:i A') : '-' }}
                                         </td>
-                                        <td class="px-4 py-3 whitespace-nowrap text-sm text-gray-500 dark:text-gray-400">
+                                        <td class="px-4 py-3 whitespace-nowrap text-sm text-gray-500">
                                             {{ $attendance->formatted_work_time }}
                                         </td>
                                         <td class="px-4 py-3 whitespace-nowrap">
                                             <span class="px-2 py-1 text-xs rounded-full 
-                                                @if($attendance->status == 'present') bg-green-100 dark:bg-green-900/50 text-green-800 dark:text-green-300
-                                                @elseif($attendance->status == 'late') bg-yellow-100 dark:bg-yellow-900/50 text-yellow-800 dark:text-yellow-300
-                                                @elseif($attendance->status == 'absent') bg-red-100 dark:bg-red-900/50 text-red-800 dark:text-red-300
-                                                @else bg-gray-100 dark:bg-gray-600 text-gray-800 dark:text-gray-300 @endif">
+                                                @if($attendance->status == 'present') bg-green-100 text-green-800
+                                                @elseif($attendance->status == 'late') bg-yellow-100 text-yellow-800
+                                                @elseif($attendance->status == 'absent') bg-red-100 text-red-800
+                                                @else bg-gray-100 text-gray-800 @endif">
                                                 {{ ucfirst($attendance->status) }}
                                             </span>
                                         </td>
                                     </tr>
                                 @empty
                                     <tr>
-                                        <td colspan="5" class="px-4 py-8 text-center text-gray-500 dark:text-gray-400">
+                                        <td colspan="5" class="px-4 py-8 text-center text-gray-500">
                                             No attendance records this week.
                                         </td>
                                     </tr>

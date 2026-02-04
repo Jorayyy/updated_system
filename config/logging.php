@@ -126,6 +126,56 @@ return [
         'emergency' => [
             'path' => storage_path('logs/laravel.log'),
         ],
+
+        /*
+        |--------------------------------------------------------------------------
+        | HR Automation Log Channels
+        |--------------------------------------------------------------------------
+        |
+        | Dedicated log channels for HR automation processes to maintain
+        | clear audit trails and separate concerns.
+        |
+        */
+
+        'attendance' => [
+            'driver' => 'daily',
+            'path' => storage_path('logs/attendance.log'),
+            'level' => 'info',
+            'days' => 30,
+            'replace_placeholders' => true,
+        ],
+
+        'payroll' => [
+            'driver' => 'daily',
+            'path' => storage_path('logs/payroll.log'),
+            'level' => 'info',
+            'days' => 90,
+            'replace_placeholders' => true,
+        ],
+
+        'dtr' => [
+            'driver' => 'daily',
+            'path' => storage_path('logs/dtr.log'),
+            'level' => 'info',
+            'days' => 60,
+            'replace_placeholders' => true,
+        ],
+
+        'leave' => [
+            'driver' => 'daily',
+            'path' => storage_path('logs/leave.log'),
+            'level' => 'info',
+            'days' => 30,
+            'replace_placeholders' => true,
+        ],
+
+        'automation' => [
+            'driver' => 'daily',
+            'path' => storage_path('logs/automation.log'),
+            'level' => 'debug',
+            'days' => 14,
+            'replace_placeholders' => true,
+        ],
     ],
 
 ];

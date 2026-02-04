@@ -202,6 +202,11 @@
             <div class="company-address">Tacloban City, Leyte, Philippines</div>
             <div class="document-title">PAYSLIP</div>
             <div class="period-info">{{ $payroll->payrollPeriod->name }}</div>
+            @if($payroll->is_manually_adjusted)
+                <div style="margin-top: 10px; color: #856404; font-size: 10px; font-weight: bold; text-transform: uppercase;">
+                    ** Manually Adjusted **
+                </div>
+            @endif
         </div>
 
         <div class="info-section">
@@ -256,34 +261,40 @@
                     <span class="line-item-label">Basic Pay</span>
                     <span class="line-item-value">₱{{ number_format($payroll->basic_pay, 2) }}</span>
                 </div>
-                @if($payroll->overtime_pay > 0)
+                @if(($payroll->overtime_pay ?? 0) > 0)
                 <div class="line-item">
-                    <span class="line-item-label">Overtime Pay ({{ $payroll->overtime_hours }} hrs)</span>
+                    <span class="line-item-label">Overtime Pay ({{ $payroll->overtime_hours ?? 0 }} hrs)</span>
                     <span class="line-item-value">₱{{ number_format($payroll->overtime_pay, 2) }}</span>
                 </div>
                 @endif
-                @if($payroll->allowances > 0)
-                <div class="line-item">
-                    <span class="line-item-label">Allowances</span>
-                    <span class="line-item-value">₱{{ number_format($payroll->allowances, 2) }}</span>
-                </div>
-                @endif
-                @if($payroll->bonuses > 0)
-                <div class="line-item">
-                    <span class="line-item-label">Bonuses</span>
-                    <span class="line-item-value">₱{{ number_format($payroll->bonuses, 2) }}</span>
-                </div>
-                @endif
-                @if($payroll->holiday_pay > 0)
+                @if(($payroll->holiday_pay ?? 0) > 0)
                 <div class="line-item">
                     <span class="line-item-label">Holiday Pay</span>
                     <span class="line-item-value">₱{{ number_format($payroll->holiday_pay, 2) }}</span>
                 </div>
                 @endif
-                @if($payroll->night_differential > 0)
+                @if(($payroll->night_diff_pay ?? 0) > 0)
                 <div class="line-item">
                     <span class="line-item-label">Night Differential</span>
-                    <span class="line-item-value">₱{{ number_format($payroll->night_differential, 2) }}</span>
+                    <span class="line-item-value">₱{{ number_format($payroll->night_diff_pay, 2) }}</span>
+                </div>
+                @endif
+                @if(($payroll->rest_day_pay ?? 0) > 0)
+                <div class="line-item">
+                    <span class="line-item-label">Rest Day Pay</span>
+                    <span class="line-item-value">₱{{ number_format($payroll->rest_day_pay, 2) }}</span>
+                </div>
+                @endif
+                @if(($payroll->allowances ?? 0) > 0)
+                <div class="line-item">
+                    <span class="line-item-label">Allowances</span>
+                    <span class="line-item-value">₱{{ number_format($payroll->allowances, 2) }}</span>
+                </div>
+                @endif
+                @if(($payroll->bonus ?? 0) > 0)
+                <div class="line-item">
+                    <span class="line-item-label">Bonus</span>
+                    <span class="line-item-value">₱{{ number_format($payroll->bonus, 2) }}</span>
                 </div>
                 @endif
                 <div class="line-item subtotal">
@@ -309,25 +320,37 @@
                     <span class="line-item-label">Withholding Tax</span>
                     <span class="line-item-value">₱{{ number_format($payroll->withholding_tax, 2) }}</span>
                 </div>
-                @if($payroll->late_deductions > 0)
+                @if(($payroll->late_deductions ?? 0) > 0)
                 <div class="line-item">
                     <span class="line-item-label">Late Deductions</span>
                     <span class="line-item-value">₱{{ number_format($payroll->late_deductions, 2) }}</span>
                 </div>
                 @endif
-                @if($payroll->absent_deductions > 0)
-                <div class="line-item">
-                    <span class="line-item-label">Absent Deductions</span>
-                    <span class="line-item-value">₱{{ number_format($payroll->absent_deductions, 2) }}</span>
-                </div>
-                @endif
-                @if($payroll->undertime_deductions > 0)
+                @if(($payroll->undertime_deductions ?? 0) > 0)
                 <div class="line-item">
                     <span class="line-item-label">Undertime Deductions</span>
                     <span class="line-item-value">₱{{ number_format($payroll->undertime_deductions, 2) }}</span>
                 </div>
                 @endif
-                @if($payroll->other_deductions > 0)
+                @if(($payroll->absent_deductions ?? 0) > 0)
+                <div class="line-item">
+                    <span class="line-item-label">Absent Deductions</span>
+                    <span class="line-item-value">₱{{ number_format($payroll->absent_deductions, 2) }}</span>
+                </div>
+                @endif
+                @if(($payroll->loan_deductions ?? 0) > 0)
+                <div class="line-item">
+                    <span class="line-item-label">Loan Deductions</span>
+                    <span class="line-item-value">₱{{ number_format($payroll->loan_deductions, 2) }}</span>
+                </div>
+                @endif
+                @if(($payroll->leave_without_pay_deductions ?? 0) > 0)
+                <div class="line-item">
+                    <span class="line-item-label">LWOP Deductions</span>
+                    <span class="line-item-value">₱{{ number_format($payroll->leave_without_pay_deductions, 2) }}</span>
+                </div>
+                @endif
+                @if(($payroll->other_deductions ?? 0) > 0)
                 <div class="line-item">
                     <span class="line-item-label">Other Deductions</span>
                     <span class="line-item-value">₱{{ number_format($payroll->other_deductions, 2) }}</span>

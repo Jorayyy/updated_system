@@ -8,6 +8,8 @@ use App\Http\Controllers\LeaveController;
 use App\Http\Controllers\LeaveTypeController;
 use App\Http\Controllers\DTRController;
 use App\Http\Controllers\PayrollController;
+use App\Http\Controllers\PayrollComputationController;
+use App\Http\Controllers\PayslipController;
 use App\Http\Controllers\HolidayController;
 use App\Http\Controllers\NotificationController;
 use App\Http\Controllers\SettingsController;
@@ -20,6 +22,9 @@ use App\Http\Controllers\ConcernController;
 use App\Http\Controllers\AllowedIpController;
 use App\Http\Controllers\TimekeepingController;
 use App\Http\Controllers\TransactionController;
+use App\Http\Controllers\AnalyticsController;
+use App\Http\Controllers\DtrApprovalController;
+use App\Http\Controllers\AutomationController;
 use Illuminate\Support\Facades\Route;
 
 /*
@@ -72,6 +77,13 @@ Route::middleware('auth')->group(function () {
     Route::get('/dtr', [DTRController::class, 'index'])->name('dtr.index');
     Route::get('/dtr/pdf', [DTRController::class, 'generatePdf'])->name('dtr.pdf');
 
+    // DTR Records - Employee (New Workflow)
+    Route::get('/my-dtr-records', [DtrApprovalController::class, 'index'])->name('dtr-records.index');
+    Route::get('/my-dtr-records/{dailyTimeRecord}', [DtrApprovalController::class, 'show'])->name('dtr-records.show');
+    Route::get('/my-dtr-records/{dailyTimeRecord}/request-correction', [DtrApprovalController::class, 'showCorrectionForm'])->name('dtr-records.correction-form');
+    Route::post('/my-dtr-records/{dailyTimeRecord}/request-correction', [DtrApprovalController::class, 'requestCorrection'])->name('dtr-records.request-correction');
+    Route::get('/my-dtr-summary', [DtrApprovalController::class, 'summary'])->name('dtr-records.summary');
+
     // Leaves - Employee
     Route::get('/leaves', [LeaveController::class, 'index'])->name('leaves.index');
     Route::get('/leaves/create', [LeaveController::class, 'create'])->name('leaves.create');
@@ -79,7 +91,16 @@ Route::middleware('auth')->group(function () {
     Route::get('/leaves/{leave}', [LeaveController::class, 'show'])->name('leaves.show');
     Route::patch('/leaves/{leave}/cancel', [LeaveController::class, 'cancel'])->name('leaves.cancel');
 
-    // Payslips - Employee
+    // Payslips - Employee (Enhanced)
+    Route::prefix('payslip')->name('payslip.')->group(function () {
+        Route::get('/', [PayslipController::class, 'index'])->name('index');
+        Route::get('/{payroll}', [PayslipController::class, 'show'])->name('show');
+        Route::get('/{payroll}/download', [PayslipController::class, 'download'])->name('download');
+        Route::get('/{payroll}/view', [PayslipController::class, 'view'])->name('view');
+        Route::get('/ytd-summary', [PayslipController::class, 'ytdSummary'])->name('ytd-summary');
+    });
+
+    // Payslips - Employee (Legacy routes for backward compatibility)
     Route::get('/my-payslips', [PayrollController::class, 'myPayslips'])->name('payroll.my-payslips');
     Route::get('/my-payslip/{payroll}', [PayrollController::class, 'myPayslip'])->name('payroll.my-payslip');
     Route::get('/my-payslip/{payroll}/pdf', [PayrollController::class, 'myPayslipPdf'])->name('payroll.my-payslip-pdf');
@@ -134,6 +155,7 @@ Route::middleware('auth')->group(function () {
         Route::patch('/leaves/{leave}/hr-approve', [LeaveController::class, 'hrApprove'])->name('leaves.hr-approve');
         Route::patch('/leaves/{leave}/admin-approve', [LeaveController::class, 'adminApprove'])->name('leaves.admin-approve');
         Route::patch('/leaves/{leave}/reject', [LeaveController::class, 'reject'])->name('leaves.reject');
+        Route::patch('/leaves/{leave}/admin-cancel', [LeaveController::class, 'adminCancel'])->name('leaves.admin-cancel');
 
         // Leave Types Management
         Route::resource('leave-types', LeaveTypeController::class);
@@ -153,6 +175,23 @@ Route::middleware('auth')->group(function () {
         Route::get('/manage/dtr/{user}/pdf', [DTRController::class, 'employeePdf'])->name('dtr.employee-pdf');
         Route::post('/manage/dtr/bulk-pdf', [DTRController::class, 'bulkPdf'])->name('dtr.bulk-pdf');
 
+        // DTR Approval Workflow (New)
+        Route::prefix('dtr-approval')->name('dtr-approval.')->group(function () {
+            Route::get('/', [DtrApprovalController::class, 'index'])->name('index');
+            Route::get('/pending', [DtrApprovalController::class, 'pendingApprovals'])->name('pending');
+            Route::get('/corrections', [DtrApprovalController::class, 'correctionRequests'])->name('corrections');
+            Route::get('/{dailyTimeRecord}', [DtrApprovalController::class, 'show'])->name('show');
+            Route::get('/{dailyTimeRecord}/edit', [DtrApprovalController::class, 'edit'])->name('edit');
+            Route::put('/{dailyTimeRecord}', [DtrApprovalController::class, 'update'])->name('update');
+            Route::post('/{dailyTimeRecord}/approve', [DtrApprovalController::class, 'approve'])->name('approve');
+            Route::post('/{dailyTimeRecord}/reject', [DtrApprovalController::class, 'reject'])->name('reject');
+            Route::post('/{dailyTimeRecord}/approve-correction', [DtrApprovalController::class, 'approveCorrection'])->name('approve-correction');
+            Route::post('/{dailyTimeRecord}/reject-correction', [DtrApprovalController::class, 'rejectCorrection'])->name('reject-correction');
+            Route::post('/bulk-approve', [DtrApprovalController::class, 'bulkApprove'])->name('bulk-approve');
+            Route::post('/period/{payrollPeriod}/approve-all', [DtrApprovalController::class, 'approveAllForPeriod'])->name('approve-all-period');
+            Route::post('/generate', [DtrApprovalController::class, 'generateDtrs'])->name('generate');
+        });
+
         // Payroll Management
         Route::get('/payroll', [PayrollController::class, 'index'])->name('payroll.index');
         Route::get('/payroll/periods', [PayrollController::class, 'periods'])->name('payroll.periods');
@@ -168,6 +207,45 @@ Route::middleware('auth')->group(function () {
         Route::get('/payroll/{payroll}/payslip', [PayrollController::class, 'payslip'])->name('payroll.payslip');
         Route::get('/payroll/{payroll}/payslip-pdf', [PayrollController::class, 'payslipPdf'])->name('payroll.payslip-pdf');
         Route::post('/payroll/{payroll}/release', [PayrollController::class, 'release'])->name('payroll.release');
+
+        // Payroll Computation (DTR-Based Workflow)
+        Route::prefix('payroll/computation')->name('payroll.computation.')->group(function () {
+            Route::get('/', [PayrollComputationController::class, 'dashboard'])->name('dashboard');
+            Route::get('/period/{period}/preview', [PayrollComputationController::class, 'preview'])->name('preview');
+            Route::post('/period/{period}/compute', [PayrollComputationController::class, 'compute'])->name('compute');
+            Route::get('/period/{period}', [PayrollComputationController::class, 'show'])->name('show');
+            Route::get('/period/{period}/export', [PayrollComputationController::class, 'export'])->name('export');
+            Route::get('/period/{period}/status', [PayrollComputationController::class, 'status'])->name('status');
+            Route::get('/{payroll}/details', [PayrollComputationController::class, 'details'])->name('details');
+            Route::get('/{payroll}/edit', [PayrollComputationController::class, 'edit'])->name('edit');
+            Route::put('/{payroll}', [PayrollComputationController::class, 'update'])->name('update');
+            Route::post('/{payroll}/recompute', [PayrollComputationController::class, 'recompute'])->name('recompute');
+            Route::post('/{payroll}/approve', [PayrollComputationController::class, 'approve'])->name('approve');
+            Route::post('/{payroll}/release', [PayrollComputationController::class, 'release'])->name('release');
+            Route::post('/{payroll}/reject', [PayrollComputationController::class, 'reject'])->name('reject');
+            Route::post('/period/{period}/bulk-approve', [PayrollComputationController::class, 'bulkApprove'])->name('bulk-approve');
+            Route::post('/period/{period}/bulk-release', [PayrollComputationController::class, 'bulkRelease'])->name('bulk-release');
+        });
+
+        // Payslip Management (Admin/HR)
+        Route::prefix('payslip-admin')->name('payslip.admin.')->group(function () {
+            Route::get('/{payroll}', [PayslipController::class, 'adminShow'])->name('show');
+            Route::get('/{payroll}/download', [PayslipController::class, 'adminDownload'])->name('download');
+            Route::post('/{payroll}/send-email', [PayslipController::class, 'sendEmail'])->name('send-email');
+            Route::post('/{payroll}/resend-email', [PayslipController::class, 'resendEmail'])->name('resend-email');
+            Route::post('/period/{period}/bulk-generate', [PayslipController::class, 'bulkGenerate'])->name('bulk-generate');
+            Route::get('/period/{period}/bulk-download', [PayslipController::class, 'bulkDownload'])->name('bulk-download');
+            Route::post('/period/{period}/bulk-send-email', [PayslipController::class, 'bulkSendEmail'])->name('bulk-send-email');
+            Route::get('/period/{period}/distribution-status', [PayslipController::class, 'distributionStatus'])->name('distribution-status');
+        });
+
+        // Automation Dashboard
+        Route::prefix('automation')->name('automation.')->group(function () {
+            Route::get('/', [AutomationController::class, 'index'])->name('index');
+            Route::post('/generate-dtrs', [AutomationController::class, 'generateDtrs'])->name('generate-dtrs');
+            Route::post('/compute-payroll', [AutomationController::class, 'computePayroll'])->name('compute-payroll');
+            Route::post('/retry-failed-jobs', [AutomationController::class, 'retryFailedJobs'])->name('retry-failed-jobs');
+        });
 
         // Holiday Management
         Route::resource('holidays', HolidayController::class);
@@ -211,6 +289,13 @@ Route::middleware('auth')->group(function () {
         Route::patch('/transactions/{transaction}/hr-approve', [TransactionController::class, 'hrApprove'])->name('transactions.hr-approve');
         Route::patch('/transactions/{transaction}/admin-approve', [TransactionController::class, 'adminApprove'])->name('transactions.admin-approve');
         Route::patch('/transactions/{transaction}/reject', [TransactionController::class, 'reject'])->name('transactions.reject');
+
+        // Analytics Dashboard (HR/Admin)
+        Route::get('/analytics', [AnalyticsController::class, 'index'])->name('analytics.index');
+        Route::get('/analytics/attendance', [AnalyticsController::class, 'attendanceData'])->name('analytics.attendance');
+        Route::get('/analytics/turnover', [AnalyticsController::class, 'turnoverData'])->name('analytics.turnover');
+        Route::get('/analytics/leaves', [AnalyticsController::class, 'leaveData'])->name('analytics.leaves');
+        Route::get('/analytics/payroll', [AnalyticsController::class, 'payrollData'])->name('analytics.payroll');
     });
 
     // ============================================
@@ -246,6 +331,8 @@ Route::middleware('auth')->group(function () {
         Route::get('/backups', [BackupController::class, 'index'])->name('backups.index');
         Route::post('/backups', [BackupController::class, 'create'])->name('backups.create');
         Route::get('/backups/{filename}/download', [BackupController::class, 'download'])->name('backups.download');
+        Route::post('/backups/{filename}/restore', [BackupController::class, 'restore'])->name('backups.restore');
+        Route::post('/backups/upload', [BackupController::class, 'upload'])->name('backups.upload');
         Route::delete('/backups/{filename}', [BackupController::class, 'destroy'])->name('backups.destroy');
 
         // Concerns/Tickets Management

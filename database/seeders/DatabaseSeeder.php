@@ -10,6 +10,7 @@ use App\Models\CompanySetting;
 use App\Models\Attendance;
 use App\Models\PayrollPeriod;
 use App\Models\Payroll;
+use App\Services\DtrService;
 use Illuminate\Database\Seeder;
 use Illuminate\Support\Facades\Hash;
 use Carbon\Carbon;
@@ -28,10 +29,10 @@ class DatabaseSeeder extends Seeder
             'password' => Hash::make('password'),
             'employee_id' => 'MEBS-0001',
             'role' => 'admin',
-            'department' => 'Administration',
-            'position' => 'System Administrator',
-            'date_hired' => now()->subYears(3),
-            'monthly_salary' => 50000,
+            'department' => 'Executive',
+            'position' => 'Site Director',
+            'date_hired' => now()->subYears(5),
+            'monthly_salary' => 150000,
             'is_active' => true,
         ]);
 
@@ -43,58 +44,137 @@ class DatabaseSeeder extends Seeder
             'employee_id' => 'MEBS-0002',
             'role' => 'hr',
             'department' => 'Human Resources',
-            'position' => 'HR Manager',
-            'date_hired' => now()->subYears(2),
-            'monthly_salary' => 35000,
+            'position' => 'Senior HR Manager',
+            'date_hired' => now()->subYears(3),
+            'monthly_salary' => 85000,
+            'hourly_rate' => 488.51,
+            'meal_allowance' => 5000,
+            'transportation_allowance' => 3000,
+            'communication_allowance' => 2000,
             'is_active' => true,
         ]);
 
-        // Create Sample Employees
+        // Create Sample Call Center Employees
         $employees = [
+            /* --- Operations Department --- */
             [
                 'name' => 'Juan Dela Cruz',
                 'email' => 'juan@mebs.com',
                 'employee_id' => 'MEBS-0003',
                 'department' => 'Operations',
-                'position' => 'Call Center Agent',
-                'monthly_salary' => 18000,
-                'hourly_rate' => 85,
+                'position' => 'Customer Service Representative',
+                'monthly_salary' => 22000,
+                'hourly_rate' => 126.44,
+                'meal_allowance' => 2000,
+                'transportation_allowance' => 1000,
             ],
             [
                 'name' => 'Maria Santos',
                 'email' => 'maria@mebs.com',
                 'employee_id' => 'MEBS-0004',
                 'department' => 'Operations',
-                'position' => 'Call Center Agent',
-                'monthly_salary' => 18000,
-                'hourly_rate' => 85,
+                'position' => 'Technical Support Representative',
+                'monthly_salary' => 25000,
+                'hourly_rate' => 143.68,
+                'meal_allowance' => 2000,
+                'transportation_allowance' => 1500,
             ],
             [
                 'name' => 'Pedro Reyes',
                 'email' => 'pedro@mebs.com',
                 'employee_id' => 'MEBS-0005',
                 'department' => 'Operations',
-                'position' => 'Senior Agent',
-                'monthly_salary' => 22000,
-                'hourly_rate' => 103,
-            ],
-            [
-                'name' => 'Ana Garcia',
-                'email' => 'ana@mebs.com',
-                'employee_id' => 'MEBS-0006',
-                'department' => 'Quality Assurance',
-                'position' => 'QA Analyst',
-                'monthly_salary' => 25000,
-                'hourly_rate' => 117,
+                'position' => 'Subject Matter Expert',
+                'monthly_salary' => 30000,
+                'hourly_rate' => 172.41,
+                'meal_allowance' => 2500,
+                'transportation_allowance' => 1500,
             ],
             [
                 'name' => 'Carlos Mendoza',
                 'email' => 'carlos@mebs.com',
-                'employee_id' => 'MEBS-0007',
+                'employee_id' => 'MEBS-0006',
                 'department' => 'Operations',
                 'position' => 'Team Leader',
+                'monthly_salary' => 45000,
+                'hourly_rate' => 258.62,
+                'meal_allowance' => 3000,
+                'transportation_allowance' => 2000,
+                'communication_allowance' => 1000,
+            ],
+            [
+                'name' => 'Elena Rodriguez',
+                'email' => 'elena@mebs.com',
+                'employee_id' => 'MEBS-0007',
+                'department' => 'Operations',
+                'position' => 'Operations Manager',
+                'monthly_salary' => 85000,
+                'hourly_rate' => 488.51,
+                'meal_allowance' => 5000,
+                'transportation_allowance' => 5000,
+                'communication_allowance' => 3000,
+            ],
+
+            /* --- Quality & Training --- */
+            [
+                'name' => 'Ana Garcia',
+                'email' => 'ana@mebs.com',
+                'employee_id' => 'MEBS-0008',
+                'department' => 'Quality Assurance',
+                'position' => 'QA Analyst',
+                'monthly_salary' => 32000,
+                'hourly_rate' => 183.91,
+                'meal_allowance' => 2500,
+                'transportation_allowance' => 1500,
+            ],
+            [
+                'name' => 'Ricardo Lim',
+                'email' => 'ricardo@mebs.com',
+                'employee_id' => 'MEBS-0009',
+                'department' => 'Training',
+                'position' => 'Product Trainer',
+                'monthly_salary' => 38000,
+                'hourly_rate' => 218.39,
+                'meal_allowance' => 2500,
+                'transportation_allowance' => 1500,
+                'communication_allowance' => 500,
+            ],
+
+            /* --- Workforce Management --- */
+            [
+                'name' => 'Sonia Bautista',
+                'email' => 'sonia@mebs.com',
+                'employee_id' => 'MEBS-0010',
+                'department' => 'Workforce Management',
+                'position' => 'Real-Time Analyst',
+                'monthly_salary' => 35000,
+                'hourly_rate' => 201.15,
+                'meal_allowance' => 2500,
+                'transportation_allowance' => 1500,
+            ],
+            [
+                'name' => 'Mark Torres',
+                'email' => 'mark@mebs.com',
+                'employee_id' => 'MEBS-0011',
+                'department' => 'Workforce Management',
+                'position' => 'WFM Scheduler',
+                'monthly_salary' => 32000,
+                'hourly_rate' => 183.91,
+                'meal_allowance' => 2500,
+                'transportation_allowance' => 1500,
+            ],
+
+            /* --- IT & Support --- */
+            [
+                'name' => 'Victor Magtanggol',
+                'email' => 'victor@mebs.com',
+                'employee_id' => 'MEBS-0012',
+                'department' => 'IT Support',
+                'position' => 'IT Helpdesk Technician',
                 'monthly_salary' => 28000,
-                'hourly_rate' => 131,
+                'hourly_rate' => 160.92,
+                'meal_allowance' => 2000,
+                'transportation_allowance' => 1000,
             ],
         ];
 
@@ -110,6 +190,9 @@ class DatabaseSeeder extends Seeder
                 'date_hired' => now()->subMonths(rand(3, 24)),
                 'monthly_salary' => $employeeData['monthly_salary'],
                 'hourly_rate' => $employeeData['hourly_rate'],
+                'meal_allowance' => $employeeData['meal_allowance'] ?? 0,
+                'transportation_allowance' => $employeeData['transportation_allowance'] ?? 0,
+                'communication_allowance' => $employeeData['communication_allowance'] ?? 0,
                 'is_active' => true,
             ]);
         }
@@ -426,11 +509,15 @@ class DatabaseSeeder extends Seeder
                 $undertimeMinutes = rand(0, 30);
 
                 $dailyRate = $employee->monthly_salary / 22;
-                $hourlyRate = $employee->hourly_rate ?? ($dailyRate / 8);
+                $hourlyRate = ($employee->hourly_rate > 0) ? $employee->hourly_rate : ($dailyRate / 8);
                 
                 $basicPay = ($workMinutes / 60) * $hourlyRate;
                 $overtimePay = ($overtimeMinutes / 60) * $hourlyRate * 1.25;
-                $grossPay = $basicPay + $overtimePay;
+                
+                // Call Center Allowances (split semi-monthly)
+                $allowances = ($employee->meal_allowance + $employee->transportation_allowance + $employee->communication_allowance) / 2;
+                
+                $grossPay = $basicPay + $overtimePay + $allowances;
 
                 $sss = $grossPay * 0.045;
                 $philhealth = $grossPay * 0.025;
@@ -452,7 +539,7 @@ class DatabaseSeeder extends Seeder
                     'basic_pay' => $basicPay,
                     'overtime_pay' => $overtimePay,
                     'holiday_pay' => 0,
-                    'allowances' => 0,
+                    'allowances' => $allowances,
                     'gross_pay' => $grossPay,
                     'sss_contribution' => $sss,
                     'philhealth_contribution' => $philhealth,
@@ -492,11 +579,15 @@ class DatabaseSeeder extends Seeder
                 $undertimeMinutes = rand(0, 30);
 
                 $dailyRate = $employee->monthly_salary / 22;
-                $hourlyRate = $employee->hourly_rate ?? ($dailyRate / 8);
+                $hourlyRate = ($employee->hourly_rate > 0) ? $employee->hourly_rate : ($dailyRate / 8);
                 
                 $basicPay = ($workMinutes / 60) * $hourlyRate;
                 $overtimePay = ($overtimeMinutes / 60) * $hourlyRate * 1.25;
-                $grossPay = $basicPay + $overtimePay;
+                
+                // Call Center Allowances (split semi-monthly)
+                $allowances = ($employee->meal_allowance + $employee->transportation_allowance + $employee->communication_allowance) / 2;
+
+                $grossPay = $basicPay + $overtimePay + $allowances;
 
                 $sss = $grossPay * 0.045;
                 $philhealth = $grossPay * 0.025;
@@ -518,7 +609,7 @@ class DatabaseSeeder extends Seeder
                     'basic_pay' => $basicPay,
                     'overtime_pay' => $overtimePay,
                     'holiday_pay' => 0,
-                    'allowances' => 0,
+                    'allowances' => $allowances,
                     'gross_pay' => $grossPay,
                     'sss_contribution' => $sss,
                     'philhealth_contribution' => $philhealth,
@@ -540,9 +631,26 @@ class DatabaseSeeder extends Seeder
 
         $this->command->info('Payroll periods and payrolls created!');
         $this->command->info('');
+
+        // FINAL STEP: Generate DTRs from the attendance records we just created
+        $this->command->info('Generating Daily Time Records (DTRs) from attendance data...');
+        $dtrService = app(DtrService::class);
+        $periods = PayrollPeriod::all();
+        $totalCreated = 0;
+        foreach ($periods as $period) {
+            $this->command->info("   Processing {$period->period_label}...");
+            $result = $dtrService->generateDtrForPeriod($period);
+            $count = $result['total_dtrs_created'] ?? 0;
+            $this->command->info("   - Created $count records");
+            $totalCreated += $count;
+        }
+        $this->command->info("DTR Generation Complete! Total created: $totalCreated");
+
+        $this->command->info('');
         $this->command->info('=== TEST DATA GENERATION COMPLETE ===');
         $this->command->info('Generated data includes:');
         $this->command->info('- Attendance records from Aug 2025 to present');
+        $this->command->info('- DTR records linked to payroll periods');
         $this->command->info('- Leave requests (various statuses)');
         $this->command->info('- Payroll periods (bi-monthly)');
         $this->command->info('- Payslips for all employees');

@@ -8,14 +8,14 @@
                 <a href="{{ route('attendance.edit', $attendance) }}" class="bg-yellow-600 text-white px-4 py-2 rounded-md hover:bg-yellow-700">
                     Edit
                 </a>
-                <a href="{{ route('attendance.manage') }}" class="text-gray-600 hover:text-gray-800">
+                <a href="javascript:window.history.back()" class="text-gray-600 hover:text-gray-800">
                     &larr; Back
                 </a>
             </div>
         </div>
     </x-slot>
 
-    <div class="py-12">
+    <div class="py-4">
         <div class="max-w-4xl mx-auto sm:px-6 lg:px-8">
             <!-- Main Info -->
             <div class="bg-white overflow-hidden shadow-sm sm:rounded-lg mb-6">
