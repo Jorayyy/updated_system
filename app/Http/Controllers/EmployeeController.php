@@ -94,12 +94,19 @@ class EmployeeController extends Controller
             'date_hired' => 'nullable|date',
             'site_id' => 'nullable|exists:sites,id',
             'account_id' => 'nullable|exists:accounts,id',
+            'profile_photo' => 'nullable|image|mimes:jpeg,png,jpg,gif|max:2048',
         ]);
+
+        $profilePhotoPath = null;
+        if ($request->hasFile('profile_photo')) {
+            $profilePhotoPath = $request->file('profile_photo')->store('profile-photos', 'public');
+        }
 
         User::create([
             'employee_id' => $request->employee_id,
             'name' => $request->name,
             'email' => $request->email,
+            'profile_photo' => $profilePhotoPath,
             'password' => Hash::make($request->password),
             'role' => $request->role,
             'department' => $request->department,
@@ -161,6 +168,7 @@ class EmployeeController extends Controller
             'monthly_salary' => 'nullable|numeric|min:0',
             'date_hired' => 'nullable|date',
             'is_active' => 'boolean',
+            'profile_photo' => 'nullable|image|mimes:jpeg,png,jpg,gif|max:2048',
         ]);
 
         $data = [
@@ -179,6 +187,14 @@ class EmployeeController extends Controller
             'is_active' => $request->boolean('is_active', true),
         ];
 
+        if ($request->hasFile('profile_photo')) {
+            // Delete old photo if exists
+            if ($employee->profile_photo && \Storage::disk('public')->exists($employee->profile_photo)) {
+                \Storage::disk('public')->delete($employee->profile_photo);
+            }
+            $data['profile_photo'] = $request->file('profile_photo')->store('profile-photos', 'public');
+        }
+
         if ($request->filled('password')) {
             $data['password'] = Hash::make($request->password);
         }
@@ -192,8 +208,13 @@ class EmployeeController extends Controller
     /**
      * Remove the specified employee (soft delete by deactivating)
      */
-    public function destroy(User $employee)
+    public function destroy(Request $request, User $employee)
     {
+        // Require admin password for deactivation of an employee
+        if (!Hash::check($request->admin_password, auth()->user()->password)) {
+            return back()->with('error', 'Unauthorized. Incorrect admin password provided.');
+        }
+
         // Don't delete, just deactivate
         $employee->update(['is_active' => false]);
 
@@ -215,8 +236,13 @@ class EmployeeController extends Controller
     /**
      * Toggle employee status (active/inactive)
      */
-    public function toggleStatus(User $employee)
+    public function toggleStatus(Request $request, User $employee)
     {
+        // Require password when deactivating (not activating)
+        if ($employee->is_active && !Hash::check($request->admin_password, auth()->user()->password)) {
+            return back()->with('error', 'Unauthorized. Incorrect admin password provided.');
+        }
+
         $employee->update(['is_active' => !$employee->is_active]);
         
         $status = $employee->is_active ? 'activated' : 'deactivated';

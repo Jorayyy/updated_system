@@ -5,6 +5,8 @@ namespace App\Http\Controllers;
 use App\Models\Account;
 use App\Models\Schedule;
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\Hash;
+use Illuminate\Support\Facades\Auth;
 
 class ScheduleController extends Controller
 {
@@ -58,8 +60,13 @@ class ScheduleController extends Controller
         return redirect()->route('schedules.index')->with('success', 'Schedule updated successfully.');
     }
 
-    public function destroy(Schedule $schedule)
+    public function destroy(Request $request, Schedule $schedule)
     {
+        // Require admin password for deletion
+        if (!Hash::check($request->admin_password, Auth::user()->password)) {
+            return back()->with('error', 'Unauthorized. Incorrect admin password provided.');
+        }
+
         $schedule->delete();
         return redirect()->route('schedules.index')->with('success', 'Schedule deleted successfully.');
     }

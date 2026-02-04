@@ -4,6 +4,8 @@ namespace App\Http\Controllers;
 
 use App\Models\Holiday;
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\Hash;
+use Illuminate\Support\Facades\Auth;
 
 class HolidayController extends Controller
 {
@@ -78,8 +80,13 @@ class HolidayController extends Controller
     /**
      * Remove the specified holiday
      */
-    public function destroy(Holiday $holiday)
+    public function destroy(Request $request, Holiday $holiday)
     {
+        // Require admin password for deletion
+        if (!Hash::check($request->admin_password, Auth::user()->password)) {
+            return back()->with('error', 'Unauthorized. Incorrect admin password provided.');
+        }
+
         $holiday->delete();
 
         return redirect()->route('holidays.index')

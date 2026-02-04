@@ -22,19 +22,24 @@ class CompanySetting extends Model
      */
     public static function getValue(string $key, $default = null)
     {
-        $setting = self::where('key', $key)->first();
-        
-        if (!$setting) {
+        try {
+            $setting = self::where('key', $key)->first();
+            
+            if (!$setting) {
+                return $default;
+            }
+
+            return match($setting->type) {
+                'integer' => (int) $setting->value,
+                'decimal' => (float) $setting->value,
+                'boolean' => filter_var($setting->value, FILTER_VALIDATE_BOOLEAN),
+                'json' => json_decode($setting->value, true),
+                default => $setting->value,
+            };
+        } catch (\Illuminate\Database\QueryException $e) {
+            // Table might not exist yet during initial setup/migration
             return $default;
         }
-
-        return match($setting->type) {
-            'integer' => (int) $setting->value,
-            'decimal' => (float) $setting->value,
-            'boolean' => filter_var($setting->value, FILTER_VALIDATE_BOOLEAN),
-            'json' => json_decode($setting->value, true),
-            default => $setting->value,
-        };
     }
 
     /**

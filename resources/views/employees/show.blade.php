@@ -20,37 +20,80 @@
             <!-- Employee Info -->
             <div class="bg-white overflow-hidden shadow-sm sm:rounded-lg mb-6">
                 <div class="p-6">
-                    <div class="grid grid-cols-1 md:grid-cols-3 gap-6">
-                        <div>
-                            <h3 class="text-lg font-semibold mb-4">Personal Information</h3>
-                            <div class="space-y-2">
-                                <div><span class="text-gray-500">Employee ID:</span> {{ $employee->employee_id }}</div>
-                                <div><span class="text-gray-500">Email:</span> {{ $employee->email }}</div>
-                                <div><span class="text-gray-500">Role:</span> <span class="px-2 py-1 text-xs rounded-full 
-                                    @if($employee->role == 'admin') bg-purple-100 text-purple-800
-                                    @elseif($employee->role == 'hr') bg-blue-100 text-blue-800
-                                    @else bg-gray-100 text-gray-800 @endif">{{ ucfirst($employee->role) }}</span></div>
-                                <div><span class="text-gray-500">Status:</span> 
-                                    <span class="px-2 py-1 text-xs rounded-full {{ $employee->is_active ? 'bg-green-100 text-green-800' : 'bg-red-100 text-red-800' }}">
-                                        {{ $employee->is_active ? 'Active' : 'Inactive' }}
-                                    </span>
+                    <div class="flex flex-col md:flex-row gap-8">
+                        <div class="flex-shrink-0 flex flex-col items-center">
+                            @if($employee->profile_photo)
+                                <img class="h-48 w-48 rounded-2xl object-cover shadow-lg border-4 border-white" src="{{ asset('storage/' . $employee->profile_photo) }}" alt="{{ $employee->name }}">
+                            @else
+                                <div class="h-48 w-48 rounded-2xl bg-indigo-100 flex items-center justify-center border-4 border-white shadow-lg">
+                                    <span class="text-indigo-700 font-bold text-5xl">{{ strtoupper(substr($employee->name, 0, 2)) }}</span>
+                                </div>
+                            @endif
+                            <div class="mt-4 text-center">
+                                <span class="px-3 py-1 text-sm font-semibold rounded-full {{ $employee->is_active ? 'bg-green-100 text-green-800' : 'bg-red-100 text-red-800' }}">
+                                    {{ $employee->is_active ? 'Active' : 'Inactive' }}
+                                </span>
+                            </div>
+                        </div>
+                        
+                        <div class="flex-grow grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+                            <div>
+                                <h3 class="text-sm font-bold text-gray-400 uppercase tracking-wider mb-4">Personal Information</h3>
+                                <div class="space-y-3">
+                                    <div>
+                                        <p class="text-xs text-gray-500 uppercase">Employee ID</p>
+                                        <p class="font-medium text-gray-900">{{ $employee->employee_id }}</p>
+                                    </div>
+                                    <div>
+                                        <p class="text-xs text-gray-500 uppercase">Email Address</p>
+                                        <p class="font-medium text-gray-900">{{ $employee->email }}</p>
+                                    </div>
+                                    <div>
+                                        <p class="text-xs text-gray-500 uppercase">System Role</p>
+                                        <span class="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium 
+                                            @if($employee->role == 'admin') bg-purple-100 text-purple-800
+                                            @elseif($employee->role == 'hr') bg-blue-100 text-blue-800
+                                            @else bg-gray-100 text-gray-800 @endif">
+                                            {{ ucfirst($employee->role) }}
+                                        </span>
+                                    </div>
                                 </div>
                             </div>
-                        </div>
-                        <div>
-                            <h3 class="text-lg font-semibold mb-4">Employment Details</h3>
-                            <div class="space-y-2">
-                                <div><span class="text-gray-500">Department:</span> {{ $employee->department ?? '-' }}</div>
-                                <div><span class="text-gray-500">Position:</span> {{ $employee->position ?? '-' }}</div>
-                                <div><span class="text-gray-500">Date Hired:</span> {{ $employee->date_hired ? $employee->date_hired->format('M d, Y') : '-' }}</div>
+                            
+                            <div>
+                                <h3 class="text-sm font-bold text-gray-400 uppercase tracking-wider mb-4">Employment Details</h3>
+                                <div class="space-y-3">
+                                    <div>
+                                        <p class="text-xs text-gray-500 uppercase">Department</p>
+                                        <p class="font-medium text-gray-900">{{ $employee->department ?? 'N/A' }}</p>
+                                    </div>
+                                    <div>
+                                        <p class="text-xs text-gray-500 uppercase">Account</p>
+                                        <p class="font-medium text-gray-900">{{ $employee->account?->name ?? 'N/A' }}</p>
+                                    </div>
+                                    <div>
+                                        <p class="text-xs text-gray-500 uppercase">Site/Location</p>
+                                        <p class="font-medium text-gray-900">{{ $employee->site?->name ?? 'N/A' }}</p>
+                                    </div>
+                                </div>
                             </div>
-                        </div>
-                        <div>
-                            <h3 class="text-lg font-semibold mb-4">Compensation</h3>
-                            <div class="space-y-2">
-                                <div><span class="text-gray-500">Monthly Salary:</span> ₱{{ number_format($employee->monthly_salary, 2) }}</div>
-                                <div><span class="text-gray-500">Daily Rate:</span> ₱{{ number_format($employee->daily_rate, 2) }}</div>
-                                <div><span class="text-gray-500">Hourly Rate:</span> ₱{{ number_format($employee->hourly_rate, 2) }}</div>
+
+                            <div>
+                                <h3 class="text-sm font-bold text-gray-400 uppercase tracking-wider mb-4">Compensation</h3>
+                                <div class="space-y-3">
+                                    <div>
+                                        <p class="text-xs text-gray-500 uppercase">Monthly Salary</p>
+                                        <p class="font-medium text-gray-900">₱{{ number_format($employee->monthly_salary, 2) }}</p>
+                                    </div>
+                                    <div>
+                                        <p class="text-xs text-gray-500 uppercase">Daily Rate</p>
+                                        <p class="font-medium text-gray-900">₱{{ number_format($employee->daily_rate, 2) }}</p>
+                                    </div>
+                                    <div>
+                                        <p class="text-xs text-gray-500 uppercase">Date Hired</p>
+                                        <p class="font-medium text-gray-900">{{ $employee->date_hired ? $employee->date_hired->format('M d, Y') : 'N/A' }}</p>
+                                    </div>
+                                </div>
                             </div>
                         </div>
                     </div>

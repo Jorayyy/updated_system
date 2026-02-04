@@ -4,6 +4,8 @@ namespace App\Http\Controllers;
 
 use App\Models\Site;
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\Hash;
+use Illuminate\Support\Facades\Auth;
 
 class SiteController extends Controller
 {
@@ -49,8 +51,13 @@ class SiteController extends Controller
         return redirect()->route('sites.index')->with('success', 'Site updated successfully.');
     }
 
-    public function destroy(Site $site)
+    public function destroy(Request $request, Site $site)
     {
+        // Require admin password for deletion
+        if (!Hash::check($request->admin_password, Auth::user()->password)) {
+            return back()->with('error', 'Unauthorized. Incorrect admin password provided.');
+        }
+
         $site->delete();
         return redirect()->route('sites.index')->with('success', 'Site deleted successfully.');
     }

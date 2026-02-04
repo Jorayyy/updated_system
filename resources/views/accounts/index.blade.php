@@ -30,10 +30,13 @@
                                         <td class="px-6 py-4 text-sm text-gray-500">{{ $account->description ?? '-' }}</td>
                                         <td class="px-6 py-4 whitespace-nowrap text-sm font-medium">
                                             <a href="{{ route('accounts.edit', $account) }}" class="text-indigo-600 hover:text-indigo-900 mr-3">Edit</a>
-                                            <form action="{{ route('accounts.destroy', $account) }}" method="POST" class="inline">
+                                            <form action="{{ route('accounts.destroy', $account) }}" method="POST" class="inline" id="delete-form-{{ $account->id }}">
                                                 @csrf
                                                 @method('DELETE')
-                                                <button type="submit" class="text-red-600 hover:text-red-900" onclick="return confirm('Are you sure?')">Delete</button>
+                                                <input type="hidden" name="admin_password" id="admin_password_{{ $account->id }}">
+                                                <button type="button" 
+                                                    onclick="const password = prompt('Critical Action: This will delete the account. Enter ADMIN PASSWORD to confirm:'); if(password) { document.getElementById('admin_password_{{ $account->id }}').value = password; document.getElementById('delete-form-{{ $account->id }}').submit(); }"
+                                                    class="text-red-600 hover:text-red-900">Delete</button>
                                             </form>
                                         </td>
                                     </tr>

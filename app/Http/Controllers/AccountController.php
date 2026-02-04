@@ -4,6 +4,8 @@ namespace App\Http\Controllers;
 
 use App\Models\Account;
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\Hash;
+use Illuminate\Support\Facades\Auth;
 
 class AccountController extends Controller
 {
@@ -47,8 +49,13 @@ class AccountController extends Controller
         return redirect()->route('accounts.index')->with('success', 'Account updated successfully.');
     }
 
-    public function destroy(Account $account)
+    public function destroy(Request $request, Account $account)
     {
+        // Require admin password for deletion
+        if (!Hash::check($request->admin_password, Auth::user()->password)) {
+            return back()->with('error', 'Unauthorized. Incorrect admin password provided.');
+        }
+
         $account->delete();
         return redirect()->route('accounts.index')->with('success', 'Account deleted successfully.');
     }

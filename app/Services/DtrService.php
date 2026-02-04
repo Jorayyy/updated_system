@@ -39,11 +39,11 @@ class DtrService
     protected int $graceMinutes = 15; // 15-minute grace period
     protected int $lunchMinutes = 60; // 1 hour lunch
     protected int $breakMinutes = 30; // Two 15-minute breaks
+    protected bool $settingsLoaded = false;
 
     public function __construct()
     {
-        // Load settings from database
-        $this->loadSettings();
+        // Settings are now loaded lazily when needed to avoid boot-time database issues
     }
 
     /**
@@ -51,12 +51,18 @@ class DtrService
      */
     protected function loadSettings(): void
     {
+        if ($this->settingsLoaded) {
+            return;
+        }
+
         $this->standardWorkMinutes = CompanySetting::getValue('regular_work_hours', 8) * 60;
         $this->standardTimeIn = CompanySetting::getValue('work_start_time', '21:00');
         $this->standardTimeOut = CompanySetting::getValue('work_end_time', '07:00');
         $this->graceMinutes = CompanySetting::getValue('grace_period_minutes', 15);
         $this->lunchMinutes = CompanySetting::getValue('lunch_break_minutes', 60);
         $this->breakMinutes = CompanySetting::getValue('short_break_minutes', 15) * 2;
+
+        $this->settingsLoaded = true;
     }
 
     /**
@@ -64,6 +70,7 @@ class DtrService
      */
     protected function getScheduleForEmployee(User $employee): array
     {
+        $this->loadSettings();
         // Try to get account-specific schedule
         if ($employee->account_id) {
             $schedule = Schedule::where('account_id', $employee->account_id)
@@ -103,6 +110,7 @@ class DtrService
      */
     public function generateDtrForDate(Carbon $date, ?int $payrollPeriodId = null): array
     {
+        $this->loadSettings();
         $results = [
             'date' => $date->toDateString(),
             'processed' => 0,
@@ -152,6 +160,7 @@ class DtrService
      */
     public function generateDtrForEmployee(User $employee, Carbon $date, ?int $payrollPeriodId = null): ?DailyTimeRecord
     {
+        $this->loadSettings();
         // Check if DTR already exists
         $existingDtr = DailyTimeRecord::where('user_id', $employee->id)
             ->whereDate('date', $date)
@@ -402,6 +411,7 @@ class DtrService
      */
     public function processIncompleteAttendance(Carbon $date): array
     {
+        $this->loadSettings();
         $results = [
             'processed' => 0,
             'auto_timed_out' => [],
@@ -465,6 +475,7 @@ class DtrService
      */
     public function generateDtrForPeriod(PayrollPeriod $period): array
     {
+        $this->loadSettings();
         $results = [
             'period' => $period->period_label,
             'start_date' => $period->start_date->toDateString(),
@@ -603,6 +614,7 @@ class DtrService
      */
     public function getEmployeeDtrSummary(User $employee, PayrollPeriod $period): array
     {
+        $this->loadSettings();
         $dtrs = DailyTimeRecord::where('user_id', $employee->id)
             ->where('payroll_period_id', $period->id)
             ->get();

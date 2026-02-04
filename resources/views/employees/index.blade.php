@@ -142,8 +142,22 @@
                                         <td class="px-6 py-4 whitespace-nowrap text-sm font-medium text-gray-900">
                                             {{ $employee->employee_id }}
                                         </td>
-                                        <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
-                                            {{ $employee->name }}
+                                        <td class="px-6 py-4 whitespace-nowrap">
+                                            <div class="flex items-center">
+                                                <div class="flex-shrink-0 h-10 w-10">
+                                                    @if($employee->profile_photo)
+                                                        <img class="h-10 w-10 rounded-full object-cover border border-gray-200" src="{{ asset('storage/' . $employee->profile_photo) }}" alt="{{ $employee->name }}">
+                                                    @else
+                                                        <div class="h-10 w-10 rounded-full bg-indigo-100 flex items-center justify-center border border-indigo-200">
+                                                            <span class="text-indigo-700 font-medium text-sm">{{ strtoupper(substr($employee->name, 0, 2)) }}</span>
+                                                        </div>
+                                                    @endif
+                                                </div>
+                                                <div class="ml-4">
+                                                    <div class="text-sm font-medium text-gray-900">{{ $employee->name }}</div>
+                                                    <div class="text-xs text-gray-500">{{ $employee->email }}</div>
+                                                </div>
+                                            </div>
                                         </td>
                                         <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
                                             <div class="font-medium text-gray-900">{{ $employee->account?->name ?? 'N/A' }}</div>
@@ -169,11 +183,12 @@
                                         <td class="px-6 py-4 whitespace-nowrap text-sm">
                                             <a href="{{ route('employees.show', $employee) }}" class="text-indigo-600 hover:text-indigo-900 mr-3 transition-colors duration-200">View</a>
                                             <a href="{{ route('employees.edit', $employee) }}" class="text-yellow-600 hover:text-yellow-900 mr-3 transition-colors duration-200">Edit</a>
-                                            <form action="{{ route('employees.toggle-status', $employee) }}" method="POST" class="inline">
+                                            <form action="{{ route('employees.toggle-status', $employee) }}" method="POST" class="inline" id="toggle-form-{{ $employee->id }}">
                                                 @csrf
+                                                <input type="hidden" name="admin_password" id="admin_password_{{ $employee->id }}">
                                                 @if($employee->is_active)
-                                                    <button type="submit" class="text-red-600 hover:text-red-900 transition-colors duration-200" 
-                                                        onclick="return confirm('Deactivate this employee?')">Deactivate</button>
+                                                    <button type="button" class="text-red-600 hover:text-red-900 transition-colors duration-200" 
+                                                        onclick="const password = prompt('Critical Action: You are about to DEACTIVATE this employee. Enter ADMIN PASSWORD to confirm:'); if(password) { document.getElementById('admin_password_{{ $employee->id }}').value = password; document.getElementById('toggle-form-{{ $employee->id }}').submit(); }">Deactivate</button>
                                                 @else
                                                     <button type="submit" class="text-green-600 hover:text-green-900 transition-colors duration-200">Activate</button>
                                                 @endif

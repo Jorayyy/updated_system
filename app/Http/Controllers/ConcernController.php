@@ -9,8 +9,7 @@ use App\Models\Notification;
 use App\Models\User;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
-use Illuminate\Support\Facades\DB;
-use Illuminate\Validation\Rule;
+use Illuminate\Support\Facades\Hash;
 
 class ConcernController extends Controller
 {
@@ -447,8 +446,13 @@ class ConcernController extends Controller
     /**
      * Delete a concern
      */
-    public function destroy(Concern $concern)
+    public function destroy(Request $request, Concern $concern)
     {
+        // Require admin password for deletion of important information
+        if (!Hash::check($request->admin_password, Auth::user()->password)) {
+            return back()->with('error', 'Unauthorized. Incorrect admin password provided.');
+        }
+
         try {
             $ticketNumber = $concern->ticket_number;
             $concern->delete();

@@ -47,6 +47,11 @@ class Kernel extends ConsoleKernel
             ->onOneServer()
             ->appendOutputTo(storage_path('logs/dtr-automation.log'));
 
+        // Old records cleanup (3-year retention policy)
+        $schedule->command('app:cleanup-old-records')
+            ->dailyAt('03:00')
+            ->withoutOverlapping();
+
         // Optional: Run early morning to catch overnight shifts
         // $schedule->command('attendance:process-eod --date=' . now()->subDay()->toDateString())
         //     ->dailyAt('06:00')
