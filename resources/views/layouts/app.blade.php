@@ -855,5 +855,7 @@
                 return false;
             };
         </script>
+
+        @stack('scripts')
     </body>
 </html>

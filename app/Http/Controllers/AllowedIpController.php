@@ -51,10 +51,10 @@ class AllowedIpController extends Controller
     public function update(Request $request, AllowedIp $allowedIp)
     {
         $validated = $request->validate([
-            'label' => 'nullable|string|max:100',
+            'ip_address' => 'required|ip|unique:allowed_ips,ip_address,' . $allowedIp->id,
+            'label' => 'required|string|max:100',
             'location' => 'nullable|string|max:100',
             'description' => 'nullable|string|max:500',
-            'is_active' => 'boolean',
         ]);
 
         $allowedIp->update($validated);

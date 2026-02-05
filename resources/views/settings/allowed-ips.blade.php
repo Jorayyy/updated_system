@@ -188,9 +188,16 @@
     </div>
 
     <!-- Edit Modal -->
-    <div id="edit-modal" class="fixed inset-0 bg-gray-600 bg-opacity-50 hidden overflow-y-auto h-full w-full z-50">
-        <div class="relative top-20 mx-auto p-5 border w-96 shadow-lg rounded-md bg-white">
-            <h3 class="text-lg font-medium text-gray-900 mb-4">Edit IP Address</h3>
+    <div id="edit-modal" class="fixed inset-0 bg-gray-600 bg-opacity-50 hidden overflow-y-auto h-full w-full z-50 flex items-center justify-center">
+        <div class="relative mx-auto p-5 border w-96 shadow-lg rounded-md bg-white">
+            <div class="flex justify-between items-center mb-4">
+                <h3 class="text-lg font-medium text-gray-900">Edit IP Address</h3>
+                <button type="button" onclick="closeEditModal()" class="text-gray-400 hover:text-gray-500">
+                    <svg class="h-6 w-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12" />
+                    </svg>
+                </button>
+            </div>
             <form id="edit-form" method="POST">
                 @csrf
                 @method('PUT')
@@ -198,6 +205,9 @@
                     <div>
                         <label class="block text-sm font-medium text-gray-700 mb-1">IP Address</label>
                         <input type="text" name="ip_address" id="edit-ip" required
+                               pattern="^(?:(?:25[0-5]|2[0-4][0-9]|[01]?[0-9][0-9]?)\.){3}(?:25[0-5]|2[0-4][0-9]|[01]?[0-9][0-9]?)$|^([a-fA-F0-9:]+)$"
+                               class="w-full rounded-md border-gray-300 shadow-sm text-sm">
+                    </div>
                                class="w-full rounded-md border-gray-300 shadow-sm text-sm">
                     </div>
                     <div>
@@ -232,7 +242,12 @@
     @push('scripts')
     <script>
         function openEditModal(ip) {
-            document.getElementById('edit-form').action = `/settings/allowed-ips/${ip.id}`;
+            // Set action URL dynamically based on current path
+            const baseUrl = window.location.pathname.endsWith('/') 
+                ? window.location.pathname.slice(0, -1) 
+                : window.location.pathname;
+            document.getElementById('edit-form').action = `${baseUrl}/${ip.id}`;
+            
             document.getElementById('edit-ip').value = ip.ip_address;
             document.getElementById('edit-label').value = ip.label;
             document.getElementById('edit-location').value = ip.location || '';
