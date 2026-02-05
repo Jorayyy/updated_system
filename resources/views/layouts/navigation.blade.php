@@ -69,6 +69,11 @@
                                     <x-dropdown-link :href="route('payroll.periods')">
                                         {{ __('Payroll Periods') }}
                                     </x-dropdown-link>
+                                    @if(auth()->user()->isAccounting())
+                                        <x-dropdown-link :href="route('payroll.computation.dashboard')">
+                                            {{ __('Payroll Computation') }}
+                                        </x-dropdown-link>
+                                    @endif
                                     <x-dropdown-link :href="route('payroll.index')">
                                         {{ __('All Payrolls') }}
                                     </x-dropdown-link>
@@ -176,9 +181,14 @@
                 <x-responsive-nav-link :href="route('transactions.admin-index')">
                     {{ __('Transactions') }}
                 </x-responsive-nav-link>
-                <x-responsive-nav-link :href="route('payroll.periods')">
-                    {{ __('Payroll') }}
+                <x-responsive-nav-link :href="route('payroll.periods')" :active="request()->routeIs('payroll.periods*')">
+                    {{ __('Payroll Periods') }}
                 </x-responsive-nav-link>
+                @if(auth()->user()->isAccounting())
+                    <x-responsive-nav-link :href="route('payroll.computation.dashboard')" :active="request()->routeIs('payroll.computation.*')">
+                        {{ __('Payroll Computation') }}
+                    </x-responsive-nav-link>
+                @endif
                 @if(auth()->user()->isAdmin())
                     <x-responsive-nav-link :href="route('concerns.index')">
                         {{ __('Concerns & Tickets') }}

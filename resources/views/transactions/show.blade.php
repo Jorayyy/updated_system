@@ -127,6 +127,22 @@
                         <p class="text-gray-900 whitespace-pre-wrap">{{ $transaction->reason }}</p>
                     </div>
 
+                    <!-- Attachment -->
+                    @if($transaction->attachment)
+                        <div class="mt-6 pt-6 border-t border-gray-200">
+                            <h4 class="text-sm font-medium text-gray-500 mb-2">Attachment</h4>
+                            <div class="flex items-center">
+                                <a href="{{ asset('storage/' . $transaction->attachment) }}" target="_blank"
+                                   class="inline-flex items-center px-4 py-2 bg-blue-50 text-blue-700 border border-blue-200 rounded-md hover:bg-blue-100 transition">
+                                    <svg class="w-5 h-5 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 10v6m0 0l-3-3m3 3l3-3m2 8H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"></path>
+                                    </svg>
+                                    View Attachment
+                                </a>
+                            </div>
+                        </div>
+                    @endif
+
                     <!-- Rejection Reason -->
                     @if($transaction->isRejected() && $transaction->rejection_reason)
                         <div class="mt-6 pt-6 border-t border-gray-200">
@@ -167,7 +183,7 @@
                         <!-- HR Approval -->
                         <div class="relative flex items-start mb-6">
                             <div class="absolute left-0 w-8 h-8 rounded-full 
-                                {{ $transaction->hr_approved_at ? 'bg-green-500' : ($transaction->isRejected() ? 'bg-red-500' : 'bg-gray-300 }} 
+                                {{ $transaction->hr_approved_at ? 'bg-green-500' : ($transaction->isRejected() ? 'bg-red-500' : 'bg-gray-300') }} 
                                 flex items-center justify-center">
                                 @if($transaction->hr_approved_at)
                                     <svg class="w-4 h-4 text-white" fill="currentColor" viewBox="0 0 20 20">
@@ -203,7 +219,7 @@
                         <!-- Admin Approval -->
                         <div class="relative flex items-start">
                             <div class="absolute left-0 w-8 h-8 rounded-full 
-                                {{ $transaction->admin_approved_at ? 'bg-green-500' : ($transaction->isRejected() ? 'bg-red-500' : 'bg-gray-300 }} 
+                                {{ $transaction->admin_approved_at ? 'bg-green-500' : ($transaction->isRejected() ? 'bg-red-500' : 'bg-gray-300') }} 
                                 flex items-center justify-center">
                                 @if($transaction->admin_approved_at)
                                     <svg class="w-4 h-4 text-white" fill="currentColor" viewBox="0 0 20 20">

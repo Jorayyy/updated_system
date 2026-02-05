@@ -29,7 +29,6 @@ class LoginRequest extends FormRequest
         return [
             'email' => ['required', 'string', 'email'],
             'password' => ['required', 'string'],
-            'role' => ['required', 'string', 'in:employee,hr,admin'],
         ];
     }
 
@@ -50,22 +49,8 @@ class LoginRequest extends FormRequest
             ]);
         }
 
-        // Check if the user has the selected role
-        $user = Auth::user();
-        $selectedRole = $this->input('role');
-
-        // User must login with their exact role
-        // No cross-role login allowed
-        if ($user->role !== $selectedRole) {
-            Auth::logout();
-            RateLimiter::hit($this->throttleKey());
-
-            throw ValidationException::withMessages([
-                'role' => 'Invalid role selected. Please select "' . ucfirst($user->role) . '" to login with this account.',
-            ]);
-        }
-
         // Check if user is active
+        $user = Auth::user();
         if (!$user->is_active) {
             Auth::logout();
             throw ValidationException::withMessages([

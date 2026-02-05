@@ -15,7 +15,7 @@
                         </div>
                     @endif
 
-                    <form action="{{ route('concerns.user-store') }}" method="POST">
+                    <form action="{{ route('concerns.user-store') }}" method="POST" enctype="multipart/form-data">
                         @csrf
                         
                         <div class="space-y-6">
@@ -32,40 +32,67 @@
                                 @enderror
                             </div>
 
-                            <!-- Category -->
-                            <div>
-                                <label for="category" class="block text-sm font-medium text-gray-700">
-                                    Category <span class="text-red-500">*</span>
-                                </label>
-                                <select name="category" id="category" required
-                                        class="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500">
-                                    <option value="">Select a category</option>
-                                    @foreach($categories as $key => $label)
-                                        <option value="{{ $key }}" {{ old('category') == $key ? 'selected' : '' }}>{{ $label }}</option>
-                                    @endforeach
-                                </select>
-                                @error('category')
-                                    <span class="text-red-500 text-sm">{{ $message }}</span>
-                                @enderror
+                            <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+                                <!-- Category -->
+                                <div>
+                                    <label for="category" class="block text-sm font-medium text-gray-700">
+                                        Category <span class="text-red-500">*</span>
+                                    </label>
+                                    <select name="category" id="category" required
+                                            class="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500">
+                                        <option value="">Select a category</option>
+                                        @foreach($categories as $key => $label)
+                                            <option value="{{ $key }}" {{ old('category') == $key ? 'selected' : '' }}>{{ $label }}</option>
+                                        @endforeach
+                                    </select>
+                                    @error('category')
+                                        <span class="text-red-500 text-sm">{{ $message }}</span>
+                                    @enderror
+                                </div>
+
+                                <!-- Priority -->
+                                <div>
+                                    <label for="priority" class="block text-sm font-medium text-gray-700">
+                                        Priority <span class="text-red-500">*</span>
+                                    </label>
+                                    <select name="priority" id="priority" required
+                                            class="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500">
+                                        @foreach($priorities as $key => $label)
+                                            <option value="{{ $key }}" {{ old('priority', 'medium') == $key ? 'selected' : '' }}>{{ $label }}</option>
+                                        @endforeach
+                                    </select>
+                                    @error('priority')
+                                        <span class="text-red-500 text-sm">{{ $message }}</span>
+                                    @enderror
+                                </div>
                             </div>
 
-                            <!-- Priority -->
-                            <div>
-                                <label for="priority" class="block text-sm font-medium text-gray-700">
-                                    Priority <span class="text-red-500">*</span>
-                                </label>
-                                <select name="priority" id="priority" required
-                                        class="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500">
-                                    @foreach($priorities as $key => $label)
-                                        <option value="{{ $key }}" {{ old('priority', 'medium') == $key ? 'selected' : '' }}>{{ $label }}</option>
-                                    @endforeach
-                                </select>
-                                <p class="mt-1 text-xs text-gray-500">
-                                    Low = Minor issue, Medium = Normal, High = Affecting work, Critical = Urgent/Blocking work
-                                </p>
-                                @error('priority')
-                                    <span class="text-red-500 text-sm">{{ $message }}</span>
-                                @enderror
+                            <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+                                <!-- Location (Optional) -->
+                                <div>
+                                    <label for="location" class="block text-sm font-medium text-gray-700">
+                                        Location / Site
+                                    </label>
+                                    <input type="text" name="location" id="location" value="{{ old('location') }}"
+                                           placeholder="e.g. Floor 2, Station 56"
+                                           class="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500">
+                                    @error('location')
+                                        <span class="text-red-500 text-sm">{{ $message }}</span>
+                                    @enderror
+                                </div>
+
+                                <!-- Affected PC (Optional) -->
+                                <div>
+                                    <label for="affected_pc" class="block text-sm font-medium text-gray-700">
+                                        Affected PC/Asset #
+                                    </label>
+                                    <input type="text" name="affected_pc" id="affected_pc" value="{{ old('affected_pc') }}"
+                                           placeholder="e.g. PC-12345"
+                                           class="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500">
+                                    @error('affected_pc')
+                                        <span class="text-red-500 text-sm">{{ $message }}</span>
+                                    @enderror
+                                </div>
                             </div>
 
                             <!-- Description -->
@@ -73,12 +100,34 @@
                                 <label for="description" class="block text-sm font-medium text-gray-700">
                                     Description <span class="text-red-500">*</span>
                                 </label>
-                                <textarea name="description" id="description" rows="6" required
+                                <textarea name="description" id="description" rows="5" required
                                           placeholder="Please provide detailed information about your concern. Include any relevant details that can help us address it faster."
                                           class="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500">{{ old('description') }}</textarea>
                                 @error('description')
                                     <span class="text-red-500 text-sm">{{ $message }}</span>
                                 @enderror
+                            </div>
+
+                            <!-- Attachment -->
+                            <div>
+                                <label for="attachment" class="block text-sm font-medium text-gray-700">
+                                    Attachment (Optional)
+                                </label>
+                                <input type="file" name="attachment" id="attachment"
+                                       class="mt-1 block w-full text-sm text-gray-500 file:mr-4 file:py-2 file:px-4 file:rounded-md file:border-0 file:text-sm file:font-semibold file:bg-blue-50 file:text-blue-700 hover:file:bg-blue-100">
+                                <p class="mt-1 text-xs text-gray-500">Max size: 5MB. Formats: JPG, PNG, PDF, DOCX.</p>
+                                @error('attachment')
+                                    <span class="text-red-500 text-sm">{{ $message }}</span>
+                                @enderror
+                            </div>
+
+                            <div class="flex items-center">
+                                <input type="checkbox" name="is_confidential" id="is_confidential" value="1" 
+                                       {{ old('is_confidential') ? 'checked' : '' }}
+                                       class="h-4 w-4 text-blue-600 focus:ring-blue-500 border-gray-300 rounded">
+                                <label for="is_confidential" class="ml-2 block text-sm text-gray-900">
+                                    Mark as Confidential (Only high-level HR/Admin can see)
+                                </label>
                             </div>
 
                             <!-- Info Box -->

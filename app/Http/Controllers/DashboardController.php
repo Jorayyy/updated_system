@@ -102,6 +102,14 @@ class DashboardController extends Controller
             ->where('year', $today->year)
             ->get();
 
+        // Recent Payslips
+        $recentPayslips = \App\Models\Payroll::with('payrollPeriod')
+            ->where('user_id', $user->id)
+            ->where('is_posted', true)
+            ->orderBy('created_at', 'desc')
+            ->limit(3)
+            ->get();
+
         return view('dashboard.employee', compact(
             'todayAttendance',
             'daysPresent',
@@ -109,7 +117,8 @@ class DashboardController extends Controller
             'daysAbsent',
             'totalWorkHours',
             'recentLeaveRequests',
-            'leaveBalances'
+            'leaveBalances',
+            'recentPayslips'
         ));
     }
 }

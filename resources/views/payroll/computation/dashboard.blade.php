@@ -215,7 +215,13 @@
                                                 {{ $period->pending_dtrs }} pending approval
                                             </span>
                                         </td>
-                                        <td class="px-6 py-4 whitespace-nowrap text-right text-sm font-medium">
+                                        <td class="px-6 py-4 whitespace-nowrap text-right text-sm font-medium space-x-3">
+                                            <form action="{{ route('payroll.computation.generate-dtrs', $period) }}" method="POST" class="inline">
+                                                @csrf
+                                                <button type="submit" class="text-indigo-600 hover:text-indigo-900 font-semibold" title="Create or complete DTR records for all employees">
+                                                    {{ $period->total_dtrs == 0 ? 'Generate DTRs' : 'Regenerate/Complete DTRs' }}
+                                                </button>
+                                            </form>
                                             <a href="{{ route('dtr-approval.index', ['period' => $period->id]) }}" class="text-indigo-600 hover:text-indigo-900">
                                                 Review DTRs
                                             </a>

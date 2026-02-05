@@ -398,17 +398,17 @@
                             <div x-show="!sidebarOpen" class="tooltip">Sites</div>
                         </div>
 
-                        <!-- Accounts -->
+                        <!-- User Roles -->
                         <div class="relative nav-item">
                             <a href="{{ route('accounts.index') }}" class="flex items-center gap-3 px-3 py-2.5 rounded-lg transition {{ request()->routeIs('accounts.*') ? 'bg-blue-600 text-white' : 'text-gray-300 hover:bg-gray-700 hover:text-white' }}">
                                 <div class="w-8 h-8 flex items-center justify-center flex-shrink-0">
                                     <svg class="w-5 h-5 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 20h5v-2a3 3 0 00-5.356-1.857M17 20H7m10 0v-2c0-.656-.126-1.283-.356-1.857M7 20H2v-2a3 3 0 015.356-1.857M7 20v-2c0-.656.126-1.283.356-1.857m0 0a5.002 5.002 0 019.288 0M15 7a3 3 0 11-6 0 3 3 0 016 0zm6 3a2 2 0 11-4 0 2 2 0 014 0zM7 10a2 2 0 11-4 0 2 2 0 014 0z"/>
+                                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4.354a4 4 0 110 5.292M15 21H3v-1a6 6 0 0112 0v1zm0 0h6v-1a6 6 0 00-9-5.197M13 7a4 4 0 11-8 0 4 4 0 018 0z" />
                                     </svg>
                                 </div>
-                                <span x-show="sidebarOpen" x-cloak class="sidebar-text" :class="sidebarOpen ? 'sidebar-text-visible' : 'sidebar-text-hidden'">Accounts</span>
+                                <span x-show="sidebarOpen" x-cloak class="sidebar-text" :class="sidebarOpen ? 'sidebar-text-visible' : 'sidebar-text-hidden'">User Roles</span>
                             </a>
-                            <div x-show="!sidebarOpen" class="tooltip">Accounts</div>
+                            <div x-show="!sidebarOpen" class="tooltip">User Roles</div>
                         </div>
 
                         <!-- Schedules -->
@@ -539,43 +539,10 @@
                             <div x-show="!sidebarOpen" class="tooltip">All Payrolls</div>
                         </div>
 
-                        <!-- Payroll Computation (Automation) -->
-                        <div class="relative nav-item">
-                            <a href="{{ route('payroll.computation.dashboard') }}" class="flex items-center gap-3 px-3 py-2.5 rounded-lg transition {{ request()->routeIs('payroll.computation.*') ? 'bg-blue-600 text-white' : 'text-gray-300 hover:bg-gray-700 hover:text-white' }}">
-                                <svg class="w-5 h-5 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 7h6m0 10v-3m-3 3h.01M9 17h.01M9 14h.01M12 14h.01M15 11h.01M12 11h.01M9 11h.01M7 21h10a2 2 0 002-2V5a2 2 0 00-2-2H7a2 2 0 00-2 2v14a2 2 0 002 2z"/>
-                                </svg>
-                                <span x-show="sidebarOpen" x-cloak class="sidebar-text" :class="sidebarOpen ? 'sidebar-text-visible' : 'sidebar-text-hidden'">Payroll Automation</span>
-                            </a>
-                            <div x-show="!sidebarOpen" class="tooltip">Payroll Automation</div>
-                        </div>
-
                         <!-- Tools & Reports Section -->
                         <div class="pt-4 mt-4 border-t border-gray-700">
                             <p x-show="sidebarOpen" x-cloak class="px-3 text-xs font-semibold text-gray-400 uppercase tracking-wider mb-2 sidebar-text" :class="sidebarOpen ? 'sidebar-text-visible' : 'sidebar-text-hidden'">Tools & Reports</p>
                             <p x-show="!sidebarOpen" x-cloak class="px-3 text-center mb-2">📈</p>
-                        </div>
-
-                        <!-- Automation Dashboard -->
-                        <div class="relative nav-item">
-                            <a href="{{ route('automation.index') }}" class="flex items-center gap-3 px-3 py-2.5 rounded-lg transition {{ request()->routeIs('automation.*') ? 'bg-blue-600 text-white' : 'text-gray-300 hover:bg-gray-700 hover:text-white' }}">
-                                <svg class="w-5 h-5 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 10V3L4 14h7v7l9-11h-7z"/>
-                                </svg>
-                                <span x-show="sidebarOpen" x-cloak class="sidebar-text" :class="sidebarOpen ? 'sidebar-text-visible' : 'sidebar-text-hidden'">Automation</span>
-                            </a>
-                            <div x-show="!sidebarOpen" class="tooltip">Automation Dashboard</div>
-                        </div>
-
-                        <!-- Analytics Dashboard -->
-                        <div class="relative nav-item">
-                            <a href="{{ route('analytics.index') }}" class="flex items-center gap-3 px-3 py-2.5 rounded-lg transition {{ request()->routeIs('analytics.*') ? 'bg-blue-600 text-white' : 'text-gray-300 hover:bg-gray-700 hover:text-white' }}">
-                                <svg class="w-5 h-5 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2a2 2 0 002-2zm0 0V9a2 2 0 012-2h2a2 2 0 012 2v10m-6 0a2 2 0 002 2h2a2 2 0 002-2m0 0V5a2 2 0 012-2h2a2 2 0 012 2v14a2 2 0 01-2 2h-2a2 2 0 01-2-2z"/>
-                                </svg>
-                                <span x-show="sidebarOpen" x-cloak class="sidebar-text" :class="sidebarOpen ? 'sidebar-text-visible' : 'sidebar-text-hidden'">Analytics</span>
-                            </a>
-                            <div x-show="!sidebarOpen" class="tooltip">Analytics</div>
                         </div>
 
                         <!-- Holidays -->

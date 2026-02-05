@@ -30,58 +30,58 @@
             <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
                 @foreach($types as $key => $type)
                     <a href="{{ route('transactions.create', $key) }}" 
-                       class="block bg-white rounded-lg shadow-sm hover:shadow-md transition border-2 border-transparent hover:border-{{ $type['color'] }}-500 $type['color'] }}-400 overflow-hidden">
+                       class="block bg-white rounded-lg shadow-sm hover:shadow-md transition border-2 border-transparent hover:border-{{ $type['color'] }}-500 overflow-hidden">
                         <div class="p-5">
                             <div class="flex items-center">
-                                <div class="flex-shrink-0 w-12 h-12 rounded-lg bg-{{ $type['color'] }}-100 $type['color'] }}-900/30 flex items-center justify-center">
+                                <div class="flex-shrink-0 w-12 h-12 rounded-lg bg-{{ $type['color'] }}-100 flex items-center justify-center">
                                     @switch($type['icon'])
                                         @case('calendar')
-                                            <svg class="w-6 h-6 text-{{ $type['color'] }}-600 $type['color'] }}-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                            <svg class="w-6 h-6 text-{{ $type['color'] }}-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                                                 <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z"></path>
                                             </svg>
                                             @break
                                         @case('clock')
-                                            <svg class="w-6 h-6 text-{{ $type['color'] }}-600 $type['color'] }}-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                            <svg class="w-6 h-6 text-{{ $type['color'] }}-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                                                 <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z"></path>
                                             </svg>
                                             @break
                                         @case('plus-circle')
-                                            <svg class="w-6 h-6 text-{{ $type['color'] }}-600 $type['color'] }}-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                            <svg class="w-6 h-6 text-{{ $type['color'] }}-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                                                 <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 9v3m0 0v3m0-3h3m-3 0H9m12 0a9 9 0 11-18 0 9 9 0 0118 0z"></path>
                                             </svg>
                                             @break
                                         @case('currency-dollar')
-                                            <svg class="w-6 h-6 text-{{ $type['color'] }}-600 $type['color'] }}-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                            <svg class="w-6 h-6 text-{{ $type['color'] }}-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                                                 <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8c-1.657 0-3 .895-3 2s1.343 2 3 2 3 .895 3 2-1.343 2-3 2m0-8c1.11 0 2.08.402 2.599 1M12 8V7m0 1v8m0 0v1m0-1c-1.11 0-2.08-.402-2.599-1M21 12a9 9 0 11-18 0 9 9 0 0118 0z"></path>
                                             </svg>
                                             @break
                                         @case('briefcase')
-                                            <svg class="w-6 h-6 text-{{ $type['color'] }}-600 $type['color'] }}-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                            <svg class="w-6 h-6 text-{{ $type['color'] }}-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                                                 <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 13.255A23.931 23.931 0 0112 15c-3.183 0-6.22-.62-9-1.745M16 6V4a2 2 0 00-2-2h-4a2 2 0 00-2 2v2m4 6h.01M5 20h14a2 2 0 002-2V8a2 2 0 00-2-2H5a2 2 0 00-2 2v10a2 2 0 002 2z"></path>
                                             </svg>
                                             @break
                                         @case('arrow-down')
-                                            <svg class="w-6 h-6 text-{{ $type['color'] }}-600 $type['color'] }}-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                            <svg class="w-6 h-6 text-{{ $type['color'] }}-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                                                 <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 14l-7 7m0 0l-7-7m7 7V3"></path>
                                             </svg>
                                             @break
                                         @case('x-circle')
-                                            <svg class="w-6 h-6 text-{{ $type['color'] }}-600 $type['color'] }}-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                            <svg class="w-6 h-6 text-{{ $type['color'] }}-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                                                 <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10 14l2-2m0 0l2-2m-2 2l-2-2m2 2l2 2m7-2a9 9 0 11-18 0 9 9 0 0118 0z"></path>
                                             </svg>
                                             @break
                                         @case('exclamation')
-                                            <svg class="w-6 h-6 text-{{ $type['color'] }}-600 $type['color'] }}-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                            <svg class="w-6 h-6 text-{{ $type['color'] }}-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                                                 <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z"></path>
                                             </svg>
                                             @break
                                         @case('refresh')
-                                            <svg class="w-6 h-6 text-{{ $type['color'] }}-600 $type['color'] }}-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                            <svg class="w-6 h-6 text-{{ $type['color'] }}-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                                                 <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15"></path>
                                             </svg>
                                             @break
                                         @default
-                                            <svg class="w-6 h-6 text-{{ $type['color'] }}-600 $type['color'] }}-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                            <svg class="w-6 h-6 text-{{ $type['color'] }}-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                                                 <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"></path>
                                             </svg>
                                     @endswitch

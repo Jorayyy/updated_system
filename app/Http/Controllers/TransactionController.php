@@ -111,6 +111,7 @@ class TransactionController extends Controller
         // Base validation
         $rules = [
             'reason' => 'required|string|max:2000',
+            'attachment' => 'nullable|file|mimes:jpg,jpeg,png,pdf,docx|max:5120',
         ];
 
         // Add type-specific validations
@@ -150,6 +151,11 @@ class TransactionController extends Controller
             $rules['purpose'] = 'required|string|max:500';
         }
 
+        if ($type === 'timekeeping_complaint') {
+            $rules['complaint_type'] = 'required|string|max:100';
+            $rules['resolution_requested'] = 'required|string|max:100';
+        }
+
         $validated = $request->validate($rules);
 
         DB::beginTransaction();
@@ -165,6 +171,11 @@ class TransactionController extends Controller
                 'time_from' => $validated['time_from'] ?? null,
                 'time_to' => $validated['time_to'] ?? null,
             ];
+
+            // Handle attachment
+            if ($request->hasFile('attachment')) {
+                $data['attachment'] = $request->file('attachment')->store('attachments/transactions', 'public');
+            }
 
             // Handle leave type
             if ($type === 'leave' && isset($validated['leave_type_id'])) {
@@ -206,8 +217,10 @@ class TransactionController extends Controller
                 $details['undertime_type'] = $request->input('undertime_type', 'early_out');
             }
             if ($type === 'timekeeping_complaint') {
-                $details['complaint_type'] = $request->input('complaint_type', 'missing_punch');
+                $details['complaint_type'] = $validated['complaint_type'];
+                $details['punch_type'] = $request->input('punch_type');
                 $details['expected_time'] = $request->input('expected_time');
+                $details['resolution_requested'] = $validated['resolution_requested'];
             }
 
             if (!empty($details)) {

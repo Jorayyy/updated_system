@@ -73,24 +73,32 @@
                                         <td class="px-6 py-4 whitespace-nowrap text-sm">
                                             {{ $payroll->payrollPeriod->pay_date->format('M d, Y') }}
                                         </td>
-                                        <td class="px-6 py-4 whitespace-nowrap text-sm text-center">
-                                            {{ $payroll->days_worked }}
-                                        </td>
-                                        <td class="px-6 py-4 whitespace-nowrap text-sm text-right">
-                                            ₱{{ number_format($payroll->gross_pay, 2) }}
-                                        </td>
-                                        <td class="px-6 py-4 whitespace-nowrap text-sm text-right text-red-600">
-                                            ₱{{ number_format($payroll->total_deductions, 2) }}
-                                        </td>
-                                        <td class="px-6 py-4 whitespace-nowrap text-sm text-right font-bold text-green-600">
-                                            ₱{{ number_format($payroll->net_pay, 2) }}
-                                        </td>
-                                        <td class="px-6 py-4 whitespace-nowrap text-center">
-                                            <a href="{{ route('payroll.my-payslip', $payroll) }}" 
-                                                class="text-indigo-600 hover:text-indigo-900 text-sm mr-2">View</a>
-                                            <a href="{{ route('payroll.my-payslip-pdf', $payroll) }}" 
-                                                class="text-green-600 hover:text-green-900 text-sm">PDF</a>
-                                        </td>
+                                        @if($payroll->is_posted || in_array($payroll->status, ['released', 'paid']))
+                                            <td class="px-6 py-4 whitespace-nowrap text-sm text-center">
+                                                {{ $payroll->days_worked }}
+                                            </td>
+                                            <td class="px-6 py-4 whitespace-nowrap text-sm text-right">
+                                                ₱{{ number_format($payroll->gross_pay, 2) }}
+                                            </td>
+                                            <td class="px-6 py-4 whitespace-nowrap text-sm text-right text-red-600">
+                                                ₱{{ number_format($payroll->total_deductions, 2) }}
+                                            </td>
+                                            <td class="px-6 py-4 whitespace-nowrap text-sm text-right font-bold text-green-600">
+                                                ₱{{ number_format($payroll->net_pay, 2) }}
+                                            </td>
+                                            <td class="px-6 py-4 whitespace-nowrap text-center">
+                                                <a href="{{ route('payroll.my-payslip', $payroll) }}" 
+                                                    class="text-indigo-600 hover:text-indigo-900 text-sm mr-2">View</a>
+                                                <a href="{{ route('payroll.my-payslip-pdf', $payroll) }}" 
+                                                    class="text-green-600 hover:text-green-900 text-sm">PDF</a>
+                                            </td>
+                                        @else
+                                            <td colspan="5" class="px-6 py-4 whitespace-nowrap text-center">
+                                                <span class="px-3 py-1 inline-flex text-xs leading-5 font-semibold rounded-full bg-yellow-100 text-yellow-800">
+                                                    Payslip not posted yet
+                                                </span>
+                                            </td>
+                                        @endif
                                     </tr>
                                 @empty
                                     <tr>

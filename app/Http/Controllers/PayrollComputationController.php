@@ -8,6 +8,7 @@ use App\Models\Payroll;
 use App\Models\PayrollPeriod;
 use App\Models\User;
 use App\Services\PayrollComputationService;
+use App\Services\DtrService;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Log;
@@ -15,10 +16,67 @@ use Illuminate\Support\Facades\Log;
 class PayrollComputationController extends Controller
 {
     protected PayrollComputationService $computationService;
+    protected DtrService $dtrService;
 
-    public function __construct(PayrollComputationService $computationService)
+    public function __construct(PayrollComputationService $computationService, DtrService $dtrService)
     {
         $this->computationService = $computationService;
+        $this->dtrService = $dtrService;
+    }
+
+    /**
+     * Generate DTRs for a specific period
+     */
+    public function generateDtrs(PayrollPeriod $period)
+    {
+        try {
+            $results = $this->dtrService->generateDtrForPeriod($period);
+            
+            return redirect()->back()->with('success', "Successfully generated {$results['created_dtrs']} DTR records for the period.");
+        } catch (\Exception $e) {
+            return redirect()->back()->with('error', "Failed to generate DTRs: " . $e->getMessage());
+        }
+    }
+
+    /**
+     * Post payroll for employee viewing
+     */
+    public function post(Payroll $payroll)
+    {
+        if ($payroll->status !== 'approved' && $payroll->status !== 'completed') {
+            return redirect()->back()->with('error', 'Only approved or completed payrolls can be posted.');
+        }
+
+        $payroll->update([
+            'is_posted' => true,
+            'posted_at' => now(),
+        ]);
+
+        return redirect()->back()->with('success', "Payroll has been posted and is now visible to the employee.");
+    }
+
+    /**
+     * Bulk post payrolls for a period
+     */
+    public function bulkPost(Request $request, PayrollPeriod $period)
+    {
+        $payrollIds = $request->get('payroll_ids', []);
+        
+        $query = Payroll::where('payroll_period_id', $period->id)
+            ->whereIn('status', ['approved', 'completed', 'released'])
+            ->where('is_posted', false);
+
+        if (!empty($payrollIds)) {
+            $query->whereIn('id', $payrollIds);
+        }
+
+        $count = $query->update([
+            'is_posted' => true,
+            'posted_at' => now(),
+            'status' => 'released', // Ensure status is released when posted
+        ]);
+
+        return redirect()->back()->with('success', "Successfully posted {$count} payrolls.");
     }
 
     /**

@@ -23,12 +23,14 @@
         <div class="max-w-4xl mx-auto sm:px-6 lg:px-8">
             <div class="bg-white overflow-hidden shadow-sm sm:rounded-lg border-2 border-amber-200">
                 <div class="p-8">
-                    <div class="flex justify-end mb-4">
-                        <a href="{{ route('payroll.computation.edit', $payroll) }}" 
-                            class="bg-blue-600 hover:bg-blue-700 text-white px-6 py-3 rounded-xl font-bold shadow-lg transition-all transform hover:scale-105 flex items-center border-2 border-blue-400">
-                            <i class="fas fa-edit mr-2"></i> Click Here to Adjust This Payslip
-                        </a>
-                    </div>
+                    @if(auth()->user()->isAdmin() || auth()->user()->isHr())
+                        <div class="flex justify-end mb-4">
+                            <a href="{{ route('payroll.computation.edit', $payroll) }}" 
+                                class="bg-blue-600 hover:bg-blue-700 text-white px-6 py-3 rounded-xl font-bold shadow-lg transition-all transform hover:scale-105 flex items-center border-2 border-blue-400">
+                                <i class="fas fa-edit mr-2"></i> Click Here to Adjust This Payslip
+                            </a>
+                        </div>
+                    @endif
                     <!-- Header -->
                     <div class="text-center border-b pb-6 mb-6">
                         <h1 class="text-2xl font-bold text-gray-800">MEBS Call Center</h1>

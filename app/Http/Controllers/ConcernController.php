@@ -10,6 +10,9 @@ use App\Models\User;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Hash;
+use Illuminate\Support\Facades\DB;
+use Illuminate\Support\Facades\Storage;
+use Illuminate\Validation\Rule;
 
 class ConcernController extends Controller
 {
@@ -555,20 +558,34 @@ class ConcernController extends Controller
             'description' => 'required|string',
             'category' => ['required', Rule::in(array_keys(Concern::CATEGORIES))],
             'priority' => ['required', Rule::in(array_keys(Concern::PRIORITIES))],
+            'location' => 'nullable|string|max:255',
+            'affected_pc' => 'nullable|string|max:100',
+            'attachment' => 'nullable|file|mimes:jpg,jpeg,png,pdf,docx|max:5120',
+            'is_confidential' => 'boolean',
         ]);
 
         DB::beginTransaction();
         try {
-            $concern = Concern::create([
+            $data = [
                 'ticket_number' => Concern::generateTicketNumber(),
                 'title' => $validated['title'],
                 'description' => $validated['description'],
                 'category' => $validated['category'],
                 'priority' => $validated['priority'],
+                'location' => $validated['location'] ?? null,
+                'affected_pc' => $validated['affected_pc'] ?? null,
+                'is_confidential' => $request->boolean('is_confidential'),
                 'status' => 'open',
                 'reported_by' => Auth::id(),
                 'assigned_to' => null,
-            ]);
+            ];
+
+            // Handle attachment
+            if ($request->hasFile('attachment')) {
+                $data['attachment'] = $request->file('attachment')->store('attachments/concerns', 'public');
+            }
+
+            $concern = Concern::create($data);
 
             // Log creation activity
             ConcernActivity::create([
@@ -579,7 +596,7 @@ class ConcernController extends Controller
             ]);
 
             // Send notification to all admins
-            $admins = User::where('role', 'admin')->where('is_active', true)->get();
+            $admins = User::whereIn('role', ['admin', 'hr'])->where('is_active', true)->get();
             foreach ($admins as $admin) {
                 Notification::send(
                     $admin->id,

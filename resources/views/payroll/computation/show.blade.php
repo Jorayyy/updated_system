@@ -89,15 +89,24 @@
             </div>
 
             {{-- Bulk Actions --}}
-            @if(($statusCounts['computed'] ?? 0) > 0 || ($statusCounts['approved'] ?? 0) > 0)
+            @php
+                $unpostedCount = \App\Models\Payroll::where('payroll_period_id', $period->id)
+                    ->whereIn('status', ['approved', 'completed', 'released'])
+                    ->where('is_posted', false)
+                    ->count();
+                $postedCount = \App\Models\Payroll::where('payroll_period_id', $period->id)
+                    ->where('is_posted', true)
+                    ->count();
+            @endphp
+            @if(($statusCounts['computed'] ?? 0) > 0 || ($statusCounts['approved'] ?? 0) > 0 || $unpostedCount > 0)
                 <div class="bg-white overflow-hidden shadow-sm rounded-lg mb-6 p-4">
                     <div class="flex items-center justify-between">
-                        <p class="text-sm text-gray-600">Bulk Actions:</p>
+                        <p class="text-sm text-gray-600 font-medium">Bulk Actions & Status:</p>
                         <div class="flex space-x-2">
                             @if(($statusCounts['computed'] ?? 0) > 0)
                                 <form action="{{ route('payroll.computation.bulk-approve', $period) }}" method="POST" class="inline">
                                     @csrf
-                                    <button type="submit" class="px-4 py-2 bg-yellow-500 text-white rounded-md hover:bg-yellow-600 text-sm" 
+                                    <button type="submit" class="px-3 py-1 bg-yellow-500 text-white rounded hover:bg-yellow-600 text-xs font-semibold" 
                                             onclick="return confirm('Approve all computed payrolls?')">
                                         Approve All ({{ $statusCounts['computed'] ?? 0 }})
                                     </button>
@@ -106,12 +115,24 @@
                             @if(($statusCounts['approved'] ?? 0) > 0)
                                 <form action="{{ route('payroll.computation.bulk-release', $period) }}" method="POST" class="inline">
                                     @csrf
-                                    <button type="submit" class="px-4 py-2 bg-green-500 text-white rounded-md hover:bg-green-600 text-sm" 
+                                    <button type="submit" class="px-3 py-1 bg-green-500 text-white rounded hover:bg-green-600 text-xs font-semibold" 
                                             onclick="return confirm('Release all approved payrolls?')">
                                         Release All ({{ $statusCounts['approved'] ?? 0 }})
                                     </button>
                                 </form>
                             @endif
+                            @if($unpostedCount > 0)
+                                <form action="{{ route('payroll.computation.bulk-post', $period) }}" method="POST" class="inline">
+                                    @csrf
+                                    <button type="submit" class="px-3 py-1 bg-indigo-600 text-white rounded hover:bg-indigo-700 text-xs font-semibold" 
+                                            onclick="return confirm('Post all approved/completed payrolls for employee viewing?')">
+                                        Post to Employees ({{ $unpostedCount }})
+                                    </button>
+                                </form>
+                            @endif
+                            <div class="px-3 py-1 bg-gray-100 text-gray-700 rounded text-xs font-semibold border">
+                                Posted: {{ $postedCount }}
+                            </div>
                         </div>
                     </div>
                 </div>
@@ -168,35 +189,58 @@
                                         ₱{{ number_format($payroll->net_pay ?? 0, 2) }}
                                     </td>
                                     <td class="px-6 py-4 whitespace-nowrap text-center">
-                                        <span class="px-2 py-1 text-xs font-semibold rounded-full 
-                                            @if($payroll->status === 'released') bg-green-100 text-green-800
-                                            @elseif($payroll->status === 'approved') bg-yellow-100 text-yellow-800
-                                            @elseif($payroll->status === 'computed') bg-gray-100 text-gray-800
-                                            @elseif($payroll->status === 'rejected') bg-red-100 text-red-800
-                                            @else bg-gray-100 text-gray-800 @endif">
-                                            {{ ucfirst($payroll->status) }}
-                                        </span>
+                                        <div class="flex flex-col items-center">
+                                            <span class="px-2 py-1 text-xs font-semibold rounded-full 
+                                                @if($payroll->status === 'released') bg-green-100 text-green-800
+                                                @elseif($payroll->status === 'approved') bg-yellow-100 text-yellow-800
+                                                @elseif($payroll->status === 'computed') bg-gray-100 text-gray-800
+                                                @elseif($payroll->status === 'rejected') bg-red-100 text-red-800
+                                                @else bg-gray-100 text-gray-800 @endif">
+                                                {{ ucfirst($payroll->status) }}
+                                            </span>
+                                            @if($payroll->is_posted)
+                                                <span class="mt-1 flex items-center text-[10px] text-indigo-600 font-bold uppercase">
+                                                    <i class="fas fa-check-circle mr-1"></i> Posted
+                                                </span>
+                                            @endif
+                                        </div>
                                     </td>
                                     <td class="px-6 py-4 whitespace-nowrap text-right text-sm font-medium">
                                         <div class="flex justify-end space-x-2">
-                                            <a href="{{ route('payroll.computation.details', $payroll) }}" class="text-indigo-600 hover:text-indigo-900">
-                                                View
+                                            <a href="{{ route('payroll.computation.details', $payroll) }}" class="text-indigo-600 hover:text-indigo-900" title="View Details">
+                                                <i class="fas fa-eye"></i>
                                             </a>
+                                            
+                                            @if(!$payroll->is_posted && in_array($payroll->status, ['approved', 'completed', 'released']))
+                                                <form action="{{ route('payroll.computation.post', $payroll) }}" method="POST" class="inline">
+                                                    @csrf
+                                                    <button type="submit" class="text-indigo-600 hover:text-indigo-900" title="Post to Employee">
+                                                        <i class="fas fa-upload"></i>
+                                                    </button>
+                                                </form>
+                                            @endif
+
                                             @if($payroll->status === 'computed')
                                                 <form action="{{ route('payroll.computation.approve', $payroll) }}" method="POST" class="inline">
                                                     @csrf
-                                                    <button type="submit" class="text-yellow-600 hover:text-yellow-900">Approve</button>
+                                                    <button type="submit" class="text-yellow-600 hover:text-yellow-900" title="Approve">
+                                                        <i class="fas fa-check"></i>
+                                                    </button>
                                                 </form>
                                             @elseif($payroll->status === 'approved')
                                                 <form action="{{ route('payroll.computation.release', $payroll) }}" method="POST" class="inline">
                                                     @csrf
-                                                    <button type="submit" class="text-green-600 hover:text-green-900">Release</button>
+                                                    <button type="submit" class="text-green-600 hover:text-green-900" title="Release">
+                                                        <i class="fas fa-parachute-box"></i>
+                                                    </button>
                                                 </form>
                                             @endif
-                                            @if(in_array($payroll->status, ['computed', 'approved']))
+                                            @if(in_array($payroll->status, ['computed', 'approved']) && !$payroll->is_posted)
                                                 <form action="{{ route('payroll.computation.recompute', $payroll) }}" method="POST" class="inline">
                                                     @csrf
-                                                    <button type="submit" class="text-blue-600 hover:text-blue-900">Recompute</button>
+                                                    <button type="submit" class="text-blue-600 hover:text-blue-900" title="Recompute">
+                                                        <i class="fas fa-sync"></i>
+                                                    </button>
                                                 </form>
                                             @endif
                                         </div>

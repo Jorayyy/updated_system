@@ -51,10 +51,12 @@
                                     <div>
                                         <p class="text-xs text-gray-500 uppercase">System Role</p>
                                         <span class="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium 
-                                            @if($employee->role == 'admin') bg-purple-100 text-purple-800
+                                            @if($employee->role == 'super_admin') bg-red-100 text-red-800
+                                            @elseif($employee->role == 'admin') bg-purple-100 text-purple-800
                                             @elseif($employee->role == 'hr') bg-blue-100 text-blue-800
+                                            @elseif($employee->role == 'accounting') bg-indigo-100 text-indigo-800
                                             @else bg-gray-100 text-gray-800 @endif">
-                                            {{ ucfirst($employee->role) }}
+                                            {{ str_replace('_', ' ', ucwords($employee->role, '_')) }}
                                         </span>
                                     </div>
                                 </div>

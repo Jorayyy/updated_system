@@ -208,6 +208,19 @@
                                         @enderror
                                     </div>
                                     <div>
+                                        <label for="punch_type" class="block text-sm font-medium text-gray-700">
+                                            Affected Punch
+                                        </label>
+                                        <select name="punch_type" id="punch_type"
+                                                class="mt-1 block w-full rounded-md border-gray-300 shadow-sm">
+                                            <option value="none">N/A</option>
+                                            <option value="time_in" {{ old('punch_type') === 'time_in' ? 'selected' : '' }}>Time In</option>
+                                            <option value="break_out" {{ old('punch_type') === 'break_out' ? 'selected' : '' }}>Break Out</option>
+                                            <option value="break_in" {{ old('punch_type') === 'break_in' ? 'selected' : '' }}>Break In</option>
+                                            <option value="time_out" {{ old('punch_type') === 'time_out' ? 'selected' : '' }}>Time Out</option>
+                                        </select>
+                                    </div>
+                                    <div>
                                         <label for="expected_time" class="block text-sm font-medium text-gray-700">
                                             Expected/Correct Time
                                         </label>
@@ -217,6 +230,18 @@
                                         @error('expected_time')
                                             <span class="text-red-500 text-sm">{{ $message }}</span>
                                         @enderror
+                                    </div>
+                                    <div>
+                                        <label for="resolution_requested" class="block text-sm font-medium text-gray-700">
+                                            Resolution Requested <span class="text-red-500">*</span>
+                                        </label>
+                                        <select name="resolution_requested" id="resolution_requested" required
+                                                class="mt-1 block w-full rounded-md border-gray-300 shadow-sm">
+                                            <option value="adjust_time" {{ old('resolution_requested') === 'adjust_time' ? 'selected' : '' }}>Adjust Time Record</option>
+                                            <option value="add_missing" {{ old('resolution_requested') === 'add_missing' ? 'selected' : '' }}>Add Missing Punch</option>
+                                            <option value="remove_error" {{ old('resolution_requested') === 'remove_error' ? 'selected' : '' }}>Remove Erroneous Entry</option>
+                                            <option value="other" {{ old('resolution_requested') === 'other' ? 'selected' : '' }}>Other</option>
+                                        </select>
                                     </div>
                                 </div>
                             @endif
@@ -278,6 +303,19 @@
                                     </div>
                                 </div>
                             @endif
+
+                            {{-- Attachment field (for all types) --}}
+                            <div>
+                                <label for="attachment" class="block text-sm font-medium text-gray-700">
+                                    Attachment (e.g., Screenshot, Document)
+                                </label>
+                                <input type="file" name="attachment" id="attachment"
+                                       class="mt-1 block w-full text-sm text-gray-500 file:mr-4 file:py-2 file:px-4 file:rounded-md file:border-0 file:text-sm file:font-semibold file:bg-blue-50 file:text-blue-700 hover:file:bg-blue-100">
+                                <p class="mt-1 text-xs text-gray-500">Max size: 5MB. Formats: JPG, PNG, PDF, DOCX.</p>
+                                @error('attachment')
+                                    <span class="text-red-500 text-sm">{{ $message }}</span>
+                                @enderror
+                            </div>
 
                             {{-- Reason (all types) --}}
                             <div>

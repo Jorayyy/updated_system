@@ -124,7 +124,7 @@
                 </div>
             </div>
 
-            <div class="grid grid-cols-1 lg:grid-cols-2 gap-6">
+            <div class="grid grid-cols-1 lg:grid-cols-3 gap-6">
                 <!-- Leave Balances -->
                 <div x-data="{ expanded: true }" class="bg-white overflow-hidden shadow-sm sm:rounded-lg">
                     <div class="p-4 sm:p-6">
@@ -205,6 +205,49 @@
                             <div class="mt-4 pt-4 border-t border-gray-200">
                                 <a href="{{ route('leaves.index') }}" class="text-indigo-600 hover:text-indigo-900 font-medium">
                                     View all leave requests →
+                                </a>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Recent Payslips -->
+                <div x-data="{ expanded: true }" class="bg-white overflow-hidden shadow-sm sm:rounded-lg">
+                    <div class="p-4 sm:p-6">
+                        <div class="flex justify-between items-center cursor-pointer" @click="expanded = !expanded">
+                            <h3 class="text-lg font-semibold text-gray-900">
+                                Recent Payslips
+                                <span class="ml-2 text-sm font-normal text-gray-500">({{ $recentPayslips->count() }})</span>
+                            </h3>
+                            <svg :class="{ 'rotate-180': expanded }" class="w-5 h-5 text-gray-500 transform transition-transform" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7"/>
+                            </svg>
+                        </div>
+                        <div x-show="expanded" x-collapse>
+                            @if($recentPayslips->count() > 0)
+                                <div class="mt-4 space-y-3 max-h-64 overflow-y-auto">
+                                    @foreach($recentPayslips as $payroll)
+                                        <div class="flex justify-between items-center p-3 bg-gray-50 rounded-lg">
+                                            <div>
+                                                <div class="font-medium text-gray-900">
+                                                    {{ $payroll->payrollPeriod->start_date->format('M d') }} - {{ $payroll->payrollPeriod->end_date->format('M d, Y') }}
+                                                </div>
+                                                <div class="text-sm font-bold text-green-600">
+                                                    ₱{{ number_format($payroll->net_pay, 2) }}
+                                                </div>
+                                            </div>
+                                            <a href="{{ route('payslip.show', $payroll) }}" class="text-indigo-600 hover:text-indigo-900 text-xs font-semibold">
+                                                View
+                                            </a>
+                                        </div>
+                                    @endforeach
+                                </div>
+                            @else
+                                <p class="mt-4 text-gray-500">No payslips posted.</p>
+                            @endif
+                            <div class="mt-4 pt-4 border-t border-gray-200">
+                                <a href="{{ route('payslip.index') }}" class="text-indigo-600 hover:text-indigo-900 font-medium">
+                                    View all payslips →
                                 </a>
                             </div>
                         </div>

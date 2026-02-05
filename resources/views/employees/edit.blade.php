@@ -69,19 +69,21 @@
                                     class="mt-1 block w-full border-gray-300 rounded-md shadow-sm focus:border-indigo-500 focus:ring-indigo-500">
                                     <option value="employee" {{ old('role', $employee->role) == 'employee' ? 'selected' : '' }}>Employee</option>
                                     <option value="hr" {{ old('role', $employee->role) == 'hr' ? 'selected' : '' }}>HR</option>
+                                    <option value="accounting" {{ old('role', $employee->role) == 'accounting' ? 'selected' : '' }}>Accounting</option>
                                     <option value="admin" {{ old('role', $employee->role) == 'admin' ? 'selected' : '' }}>Admin</option>
+                                    <option value="super_admin" {{ old('role', $employee->role) == 'super_admin' ? 'selected' : '' }}>Super Admin</option>
                                 </select>
                             </div>
 
-                            <!-- Account -->
+                            <!-- User Role -->
                             <div>
-                                <label for="account_id" class="block text-sm font-medium text-gray-700">Account</label>
+                                <label for="account_id" class="block text-sm font-medium text-gray-700">User Role</label>
                                 <select name="account_id" id="account_id"
                                     class="mt-1 block w-full border-gray-300 rounded-md shadow-sm focus:border-indigo-500 focus:ring-indigo-500">
-                                    <option value="">Select Account</option>
+                                    <option value="">Select Role</option>
                                     @foreach($accounts as $account)
                                         <option value="{{ $account->id }}" {{ old('account_id', $employee->account_id) == $account->id ? 'selected' : '' }}>
-                                            {{ $account->name }}
+                                            {{ $account->name }} @if($account->site) ({{ $account->site->name }}) @endif
                                         </option>
                                     @endforeach
                                 </select>

@@ -30,14 +30,20 @@ class PayrollController extends Controller
         
         $payrolls = Payroll::with('payrollPeriod')
             ->where('user_id', $user->id)
-            ->whereIn('status', ['approved', 'released', 'paid'])
             ->whereYear('created_at', $year)
+            ->where(function($query) {
+                $query->whereIn('status', ['approved', 'released', 'paid', 'computed'])
+                      ->orWhere('is_posted', true);
+            })
             ->orderBy('created_at', 'desc')
             ->paginate(10);
 
-        // Calculate YTD summary
+        // Calculate YTD summary (only posted/released)
         $ytdPayrolls = Payroll::where('user_id', $user->id)
-            ->whereIn('status', ['approved', 'released', 'paid'])
+            ->where(function($query) {
+                $query->where('is_posted', true)
+                      ->orWhereIn('status', ['released', 'paid']);
+            })
             ->whereYear('created_at', $year)
             ->get();
 
@@ -63,8 +69,8 @@ class PayrollController extends Controller
             abort(403, 'Unauthorized access to payslip.');
         }
 
-        if (!in_array($payroll->status, ['approved', 'released', 'paid'])) {
-            abort(403, 'Payslip is not yet available.');
+        if (!$payroll->is_posted && !in_array($payroll->status, ['released', 'paid'])) {
+            abort(403, 'Payslip is not yet posted by HR.');
         }
 
         $payroll->load(['user', 'payrollPeriod']);
@@ -85,8 +91,8 @@ class PayrollController extends Controller
             abort(403, 'Unauthorized access to payslip.');
         }
 
-        if (!in_array($payroll->status, ['approved', 'released', 'paid'])) {
-            abort(403, 'Payslip is not yet available.');
+        if (!$payroll->is_posted && !in_array($payroll->status, ['released', 'paid'])) {
+            abort(403, 'Payslip is not yet posted by HR.');
         }
 
         $payroll->load(['user', 'payrollPeriod']);

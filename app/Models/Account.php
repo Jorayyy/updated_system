@@ -9,7 +9,12 @@ class Account extends Model
 {
     use HasFactory;
 
-    protected $fillable = ['name', 'description'];
+    protected $fillable = ['name', 'description', 'site_id', 'hierarchy_level'];
+
+    public function site()
+    {
+        return $this->belongsTo(Site::class);
+    }
 
     public function users()
     {

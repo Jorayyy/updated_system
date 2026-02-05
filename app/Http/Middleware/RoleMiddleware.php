@@ -22,6 +22,11 @@ class RoleMiddleware
 
         $user = auth()->user();
 
+        // Super Admin has access to everything
+        if ($user->role === 'super_admin') {
+            return $next($request);
+        }
+
         // Check if user has any of the required roles
         if (!in_array($user->role, $roles)) {
             abort(403, 'Unauthorized. You do not have permission to access this resource.');

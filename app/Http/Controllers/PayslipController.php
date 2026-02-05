@@ -27,6 +27,7 @@ class PayslipController extends Controller
 
         $payslips = Payroll::with('payrollPeriod')
             ->where('user_id', $user->id)
+            ->where('is_posted', true)
             ->whereIn('status', ['released', 'paid'])
             ->whereYear('created_at', $year)
             ->orderBy('created_at', 'desc')
@@ -37,6 +38,7 @@ class PayslipController extends Controller
 
         // Available years
         $years = Payroll::where('user_id', $user->id)
+            ->where('is_posted', true)
             ->whereIn('status', ['released', 'paid'])
             ->selectRaw('YEAR(created_at) as year')
             ->distinct()

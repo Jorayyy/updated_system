@@ -54,12 +54,39 @@
                                     <span class="px-2 py-1 text-xs rounded-full {{ $statusColors[$concern->status] ?? '' }}">
                                         {{ $statuses[$concern->status] ?? $concern->status }}
                                     </span>
+                                    @if($concern->details['is_confidential'] ?? false)
+                                        <span class="px-2 py-1 text-xs rounded-full bg-red-100 text-red-800 flex items-center">
+                                            <svg class="w-3 h-3 mr-1" fill="currentColor" viewBox="0 0 20 20">
+                                                <path fill-rule="evenodd" d="M5 9V7a5 5 0 0110 0v2a2 2 0 012 2v5a2 2 0 01-2 2H5a2 2 0 01-2-2v-5a2 2 0 012-2zm8-2v2H7V7a3 3 0 016 0z" clip-rule="evenodd" />
+                                            </svg>
+                                            Confidential
+                                        </span>
+                                    @endif
                                 </div>
                             </div>
                             
-                            <div class="prose max-w-none">
+                            <div class="prose max-w-none text-gray-800">
                                 {!! nl2br(e($concern->description)) !!}
                             </div>
+
+                            @if(!empty($concern->details['attachment']))
+                                <div class="mt-6 p-4 bg-gray-50 rounded-lg border border-gray-100">
+                                    <h4 class="text-sm font-semibold text-gray-700 mb-2 flex items-center">
+                                        <svg class="w-4 h-4 mr-1" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15.172 7l-6.586 6.586a2 2 0 102.828 2.828l6.414-6.586a4 4 0 00-5.656-5.656l-6.415 6.585a6 6 0 108.486 8.486L20.5 13"></path>
+                                        </svg>
+                                        Attachment
+                                    </h4>
+                                    <div class="flex items-center">
+                                        <a href="{{ asset('storage/' . $concern->details['attachment']) }}" target="_blank" class="text-blue-600 hover:text-blue-800 text-sm font-medium flex items-center">
+                                            <span>View Uploaded File</span>
+                                            <svg class="w-4 h-4 ml-1" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10 6H6a2 2 0 00-2 2v10a2 2 0 002 2h10a2 2 0 002-2v-4M14 4h6m0 0v6m0-6L10 14"></path>
+                                            </svg>
+                                        </a>
+                                    </div>
+                                </div>
+                            @endif
 
                             <div class="mt-6 pt-4 border-t border-gray-200 text-sm text-gray-500">
                                 <div class="grid grid-cols-2 gap-4">
@@ -71,6 +98,18 @@
                                         <span class="font-medium">Assigned To:</span>
                                         {{ $concern->assignee->name ?? 'Not yet assigned' }}
                                     </div>
+                                    @if(!empty($concern->details['location']))
+                                        <div>
+                                            <span class="font-medium">Location:</span>
+                                            {{ $concern->details['location'] }}
+                                        </div>
+                                    @endif
+                                    @if(!empty($concern->details['affected_pc']))
+                                        <div>
+                                            <span class="font-medium">Affected PC:</span>
+                                            {{ $concern->details['affected_pc'] }}
+                                        </div>
+                                    @endif
                                     <div>
                                         <span class="font-medium">Submitted:</span>
                                         {{ $concern->created_at->format('M d, Y h:i A') }}

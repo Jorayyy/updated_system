@@ -206,27 +206,34 @@ Route::middleware('auth')->group(function () {
         // Payroll Management
         Route::get('/payroll', [PayrollController::class, 'index'])->name('payroll.index');
         Route::get('/payroll/periods', [PayrollController::class, 'periods'])->name('payroll.periods');
-        Route::get('/payroll/periods/create', [PayrollController::class, 'createPeriod'])->name('payroll.create-period');
-        Route::post('/payroll/periods', [PayrollController::class, 'storePeriod'])->name('payroll.store-period');
+        
+        // Modification routes restricted to HR Accounting
+        Route::middleware('role:accounting,super_admin')->group(function () {
+            Route::get('/payroll/periods/create', [PayrollController::class, 'createPeriod'])->name('payroll.create-period');
+            Route::post('/payroll/periods', [PayrollController::class, 'storePeriod'])->name('payroll.store-period');
+            Route::post('/payroll/periods/{period}/process', [PayrollController::class, 'processPeriod'])->name('payroll.process-period');
+            Route::post('/payroll/periods/{period}/complete', [PayrollController::class, 'completePeriod'])->name('payroll.complete-period');
+            Route::post('/payroll/periods/{period}/recompute/{user}', [PayrollController::class, 'recompute'])->name('payroll.recompute');
+            Route::post('/payroll/periods/{period}/bulk-release', [PayrollController::class, 'bulkRelease'])->name('payroll.bulk-release');
+            Route::post('/payroll/{payroll}/release', [PayrollController::class, 'release'])->name('payroll.release');
+        });
+
         Route::get('/payroll/periods/{period}', [PayrollController::class, 'showPeriod'])->name('payroll.show-period');
-        Route::post('/payroll/periods/{period}/process', [PayrollController::class, 'processPeriod'])->name('payroll.process-period');
-        Route::post('/payroll/periods/{period}/complete', [PayrollController::class, 'completePeriod'])->name('payroll.complete-period');
-        Route::post('/payroll/periods/{period}/recompute/{user}', [PayrollController::class, 'recompute'])->name('payroll.recompute');
-        Route::post('/payroll/periods/{period}/bulk-release', [PayrollController::class, 'bulkRelease'])->name('payroll.bulk-release');
         Route::get('/payroll/periods/{period}/report', [PayrollController::class, 'report'])->name('payroll.report');
         Route::get('/payroll/periods/{period}/generate-report', [PayrollController::class, 'generateReport'])->name('payroll.generate-report');
         Route::get('/payroll/{payroll}/payslip', [PayrollController::class, 'payslip'])->name('payroll.payslip');
         Route::get('/payroll/{payroll}/payslip-pdf', [PayrollController::class, 'payslipPdf'])->name('payroll.payslip-pdf');
-        Route::post('/payroll/{payroll}/release', [PayrollController::class, 'release'])->name('payroll.release');
 
-        // Payroll Computation (DTR-Based Workflow)
-        Route::prefix('payroll/computation')->name('payroll.computation.')->group(function () {
+        // Payroll Computation (DTR-Based Workflow) - Restricted to HR Accounting
+        Route::prefix('payroll/computation')->name('payroll.computation.')->middleware('role:accounting,super_admin')->group(function () {
             Route::get('/', [PayrollComputationController::class, 'dashboard'])->name('dashboard');
             Route::get('/period/{period}/preview', [PayrollComputationController::class, 'preview'])->name('preview');
             Route::post('/period/{period}/compute', [PayrollComputationController::class, 'compute'])->name('compute');
             Route::get('/period/{period}', [PayrollComputationController::class, 'show'])->name('show');
-            Route::get('/period/{period}/export', [PayrollComputationController::class, 'export'])->name('export');
             Route::get('/period/{period}/status', [PayrollComputationController::class, 'status'])->name('status');
+            Route::get('/period/{period}/export', [PayrollComputationController::class, 'export'])->name('export');
+            Route::post('/period/{period}/generate-dtrs', [PayrollComputationController::class, 'generateDtrs'])->name('generate-dtrs');
+            
             Route::get('/{payroll}/details', [PayrollComputationController::class, 'details'])->name('details');
             Route::get('/{payroll}/edit', [PayrollComputationController::class, 'edit'])->name('edit');
             Route::put('/{payroll}', [PayrollComputationController::class, 'update'])->name('update');
@@ -234,8 +241,11 @@ Route::middleware('auth')->group(function () {
             Route::post('/{payroll}/approve', [PayrollComputationController::class, 'approve'])->name('approve');
             Route::post('/{payroll}/release', [PayrollComputationController::class, 'release'])->name('release');
             Route::post('/{payroll}/reject', [PayrollComputationController::class, 'reject'])->name('reject');
+            Route::post('/{payroll}/post', [PayrollComputationController::class, 'post'])->name('post');
+            
             Route::post('/period/{period}/bulk-approve', [PayrollComputationController::class, 'bulkApprove'])->name('bulk-approve');
             Route::post('/period/{period}/bulk-release', [PayrollComputationController::class, 'bulkRelease'])->name('bulk-release');
+            Route::post('/period/{period}/bulk-post', [PayrollComputationController::class, 'bulkPost'])->name('bulk-post');
         });
 
         // Payslip Management (Admin/HR)

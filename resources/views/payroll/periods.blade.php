@@ -101,21 +101,29 @@
                                             </span>
                                         </td>
                                         <td class="px-6 py-4 whitespace-nowrap text-center">
-                                            <div class="flex items-center justify-center gap-2">
+                                            <div class="flex items-center justify-center gap-3">
                                                 <a href="{{ route('payroll.show-period', $period) }}" 
-                                                    class="text-indigo-600 hover:text-indigo-900 text-sm">View</a>
+                                                    class="text-indigo-600 hover:text-indigo-900 text-sm font-medium" title="View Period">View</a>
+                                                
+                                                @if(auth()->user()->isAccounting())
+                                                    <a href="{{ route('payroll.computation.dashboard', ['period' => $period->id]) }}" 
+                                                        class="text-blue-600 hover:text-blue-900 text-sm font-bold" title="Generate DTR & Payroll">
+                                                        Generate
+                                                    </a>
+                                                @endif
+
                                                 @if($period->status == 'draft')
                                                     <form action="{{ route('payroll.process-period', $period) }}" method="POST" class="inline"
                                                         onsubmit="return confirm('Are you sure you want to process this payroll period?')">
                                                         @csrf
-                                                        <button type="submit" class="text-green-600 hover:text-green-900 text-sm">
+                                                        <button type="submit" class="text-green-600 hover:text-green-900 text-sm font-medium">
                                                             Process
                                                         </button>
                                                     </form>
                                                 @endif
                                                 @if($period->status == 'completed')
                                                     <a href="{{ route('payroll.report', $period) }}" 
-                                                        class="text-purple-600 hover:text-purple-900 text-sm">Report</a>
+                                                        class="text-purple-600 hover:text-purple-900 text-sm font-medium">Report</a>
                                                 @endif
                                             </div>
                                         </td>

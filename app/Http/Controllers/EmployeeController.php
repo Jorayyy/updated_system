@@ -85,7 +85,7 @@ class EmployeeController extends Controller
             'name' => 'required|string|max:255',
             'email' => 'required|string|email|max:255|unique:users,email',
             'password' => ['required', 'confirmed', Rules\Password::defaults()],
-            'role' => 'required|in:admin,hr,employee',
+            'role' => 'required|in:admin,hr,employee,super_admin,accounting',
             'department' => 'nullable|string|max:100',
             'position' => 'nullable|string|max:100',
             'hourly_rate' => 'nullable|numeric|min:0',
@@ -100,6 +100,11 @@ class EmployeeController extends Controller
         $profilePhotoPath = null;
         if ($request->hasFile('profile_photo')) {
             $profilePhotoPath = $request->file('profile_photo')->store('profile-photos', 'public');
+        }
+
+        // Security Check for Super Admin assignments
+        if (($request->role === 'super_admin' || ($request->account_id && \App\Models\Account::find($request->account_id)?->hierarchy_level == 100)) && !auth()->user()->isSuperAdmin()) {
+            return back()->with('error', 'Only the Super Admin can assign Super Admin level roles.')->withInput();
         }
 
         User::create([
@@ -158,7 +163,7 @@ class EmployeeController extends Controller
             'name' => 'required|string|max:255',
             'email' => 'required|string|email|max:255|unique:users,email,' . $employee->id,
             'password' => ['nullable', 'confirmed', Rules\Password::defaults()],
-            'role' => 'required|in:admin,hr,employee',
+            'role' => 'required|in:admin,hr,employee,super_admin,accounting',
             'site_id' => 'nullable|exists:sites,id',
             'account_id' => 'nullable|exists:accounts,id',
             'department' => 'nullable|string|max:100',
@@ -186,6 +191,11 @@ class EmployeeController extends Controller
             'date_hired' => $request->date_hired,
             'is_active' => $request->boolean('is_active', true),
         ];
+
+        // Security Check for Super Admin assignments
+        if (($request->role === 'super_admin' || ($request->account_id && \App\Models\Account::find($request->account_id)?->hierarchy_level == 100)) && !auth()->user()->isSuperAdmin()) {
+            return back()->with('error', 'Only the Super Admin can assign Super Admin level roles.')->withInput();
+        }
 
         if ($request->hasFile('profile_photo')) {
             // Delete old photo if exists

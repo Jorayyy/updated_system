@@ -71,8 +71,10 @@
                         
                         <select name="role" class="border-gray-300 rounded-md shadow-sm">
                             <option value="">All Roles</option>
+                            <option value="super_admin" {{ request('role') == 'super_admin' ? 'selected' : '' }}>Super Admin</option>
                             <option value="admin" {{ request('role') == 'admin' ? 'selected' : '' }}>Admin</option>
                             <option value="hr" {{ request('role') == 'hr' ? 'selected' : '' }}>HR</option>
+                            <option value="accounting" {{ request('role') == 'accounting' ? 'selected' : '' }}>Accounting</option>
                             <option value="employee" {{ request('role') == 'employee' ? 'selected' : '' }}>Employee</option>
                         </select>
 
