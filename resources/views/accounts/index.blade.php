@@ -20,6 +20,7 @@
                         <thead class="bg-white">
                             <tr>
                                 <th class="px-6 py-4 text-left text-xs font-bold text-gray-700 uppercase tracking-wider">Role Name</th>
+                                <th class="px-6 py-4 text-left text-xs font-bold text-gray-700 uppercase tracking-wider">Permissions Category</th>
                                 <th class="px-6 py-4 text-left text-xs font-bold text-gray-700 uppercase tracking-wider">Role Description</th>
                                 <th class="px-6 py-4 text-left text-xs font-bold text-gray-700 uppercase tracking-wider text-center">Level</th>
                                 <th class="px-6 py-4 text-left text-xs font-bold text-gray-700 uppercase tracking-wider">Site</th>
@@ -34,6 +35,19 @@
                                         <a href="{{ route('accounts.edit', $account) }}" class="text-blue-400 font-medium hover:text-blue-600">
                                             {{ $account->name }}
                                         </a>
+                                    </td>
+                                    <td class="px-6 py-4 whitespace-nowrap">
+                                        <span class="px-2 py-1 {{ 
+                                            match($account->system_role) {
+                                                'super_admin' => 'bg-purple-100 text-purple-700',
+                                                'admin' => 'bg-red-100 text-red-700',
+                                                'hr' => 'bg-green-100 text-green-700',
+                                                'accounting' => 'bg-yellow-100 text-yellow-700',
+                                                default => 'bg-gray-100 text-gray-700'
+                                            }
+                                        }} rounded-full text-[10px] font-bold uppercase tracking-wider">
+                                            {{ $account->system_role }}
+                                        </span>
                                     </td>
                                     <td class="px-6 py-4 text-sm text-gray-600">
                                         {{ $account->description ?? '-' }}

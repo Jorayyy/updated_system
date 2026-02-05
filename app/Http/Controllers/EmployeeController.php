@@ -85,7 +85,7 @@ class EmployeeController extends Controller
             'name' => 'required|string|max:255',
             'email' => 'required|string|email|max:255|unique:users,email',
             'password' => ['required', 'confirmed', Rules\Password::defaults()],
-            'role' => 'required|in:admin,hr,employee,super_admin,accounting',
+            'account_id' => 'required|exists:accounts,id',
             'department' => 'nullable|string|max:100',
             'position' => 'nullable|string|max:100',
             'hourly_rate' => 'nullable|numeric|min:0',
@@ -93,9 +93,11 @@ class EmployeeController extends Controller
             'monthly_salary' => 'nullable|numeric|min:0',
             'date_hired' => 'nullable|date',
             'site_id' => 'nullable|exists:sites,id',
-            'account_id' => 'nullable|exists:accounts,id',
             'profile_photo' => 'nullable|image|mimes:jpeg,png,jpg,gif|max:2048',
         ]);
+
+        $account = Account::find($request->account_id);
+        $role = $account->system_role ?? 'employee';
 
         $profilePhotoPath = null;
         if ($request->hasFile('profile_photo')) {
@@ -103,7 +105,7 @@ class EmployeeController extends Controller
         }
 
         // Security Check for Super Admin assignments
-        if (($request->role === 'super_admin' || ($request->account_id && \App\Models\Account::find($request->account_id)?->hierarchy_level == 100)) && !auth()->user()->isSuperAdmin()) {
+        if (($role === 'super_admin' || $account->hierarchy_level == 100) && !auth()->user()->isSuperAdmin()) {
             return back()->with('error', 'Only the Super Admin can assign Super Admin level roles.')->withInput();
         }
 
@@ -113,7 +115,7 @@ class EmployeeController extends Controller
             'email' => $request->email,
             'profile_photo' => $profilePhotoPath,
             'password' => Hash::make($request->password),
-            'role' => $request->role,
+            'role' => $role,
             'department' => $request->department,
             'position' => $request->position,
             'hourly_rate' => $request->hourly_rate ?? 0,
@@ -163,9 +165,8 @@ class EmployeeController extends Controller
             'name' => 'required|string|max:255',
             'email' => 'required|string|email|max:255|unique:users,email,' . $employee->id,
             'password' => ['nullable', 'confirmed', Rules\Password::defaults()],
-            'role' => 'required|in:admin,hr,employee,super_admin,accounting',
             'site_id' => 'nullable|exists:sites,id',
-            'account_id' => 'nullable|exists:accounts,id',
+            'account_id' => 'required|exists:accounts,id',
             'department' => 'nullable|string|max:100',
             'position' => 'nullable|string|max:100',
             'hourly_rate' => 'nullable|numeric|min:0',
@@ -176,11 +177,14 @@ class EmployeeController extends Controller
             'profile_photo' => 'nullable|image|mimes:jpeg,png,jpg,gif|max:2048',
         ]);
 
+        $account = Account::find($request->account_id);
+        $role = $account->system_role ?? 'employee';
+
         $data = [
             'employee_id' => $request->employee_id,
             'name' => $request->name,
             'email' => $request->email,
-            'role' => $request->role,
+            'role' => $role,
             'site_id' => $request->site_id,
             'account_id' => $request->account_id,
             'department' => $request->department,
@@ -193,7 +197,7 @@ class EmployeeController extends Controller
         ];
 
         // Security Check for Super Admin assignments
-        if (($request->role === 'super_admin' || ($request->account_id && \App\Models\Account::find($request->account_id)?->hierarchy_level == 100)) && !auth()->user()->isSuperAdmin()) {
+        if (($role === 'super_admin' || $account->hierarchy_level == 100) && !auth()->user()->isSuperAdmin()) {
             return back()->with('error', 'Only the Super Admin can assign Super Admin level roles.')->withInput();
         }
 

@@ -44,6 +44,20 @@
                             </div>
 
                             <div>
+                                <label for="system_role" class="block text-sm font-medium text-gray-700">System Permissions Category *</label>
+                                <select name="system_role" id="system_role" required
+                                    class="mt-1 block w-full border-gray-300 rounded-md shadow-sm focus:border-indigo-500 focus:ring-indigo-500">
+                                    <option value="employee" {{ old('system_role') == 'employee' ? 'selected' : '' }}>Employee (Standard)</option>
+                                    <option value="accounting" {{ old('system_role') == 'accounting' ? 'selected' : '' }}>Accounting (Payroll Access)</option>
+                                    <option value="hr" {{ old('system_role') == 'hr' ? 'selected' : '' }}>HR (Personnel Management)</option>
+                                    <option value="admin" {{ old('system_role') == 'admin' ? 'selected' : '' }}>Admin (Full Management)</option>
+                                    <option value="super_admin" {{ old('system_role') == 'super_admin' ? 'selected' : '' }}>Super Admin (System Owner)</option>
+                                </select>
+                                <p class="mt-1 text-xs text-gray-500 italic">This determines which menus and buttons the user can see.</p>
+                                @error('system_role') <p class="mt-1 text-sm text-red-600">{{ $message }}</p> @enderror
+                            </div>
+
+                            <div>
                                 <label for="description" class="block text-sm font-medium text-gray-700">Role Description</label>
                                 <textarea name="description" id="description" rows="3"
                                     placeholder="Briefly describe the responsibilities..."

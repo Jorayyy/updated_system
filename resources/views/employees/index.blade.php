@@ -169,10 +169,12 @@
                                             {{ $employee->department ?? '-' }}
                                         </td>
                                         <td class="px-6 py-4 whitespace-nowrap">
-                                            <span class="px-2 py-1 text-xs rounded-full 
-                                                @if($employee->role == 'admin') bg-purple-100 text-purple-800
-                                                @elseif($employee->role == 'hr') bg-blue-100 text-blue-800
-                                                @else bg-gray-100 text-gray-800 @endif">
+                                            <span class="px-2 py-1 text-xs rounded-full font-bold uppercase tracking-wider
+                                                @if($employee->role == 'super_admin') bg-indigo-100 text-indigo-700
+                                                @elseif($employee->role == 'admin') bg-red-100 text-red-700
+                                                @elseif($employee->role == 'hr') bg-green-100 text-green-700
+                                                @elseif($employee->role == 'accounting') bg-yellow-100 text-yellow-700
+                                                @else bg-gray-100 text-gray-700 @endif">
                                                 {{ ucfirst($employee->role) }}
                                             </span>
                                         </td>

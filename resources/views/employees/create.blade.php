@@ -61,34 +61,22 @@
                                 @enderror
                             </div>
 
-                            <!-- Role -->
-                            <div>
-                                <label for="role" class="block text-sm font-medium text-gray-700">Role *</label>
-                                <select name="role" id="role" required
-                                    class="mt-1 block w-full border-gray-300 rounded-md shadow-sm focus:border-indigo-500 focus:ring-indigo-500">
-                                    <option value="employee" {{ old('role') == 'employee' ? 'selected' : '' }}>Employee</option>
-                                    <option value="hr" {{ old('role') == 'hr' ? 'selected' : '' }}>HR</option>
-                                    <option value="accounting" {{ old('role') == 'accounting' ? 'selected' : '' }}>Accounting</option>
-                                    <option value="admin" {{ old('role') == 'admin' ? 'selected' : '' }}>Admin</option>
-                                    <option value="super_admin" {{ old('role') == 'super_admin' ? 'selected' : '' }}>Super Admin</option>
-                                </select>
-                                @error('role')
-                                    <p class="mt-1 text-sm text-red-600">{{ $message }}</p>
-                                @enderror
-                            </div>
-
-                            <!-- User Role -->
-                            <div>
-                                <label for="account_id" class="block text-sm font-medium text-gray-700">User Role</label>
-                                <select name="account_id" id="account_id"
-                                    class="mt-1 block w-full border-gray-300 rounded-md shadow-sm focus:border-indigo-500 focus:ring-indigo-500">
-                                    <option value="">Select Role</option>
+                            <!-- User Role (Permissions) -->
+                            <div class="md:col-span-2 bg-indigo-50 p-4 rounded-lg border border-indigo-100">
+                                <label for="account_id" class="block text-sm font-bold text-indigo-900 uppercase tracking-tight">Assigned User Role (System Permissions) *</label>
+                                <select name="account_id" id="account_id" required
+                                    class="mt-2 block w-full border-gray-300 rounded-md shadow-sm focus:border-indigo-500 focus:ring-indigo-500 bg-white">
+                                    <option value="">Select Role...</option>
                                     @foreach($accounts as $account)
                                         <option value="{{ $account->id }}" {{ old('account_id') == $account->id ? 'selected' : '' }}>
-                                            {{ $account->name }} @if($account->site) ({{ $account->site->name }}) @endif
+                                            {{ $account->name }} @if($account->site) — [{{ $account->site->name }}] @endif (Level: {{ $account->hierarchy_level }}, Type: {{ ucfirst($account->system_role) }})
                                         </option>
                                     @endforeach
                                 </select>
+                                <p class="mt-2 text-xs text-indigo-700 italic">
+                                    <svg class="w-3 h-3 inline mr-1" fill="currentColor" viewBox="0 0 20 20"><path fill-rule="evenodd" d="M18 10a8 8 0 11-16 0 8 8 0 0116 0zm-7-4a1 1 0 11-2 0 1 1 0 012 0zM9 9a1 1 0 000 2v3a1 1 0 001 1h1a1 1 0 100-2v-3a1 1 0 00-1-1H9z" clip-rule="evenodd"></path></svg>
+                                    The chosen User Role determines which menus and features this employee can access.
+                                </p>
                                 @error('account_id')
                                     <p class="mt-1 text-sm text-red-600">{{ $message }}</p>
                                 @enderror

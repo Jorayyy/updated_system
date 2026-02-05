@@ -34,6 +34,7 @@ class AccountController extends Controller
             'description' => 'nullable|string',
             'site_id' => 'nullable|exists:sites,id',
             'hierarchy_level' => 'required|integer|min:0|max:100',
+            'system_role' => 'required|in:employee,accounting,hr,admin,super_admin',
         ]);
 
         if (!Auth::user()->isSuperAdmin()) {
@@ -61,6 +62,7 @@ class AccountController extends Controller
             'description' => 'nullable|string',
             'site_id' => 'nullable|exists:sites,id',
             'hierarchy_level' => 'required|integer|min:0|max:100',
+            'system_role' => 'required|in:employee,accounting,hr,admin,super_admin',
         ]);
 
         if (!Auth::user()->isSuperAdmin()) {

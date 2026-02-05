@@ -9,7 +9,7 @@ class Account extends Model
 {
     use HasFactory;
 
-    protected $fillable = ['name', 'description', 'site_id', 'hierarchy_level'];
+    protected $fillable = ['name', 'description', 'site_id', 'hierarchy_level', 'system_role'];
 
     public function site()
     {

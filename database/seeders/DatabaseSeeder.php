@@ -25,93 +25,163 @@ class DatabaseSeeder extends Seeder
      */
     public function run(): void
     {
-        // Create Sample Sites
-        $tacloban = Site::create([
-            'name' => 'MEBS Tacloban Main',
-            'location' => 'Tacloban City, Leyte',
-            'description' => 'Main operational hub for MEBS Hiyas',
-            'is_active' => true,
-        ]);
+        // Define Admin Email for reuse
+        $adminEmail = 'admin@mebs.com';
 
-        $cebu = Site::create([
-            'name' => 'MEBS Cebu Branch',
-            'location' => 'IT Park, Cebu City',
-            'description' => 'Satellite office for specialized campaigns',
-            'is_active' => true,
-        ]);
+        // Create Sample Sites
+        $tacloban = Site::updateOrCreate(
+            ['name' => 'MEBS Tacloban Main'],
+            [
+                'location' => 'Tacloban City, Leyte',
+                'description' => 'Main operational hub for MEBS Hiyas',
+                'is_active' => true,
+            ]
+        );
+
+        $cebu = Site::updateOrCreate(
+            ['name' => 'MEBS Cebu Branch'],
+            [
+                'location' => 'IT Park, Cebu City',
+                'description' => 'Satellite office for specialized campaigns',
+                'is_active' => true,
+            ]
+        );
+
+        // Create Hierarchical Roles (Accounts)
+        $superAdminRole = Account::updateOrCreate(
+            ['name' => 'Super Admin'],
+            [
+                'description' => 'Full system access and configuration',
+                'hierarchy_level' => 100,
+                'system_role' => 'super_admin',
+                'is_active' => true,
+            ]
+        );
+
+        $adminRole = Account::updateOrCreate(
+            ['name' => 'Admin User'],
+            [
+                'description' => 'Site-level management and HR oversight',
+                'hierarchy_level' => 80,
+                'system_role' => 'admin',
+                'is_active' => true,
+            ]
+        );
+
+        $hrRole = Account::updateOrCreate(
+            ['name' => 'HR Manager'],
+            [
+                'description' => 'Personnel management and recruiting',
+                'hierarchy_level' => 60,
+                'system_role' => 'hr',
+                'is_active' => true,
+            ]
+        );
+
+        $accountingRole = Account::updateOrCreate(
+            ['name' => 'Accounting'],
+            [
+                'description' => 'Payroll processing and financial reporting',
+                'hierarchy_level' => 40,
+                'system_role' => 'accounting',
+                'is_active' => true,
+            ]
+        );
+
+        $agentRole = Account::updateOrCreate(
+            ['name' => 'Standard Employee'],
+            [
+                'description' => 'Default access for frontline staff',
+                'hierarchy_level' => 0,
+                'system_role' => 'employee',
+                'is_active' => true,
+            ]
+        );
 
         // Create Sample Accounts (Campaigns)
-        $ecommerce = Account::create([
-            'name' => 'E-Commerce Global Support',
-            'client_name' => 'Nexus Retail Group',
-            'description' => '24/7 Customer Support for Global E-commerce Platform',
-            'is_active' => true,
-        ]);
+        $ecommerce = Account::updateOrCreate(
+            ['name' => 'E-Commerce Global Support'],
+            [
+                'description' => '24/7 Customer Support for Global E-commerce Platform',
+                'is_active' => true,
+                'hierarchy_level' => 0,
+                'system_role' => 'employee',
+            ]
+        );
 
-        $techSupport = Account::create([
-            'name' => 'Premium Tech Solutions',
-            'client_name' => 'Titan Technologies',
-            'description' => 'Level 2 Technical Support for SaaS products',
-            'is_active' => true,
-        ]);
+        $techSupport = Account::updateOrCreate(
+            ['name' => 'Premium Tech Solutions'],
+            [
+                'description' => 'Level 2 Technical Support for SaaS products',
+                'is_active' => true,
+                'hierarchy_level' => 0,
+                'system_role' => 'employee',
+            ]
+        );
 
         // Create Schedules for Accounts
-        Schedule::create([
-            'account_id' => $ecommerce->id,
-            'name' => 'Ecommerce Day Shift',
-            'work_start_time' => '08:00:00',
-            'work_end_time' => '17:00:00',
-            'is_active' => true,
-        ]);
+        Schedule::updateOrCreate(
+            ['account_id' => $ecommerce->id, 'name' => 'Ecommerce Day Shift'],
+            [
+                'work_start_time' => '08:00:00',
+                'work_end_time' => '17:00:00',
+                'is_active' => true,
+            ]
+        );
 
-        Schedule::create([
-            'account_id' => $ecommerce->id,
-            'name' => 'Ecommerce Night Shift',
-            'work_start_time' => '21:00:00',
-            'work_end_time' => '06:00:00',
-            'is_active' => true,
-        ]);
+        Schedule::updateOrCreate(
+            ['account_id' => $ecommerce->id, 'name' => 'Ecommerce Night Shift'],
+            [
+                'work_start_time' => '21:00:00',
+                'work_end_time' => '06:00:00',
+                'is_active' => true,
+            ]
+        );
 
-        Schedule::create([
-            'account_id' => $techSupport->id,
-            'name' => 'Tech Premium Shift',
-            'work_start_time' => '22:00:00',
-            'work_end_time' => '07:00:00',
-            'is_active' => true,
-        ]);
+        // Create Admin User (Updated to super_admin)
+        $admin = User::updateOrCreate(
+            ['email' => $adminEmail],
+            [
+                'name' => 'Admin User',
+                'password' => Hash::make('password'),
+                'employee_id' => 'MEBS-0001',
+                'role' => 'super_admin',
+                'department' => 'Executive',
+                'position' => 'Site Director',
+                'date_hired' => now()->subYears(5),
+                'monthly_salary' => 150000,
+                'is_active' => true,
+                'site_id' => $tacloban->id,
+                'account_id' => $superAdminRole->id,
+            ]
+        );
 
-        // Create Admin User
-        $admin = User::create([
-            'name' => 'Admin User',
-            'email' => 'admin@mebs.com',
-            'password' => Hash::make('password'),
-            'employee_id' => 'MEBS-0001',
-            'role' => 'admin',
-            'department' => 'Executive',
-            'position' => 'Site Director',
-            'date_hired' => now()->subYears(5),
-            'monthly_salary' => 150000,
-            'is_active' => true,
-            'site_id' => $tacloban->id,
-        ]);
+        // Check if full test data exists, if so skip the generation to save time
+        if (Attendance::where('user_id', $admin->id)->exists()) {
+            $this->command->info('User updated. Skipping test data generation as it already exists...');
+            return;
+        }
 
         // Create HR User
-        $hr = User::create([
-            'name' => 'HR Manager',
-            'email' => 'hr@mebs.com',
-            'password' => Hash::make('password'),
-            'employee_id' => 'MEBS-0002',
-            'role' => 'hr',
-            'department' => 'Human Resources',
-            'position' => 'Senior HR Manager',
-            'date_hired' => now()->subYears(3),
-            'monthly_salary' => 85000,
-            'hourly_rate' => 488.51,
-            'meal_allowance' => 5000,
-            'transportation_allowance' => 3000,
-            'communication_allowance' => 2000,
-            'is_active' => true,
-        ]);
+        $hr = User::updateOrCreate(
+            ['email' => 'hr@mebs.com'],
+            [
+                'name' => 'HR Manager',
+                'password' => Hash::make('password'),
+                'employee_id' => 'MEBS-0002',
+                'role' => 'hr',
+                'department' => 'Human Resources',
+                'position' => 'Senior HR Manager',
+                'date_hired' => now()->subYears(3),
+                'monthly_salary' => 85000,
+                'hourly_rate' => 488.51,
+                'meal_allowance' => 5000,
+                'transportation_allowance' => 3000,
+                'communication_allowance' => 2000,
+                'is_active' => true,
+                'account_id' => $hrRole->id,
+            ]
+        );
 
         // Create Sample Call Center Employees
         $employees = [
@@ -238,22 +308,26 @@ class DatabaseSeeder extends Seeder
         ];
 
         foreach ($employees as $employeeData) {
-            User::create([
-                'name' => $employeeData['name'],
-                'email' => $employeeData['email'],
-                'password' => Hash::make('password'),
-                'employee_id' => $employeeData['employee_id'],
-                'role' => 'employee',
-                'department' => $employeeData['department'],
-                'position' => $employeeData['position'],
-                'date_hired' => now()->subMonths(rand(3, 24)),
-                'monthly_salary' => $employeeData['monthly_salary'],
-                'hourly_rate' => $employeeData['hourly_rate'],
-                'meal_allowance' => $employeeData['meal_allowance'] ?? 0,
-                'transportation_allowance' => $employeeData['transportation_allowance'] ?? 0,
-                'communication_allowance' => $employeeData['communication_allowance'] ?? 0,
-                'is_active' => true,
-            ]);
+            User::updateOrCreate(
+                ['email' => $employeeData['email']],
+                [
+                    'name' => $employeeData['name'],
+                    'password' => Hash::make('password'),
+                    'employee_id' => $employeeData['employee_id'],
+                    'role' => 'employee',
+                    'department' => $employeeData['department'],
+                    'position' => $employeeData['position'],
+                    'date_hired' => now()->subMonths(rand(3, 24)),
+                    'monthly_salary' => $employeeData['monthly_salary'],
+                    'hourly_rate' => $employeeData['hourly_rate'],
+                    'meal_allowance' => $employeeData['meal_allowance'] ?? 0,
+                    'transportation_allowance' => $employeeData['transportation_allowance'] ?? 0,
+                    'communication_allowance' => $employeeData['communication_allowance'] ?? 0,
+                    'is_active' => true,
+                    'site_id' => $tacloban->id,
+                    'account_id' => $ecommerce->id,
+                ]
+            );
         }
 
         // Create Leave Types
@@ -321,7 +395,10 @@ class DatabaseSeeder extends Seeder
         ];
 
         foreach ($leaveTypes as $leaveTypeData) {
-            LeaveType::create($leaveTypeData);
+            LeaveType::updateOrCreate(
+                ['code' => $leaveTypeData['code']],
+                $leaveTypeData
+            );
         }
 
         // Create Leave Balances for all employees
@@ -333,14 +410,18 @@ class DatabaseSeeder extends Seeder
                 // Skip maternity leave for now (would need gender field)
                 if ($leaveType->code === 'ML') continue;
                 
-                LeaveBalance::create([
-                    'user_id' => $user->id,
-                    'leave_type_id' => $leaveType->id,
-                    'year' => date('Y'),
-                    'allocated_days' => $leaveType->max_days,
-                    'used_days' => 0,
-                    'remaining_days' => $leaveType->max_days,
-                ]);
+                LeaveBalance::updateOrCreate(
+                    [
+                        'user_id' => $user->id,
+                        'leave_type_id' => $leaveType->id,
+                        'year' => date('Y'),
+                    ],
+                    [
+                        'allocated_days' => $leaveType->max_days,
+                        'used_days' => 0,
+                        'remaining_days' => $leaveType->max_days,
+                    ]
+                );
             }
         }
 
@@ -383,7 +464,10 @@ class DatabaseSeeder extends Seeder
         ];
 
         foreach ($settings as $setting) {
-            CompanySetting::create($setting);
+            CompanySetting::updateOrCreate(
+                ['key' => $setting['key']],
+                $setting
+            );
         }
         
         // Seed Philippine Holidays
@@ -425,15 +509,19 @@ class DatabaseSeeder extends Seeder
 
                 // Random chance of absence (5%)
                 if (rand(1, 100) <= 5) {
-                    Attendance::create([
-                        'user_id' => $employee->id,
-                        'date' => $currentDate->format('Y-m-d'),
-                        'status' => 'absent',
-                        'current_step' => 'time_out',
-                        'total_work_minutes' => 0,
-                        'total_break_minutes' => 0,
-                        'remarks' => 'No show',
-                    ]);
+                    Attendance::updateOrCreate(
+                        [
+                            'user_id' => $employee->id,
+                            'date' => $currentDate->format('Y-m-d'),
+                        ],
+                        [
+                            'status' => 'absent',
+                            'current_step' => 'time_out',
+                            'total_work_minutes' => 0,
+                            'total_break_minutes' => 0,
+                            'remarks' => 'No show',
+                        ]
+                    );
                     $currentDate->addDay();
                     continue;
                 }
@@ -466,24 +554,28 @@ class DatabaseSeeder extends Seeder
                 $overtimeMinutes = max(0, $totalWorkMinutes - 480);
                 $undertimeMinutes = max(0, 480 - $totalWorkMinutes);
 
-                Attendance::create([
-                    'user_id' => $employee->id,
-                    'date' => $currentDate->format('Y-m-d'),
-                    'time_in' => $timeIn,
-                    'first_break_out' => $firstBreakOut,
-                    'first_break_in' => $firstBreakIn,
-                    'lunch_break_out' => $lunchOut,
-                    'lunch_break_in' => $lunchIn,
-                    'second_break_out' => $secondBreakOut,
-                    'second_break_in' => $secondBreakIn,
-                    'time_out' => $timeOut,
-                    'status' => $status,
-                    'current_step' => 'time_out',
-                    'total_work_minutes' => $totalWorkMinutes,
-                    'total_break_minutes' => $totalBreakMinutes,
-                    'overtime_minutes' => $overtimeMinutes,
-                    'undertime_minutes' => $undertimeMinutes,
-                ]);
+                Attendance::updateOrCreate(
+                    [
+                        'user_id' => $employee->id,
+                        'date' => $currentDate->format('Y-m-d'),
+                    ],
+                    [
+                        'time_in' => $timeIn,
+                        'first_break_out' => $firstBreakOut,
+                        'first_break_in' => $firstBreakIn,
+                        'lunch_break_out' => $lunchOut,
+                        'lunch_break_in' => $lunchIn,
+                        'second_break_out' => $secondBreakOut,
+                        'second_break_in' => $secondBreakIn,
+                        'time_out' => $timeOut,
+                        'status' => $status,
+                        'current_step' => 'time_out',
+                        'total_work_minutes' => $totalWorkMinutes,
+                        'total_break_minutes' => $totalBreakMinutes,
+                        'overtime_minutes' => $overtimeMinutes,
+                        'undertime_minutes' => $undertimeMinutes,
+                    ]
+                );
 
                 $currentDate->addDay();
             }
@@ -520,18 +612,22 @@ class DatabaseSeeder extends Seeder
                 $status = $leaveStatuses[array_rand($leaveStatuses)];
                 $reasons = $leaveReasons[$leaveType->code] ?? ['Personal reason'];
                 
-                LeaveRequest::create([
-                    'user_id' => $employee->id,
-                    'leave_type_id' => $leaveType->id,
-                    'start_date' => $startDate,
-                    'end_date' => $endDate,
-                    'total_days' => $totalDays,
-                    'reason' => $reasons[array_rand($reasons)],
-                    'status' => $status,
-                    'approved_by' => $status !== 'pending' ? $hr->id : null,
-                    'approved_at' => $status !== 'pending' ? $startDate->copy()->subDays(rand(1, 3)) : null,
-                    'rejection_reason' => $status === 'rejected' ? 'Insufficient leave balance' : null,
-                ]);
+                LeaveRequest::updateOrCreate(
+                    [
+                        'user_id' => $employee->id,
+                        'leave_type_id' => $leaveType->id,
+                        'start_date' => $startDate->format('Y-m-d'),
+                        'end_date' => $endDate->format('Y-m-d'),
+                    ],
+                    [
+                        'total_days' => $totalDays,
+                        'reason' => $reasons[array_rand($reasons)],
+                        'status' => $status,
+                        'approved_by' => $status !== 'pending' ? $hr->id : null,
+                        'approved_at' => $status !== 'pending' ? $startDate->copy()->subDays(rand(1, 3)) : null,
+                        'rejection_reason' => $status === 'rejected' ? 'Insufficient leave balance' : null,
+                    ]
+                );
             }
         }
 
