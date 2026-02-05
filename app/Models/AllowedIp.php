@@ -45,7 +45,7 @@ class AllowedIp extends Model
     public static function isAllowed(string $ipAddress): bool
     {
         // Check if IP restriction is enabled in settings
-        $ipRestrictionEnabled = CompanySetting::getValue('ip_restriction_enabled', false);
+        $ipRestrictionEnabled = CompanySetting::getValue('attendance_ip_restriction', false);
         
         if (!$ipRestrictionEnabled) {
             return true; // IP restriction is disabled, allow all
