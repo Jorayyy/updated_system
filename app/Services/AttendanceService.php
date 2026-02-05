@@ -19,29 +19,17 @@ class AttendanceService
      */
     protected function checkIpRestriction(): array
     {
-        // Check if IP restriction is enabled in settings
-        $ipRestrictionEnabled = CompanySetting::getValue('attendance_ip_restriction', false);
-        
-        if (!$ipRestrictionEnabled) {
-            return ['allowed' => true];
-        }
-
-        // Check if there are any allowed IPs configured
-        $hasAllowedIps = AllowedIp::where('is_active', true)->exists();
-        
-        if (!$hasAllowedIps) {
-            // If restriction is enabled but no IPs are whitelisted, block everything
-            return [
-                'allowed' => false,
-                'message' => 'IP restriction is enabled but no authorized network is registered. Please contact your administrator.',
-            ];
-        }
-
-        // Check if current IP is allowed
+        // Check if current IP is allowed (handles both disabled setting and empty whitelist)
         if (!AllowedIp::isAllowed(request()->ip())) {
+            // Check if it was blocked because no IPs are registered OR because this specific IP is not in the list
+            $hasAllowedIps = AllowedIp::active()->exists();
+            $message = $hasAllowedIps 
+                ? 'Your IP address (' . request()->ip() . ') is not authorized for attendance recording. Please contact your administrator.'
+                : 'IP restriction is enabled but no authorized network is registered. Please contact your administrator.';
+
             return [
                 'allowed' => false,
-                'message' => 'Your IP address (' . request()->ip() . ') is not authorized for attendance recording. Please contact your administrator.',
+                'message' => $message,
             ];
         }
 

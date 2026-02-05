@@ -4,6 +4,7 @@ namespace App\Http\Controllers;
 
 use App\Models\TimekeepingTransaction;
 use App\Models\Attendance;
+use App\Models\AllowedIp;
 use App\Models\User;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
@@ -54,6 +55,16 @@ class TimekeepingController extends Controller
      */
     public function store(Request $request)
     {
+        // Check IP restriction
+        if (!AllowedIp::isAllowed($request->ip())) {
+            $hasAllowedIps = AllowedIp::active()->exists();
+            $message = $hasAllowedIps 
+                ? 'Your IP address (' . $request->ip() . ') is not authorized for attendance recording. Please contact your administrator.'
+                : 'IP restriction is enabled but no authorized network is registered. Please contact your administrator.';
+                
+            return redirect()->back()->with('error', $message);
+        }
+
         $validated = $request->validate([
             'transaction_type' => ['required', Rule::in(array_keys(TimekeepingTransaction::TRANSACTION_TYPES))],
             'notes' => 'nullable|string|max:500',

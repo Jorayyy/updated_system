@@ -50,6 +50,12 @@ class AllowedIp extends Model
         if (!$ipRestrictionEnabled) {
             return true; // IP restriction is disabled, allow all
         }
+
+        // Check if there are any allowed IPs configured
+        // If restriction is enabled but no IPs are registered, we block everything for security
+        if (!self::active()->exists()) {
+            return false;
+        }
         
         return self::active()->where('ip_address', $ipAddress)->exists();
     }
