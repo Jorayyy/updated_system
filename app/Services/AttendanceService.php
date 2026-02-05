@@ -350,15 +350,18 @@ class AttendanceService
     public function getTodayStatus(User $user): array
     {
         $attendance = $this->getCurrentAttendance($user);
+        $ipCheck = $this->checkIpRestriction();
 
         if (!$attendance) {
             return [
                 'status' => 'not_started',
-                'can_proceed' => true,
+                'can_proceed' => $ipCheck['allowed'],
+                'ip_blocked' => !$ipCheck['allowed'],
+                'ip_message' => !$ipCheck['allowed'] ? $ipCheck['message'] : null,
                 'next_action' => 'Clock In',
                 'next_step' => 'time_in',
                 'attendance' => null,
-                'steps' => $this->getEmptySteps(),
+                'steps' => $this->getEmptySteps($ipCheck['allowed']),
                 'current_break' => null,
             ];
         }
@@ -369,11 +372,13 @@ class AttendanceService
 
         return [
             'status' => $this->getStatusLabel($attendance, $isOnBreak),
-            'can_proceed' => !$isCompleted,
-            'next_action' => $nextStepInfo ? $nextStepInfo['action'] : null,
+            'can_proceed' => !$isCompleted && $ipCheck['allowed'],
+            'ip_blocked' => !$ipCheck['allowed'],
+            'ip_message' => !$ipCheck['allowed'] ? $ipCheck['message'] : null,
+            'next_action' => ($nextStepInfo && $ipCheck['allowed']) ? $nextStepInfo['action'] : null,
             'next_step' => $attendance->getNextStep(),
             'attendance' => $attendance,
-            'steps' => $attendance->getStepsStatus(),
+            'steps' => $attendance->getStepsStatus($ipCheck['allowed']),
             'current_break' => null, // Legacy support
         ];
     }
@@ -381,7 +386,7 @@ class AttendanceService
     /**
      * Get empty steps for when no attendance record exists
      */
-    protected function getEmptySteps(): array
+    protected function getEmptySteps(bool $canProceed = true): array
     {
         $steps = [];
         $isFirst = true;
@@ -394,7 +399,7 @@ class AttendanceService
                 'time' => null,
                 'is_completed' => false,
                 'is_current' => false,
-                'is_next' => $isFirst,
+                'is_next' => $isFirst && $canProceed,
             ];
             $isFirst = false;
         }

@@ -19,6 +19,18 @@
                 </div>
             @endif
 
+            @if($status['ip_blocked'] ?? false)
+                <div class="mb-6 p-4 bg-red-50 border-l-4 border-red-500 text-red-700 rounded shadow-sm flex items-start gap-3">
+                    <svg class="w-6 h-6 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z"/>
+                    </svg>
+                    <div>
+                        <p class="font-bold underline text-lg">PUNCHING DISABLED</p>
+                        <p class="mt-1">{{ $status['ip_message'] }}</p>
+                    </div>
+                </div>
+            @endif
+
             <!-- Current Status Card -->
             <div class="bg-white overflow-hidden shadow-sm sm:rounded-lg mb-6">
                 <div class="p-6">
@@ -145,12 +157,18 @@
 
                                 <!-- Action button for next step -->
                                 @if($step['is_next'])
-                                    <form action="{{ route('attendance.step') }}" method="POST">
-                                        @csrf
-                                        <button type="submit" class="px-4 py-2 bg-indigo-600 hover:bg-indigo-700 text-white rounded-lg font-medium transition">
+                                    @if($status['ip_blocked'] ?? false)
+                                        <button type="button" disabled class="px-4 py-2 bg-gray-400 text-white rounded-lg font-medium cursor-not-allowed opacity-50" title="IP Restricted">
                                             {{ $step['action'] }}
                                         </button>
-                                    </form>
+                                    @else
+                                        <form action="{{ route('attendance.step') }}" method="POST">
+                                            @csrf
+                                            <button type="submit" class="px-4 py-2 bg-indigo-600 hover:bg-indigo-700 text-white rounded-lg font-medium transition">
+                                                {{ $step['action'] }}
+                                            </button>
+                                        </form>
+                                    @endif
                                 @elseif($step['is_completed'])
                                     <span class="text-sm font-medium 
                                         @switch($step['color'])
@@ -196,8 +214,9 @@
                                     Need to leave early?
                                 </div>
                                 <button type="submit" 
+                                    @if($status['ip_blocked'] ?? false) disabled @endif
                                     onclick="return confirm('This will skip all remaining breaks and clock you out. Are you sure?')"
-                                    class="px-4 py-2 bg-red-600 hover:bg-red-700 text-white rounded-lg font-medium transition">
+                                    class="px-4 py-2 {{ ($status['ip_blocked'] ?? false) ? 'bg-gray-400 cursor-not-allowed opacity-50' : 'bg-red-600 hover:bg-red-700' }} text-white rounded-lg font-medium transition">
                                     🚪 Quick Time Out
                                 </button>
                             </form>

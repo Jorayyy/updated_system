@@ -242,7 +242,7 @@ class Attendance extends Model
     /**
      * Get all steps with their status and times
      */
-    public function getStepsStatus(): array
+    public function getStepsStatus(bool $canProceed = true): array
     {
         $steps = [];
         $stepOrder = array_keys(self::STEPS);
@@ -254,7 +254,7 @@ class Attendance extends Model
             
             $isCompleted = $time !== null;
             $isCurrent = $step === $this->current_step && !$this->isCompleted();
-            $isNext = !$this->isCompleted() && $this->getNextStep() === $step;
+            $isNext = $canProceed && !$this->isCompleted() && $this->getNextStep() === $step;
             
             $steps[$step] = [
                 'label' => $info['label'],
