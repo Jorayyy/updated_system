@@ -19,7 +19,7 @@ class AllowedIpController extends Controller
             ->paginate(15);
 
         $currentIp = request()->ip();
-        $isCurrentIpAllowed = AllowedIp::isAllowed($currentIp);
+        $isCurrentIpAllowed = AllowedIp::active()->where('ip_address', $currentIp)->exists();
 
         return view('settings.allowed-ips', compact('allowedIps', 'currentIp', 'isCurrentIpAllowed'));
     }

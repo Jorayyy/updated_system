@@ -539,6 +539,7 @@
                             <div x-show="!sidebarOpen" class="tooltip">All Payrolls</div>
                         </div>
 
+                        @if(auth()->user()->isSuperAdmin())
                         <!-- Tools & Reports Section -->
                         <div class="pt-4 mt-4 border-t border-gray-700">
                             <p x-show="sidebarOpen" x-cloak class="px-3 text-xs font-semibold text-gray-400 uppercase tracking-wider mb-2 sidebar-text" :class="sidebarOpen ? 'sidebar-text-visible' : 'sidebar-text-hidden'">Tools & Reports</p>
@@ -589,7 +590,6 @@
                             <div x-show="!sidebarOpen" class="tooltip">Timekeeping Management</div>
                         </div>
 
-                        @if(auth()->user()->isAdmin())
                             <!-- Admin Section -->
                             <div class="pt-4 mt-4 border-t border-gray-700">
                                 <p x-show="sidebarOpen" x-cloak class="px-3 text-xs font-semibold text-gray-400 uppercase tracking-wider mb-2 sidebar-text" :class="sidebarOpen ? 'sidebar-text-visible' : 'sidebar-text-hidden'">Administration</p>

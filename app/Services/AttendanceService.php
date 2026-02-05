@@ -30,8 +30,11 @@ class AttendanceService
         $hasAllowedIps = AllowedIp::where('is_active', true)->exists();
         
         if (!$hasAllowedIps) {
-            // No IPs configured, allow all
-            return ['allowed' => true];
+            // If restriction is enabled but no IPs are whitelisted, block everything
+            return [
+                'allowed' => false,
+                'message' => 'IP restriction is enabled but no authorized network is registered. Please contact your administrator.',
+            ];
         }
 
         // Check if current IP is allowed
@@ -277,6 +280,15 @@ class AttendanceService
      */
     public function skipToTimeOut(User $user, ?string $reason = null): array
     {
+        // Check IP restriction
+        $ipCheck = $this->checkIpRestriction();
+        if (!$ipCheck['allowed']) {
+            return [
+                'success' => false,
+                'message' => $ipCheck['message'],
+            ];
+        }
+
         $attendance = $this->getCurrentAttendance($user);
 
         if (!$attendance || !$attendance->hasTimedIn()) {

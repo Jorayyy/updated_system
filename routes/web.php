@@ -268,6 +268,36 @@ Route::middleware('auth')->group(function () {
             Route::post('/retry-failed-jobs', [AutomationController::class, 'retryFailedJobs'])->name('retry-failed-jobs');
         });
 
+        // PC Management
+        Route::get('/computers', [ComputerController::class, 'index'])->name('computers.index');
+        Route::get('/computers/create', [ComputerController::class, 'create'])->name('computers.create');
+        Route::post('/computers', [ComputerController::class, 'store'])->name('computers.store');
+        Route::get('/computers/{computer}', [ComputerController::class, 'show'])->name('computers.show');
+        Route::get('/computers/{computer}/edit', [ComputerController::class, 'edit'])->name('computers.edit');
+        Route::put('/computers/{computer}', [ComputerController::class, 'update'])->name('computers.update');
+        Route::delete('/computers/{computer}', [ComputerController::class, 'destroy'])->name('computers.destroy');
+        Route::post('/computers/{computer}/assign', [ComputerController::class, 'assignToUser'])->name('computers.assign');
+        Route::post('/computers/{computer}/release', [ComputerController::class, 'adminRelease'])->name('computers.admin-release');
+        Route::get('/computers/active-usage', [ComputerController::class, 'activeUsage'])->name('computers.active-usage');
+
+        // Transactions Management (HR/Admin)
+        Route::get('/manage/transactions', [TransactionController::class, 'adminIndex'])->name('transactions.admin-index');
+        Route::patch('/transactions/{transaction}/hr-approve', [TransactionController::class, 'hrApprove'])->name('transactions.hr-approve');
+        Route::patch('/transactions/{transaction}/admin-approve', [TransactionController::class, 'adminApprove'])->name('transactions.admin-approve');
+        Route::patch('/transactions/{transaction}/reject', [TransactionController::class, 'reject'])->name('transactions.reject');
+
+        // Analytics Dashboard (HR/Admin)
+        Route::get('/analytics', [AnalyticsController::class, 'index'])->name('analytics.index');
+        Route::get('/analytics/attendance', [AnalyticsController::class, 'attendanceData'])->name('analytics.attendance');
+        Route::get('/analytics/turnover', [AnalyticsController::class, 'turnoverData'])->name('analytics.turnover');
+        Route::get('/analytics/leaves', [AnalyticsController::class, 'leaveData'])->name('analytics.leaves');
+        Route::get('/analytics/payroll', [AnalyticsController::class, 'payrollData'])->name('analytics.payroll');
+    });
+
+    // ============================================
+    // SUPER ADMIN ONLY ROUTES
+    // ============================================
+    Route::middleware('role:super_admin')->group(function () {
         // Holiday Management
         Route::resource('holidays', HolidayController::class);
         Route::post('/holidays/generate-recurring', [HolidayController::class, 'generateRecurring'])->name('holidays.generate-recurring');
@@ -287,42 +317,11 @@ Route::middleware('auth')->group(function () {
         Route::get('/audit-logs', [AuditLogController::class, 'index'])->name('audit-logs.index');
         Route::get('/audit-logs/{auditLog}', [AuditLogController::class, 'show'])->name('audit-logs.show');
 
-        // PC Management
-        Route::get('/computers', [ComputerController::class, 'index'])->name('computers.index');
-        Route::get('/computers/create', [ComputerController::class, 'create'])->name('computers.create');
-        Route::post('/computers', [ComputerController::class, 'store'])->name('computers.store');
-        Route::get('/computers/{computer}', [ComputerController::class, 'show'])->name('computers.show');
-        Route::get('/computers/{computer}/edit', [ComputerController::class, 'edit'])->name('computers.edit');
-        Route::put('/computers/{computer}', [ComputerController::class, 'update'])->name('computers.update');
-        Route::delete('/computers/{computer}', [ComputerController::class, 'destroy'])->name('computers.destroy');
-        Route::post('/computers/{computer}/assign', [ComputerController::class, 'assignToUser'])->name('computers.assign');
-        Route::post('/computers/{computer}/release', [ComputerController::class, 'adminRelease'])->name('computers.admin-release');
-        Route::get('/computers/active-usage', [ComputerController::class, 'activeUsage'])->name('computers.active-usage');
-
-        // Timekeeping Management (HR)
+        // Timekeeping Management
         Route::get('/manage/timekeeping', [TimekeepingController::class, 'adminIndex'])->name('timekeeping.admin-index');
         Route::post('/manage/timekeeping', [TimekeepingController::class, 'adminStore'])->name('timekeeping.admin-store');
         Route::patch('/timekeeping/{transaction}/void', [TimekeepingController::class, 'void'])->name('timekeeping.void');
         Route::get('/timekeeping/live-stats', [TimekeepingController::class, 'liveStats'])->name('timekeeping.live-stats');
-
-        // Transactions Management (HR/Admin)
-        Route::get('/manage/transactions', [TransactionController::class, 'adminIndex'])->name('transactions.admin-index');
-        Route::patch('/transactions/{transaction}/hr-approve', [TransactionController::class, 'hrApprove'])->name('transactions.hr-approve');
-        Route::patch('/transactions/{transaction}/admin-approve', [TransactionController::class, 'adminApprove'])->name('transactions.admin-approve');
-        Route::patch('/transactions/{transaction}/reject', [TransactionController::class, 'reject'])->name('transactions.reject');
-
-        // Analytics Dashboard (HR/Admin)
-        Route::get('/analytics', [AnalyticsController::class, 'index'])->name('analytics.index');
-        Route::get('/analytics/attendance', [AnalyticsController::class, 'attendanceData'])->name('analytics.attendance');
-        Route::get('/analytics/turnover', [AnalyticsController::class, 'turnoverData'])->name('analytics.turnover');
-        Route::get('/analytics/leaves', [AnalyticsController::class, 'leaveData'])->name('analytics.leaves');
-        Route::get('/analytics/payroll', [AnalyticsController::class, 'payrollData'])->name('analytics.payroll');
-    });
-
-    // ============================================
-    // ADMIN ONLY ROUTES
-    // ============================================
-    Route::middleware('admin')->group(function () {
         // Settings Management
         Route::get('/settings', [SettingsController::class, 'index'])->name('settings.index');
         Route::get('/settings/company', [SettingsController::class, 'company'])->name('settings.company');
