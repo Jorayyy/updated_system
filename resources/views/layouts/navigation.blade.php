@@ -1,0 +1,285 @@
+<nav x-data="{ open: false }" class="bg-white border-b border-gray-100 transition-colors duration-200">
+    <!-- Primary Navigation Menu -->
+    <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+        <div class="flex justify-between h-16">
+            <div class="flex">
+                <!-- Logo -->
+                <div class="shrink-0 flex items-center">
+                    <a href="{{ route('dashboard') }}" class="font-bold text-xl text-gray-800">
+                        MEBS HIYAS
+                    </a>
+                </div>
+
+                <!-- Navigation Links -->
+                <div class="hidden space-x-8 sm:-my-px sm:ms-10 sm:flex">
+                    <x-nav-link :href="route('dashboard')" :active="request()->routeIs('dashboard')">
+                        {{ __('Dashboard') }}
+                    </x-nav-link>
+                    
+                    <x-nav-link :href="route('attendance.index')" :active="request()->routeIs('attendance.index', 'attendance.history')">
+                        {{ __('Attendance') }}
+                    </x-nav-link>
+                    
+                    <x-nav-link :href="route('dtr.index')" :active="request()->routeIs('dtr.index')">
+                        {{ __('My DTR') }}
+                    </x-nav-link>
+                    
+                    <x-nav-link :href="route('transactions.index')" :active="request()->routeIs('transactions.index', 'transactions.create', 'transactions.show', 'transactions.history')">
+                        {{ __('Transactions') }}
+                    </x-nav-link>
+                    
+                    <x-nav-link :href="route('payroll.my-payslips')" :active="request()->routeIs('payroll.my-payslips', 'payroll.my-payslip')">
+                        {{ __('Payslips') }}
+                    </x-nav-link>
+
+                    @if(auth()->user()->isAdmin() || auth()->user()->isHr())
+                        <!-- HR/Admin Menu -->
+                        <div class="hidden sm:flex sm:items-center">
+                            <x-dropdown align="left" width="48">
+                                <x-slot name="trigger">
+                                    <button class="inline-flex items-center px-3 py-2 border border-transparent text-sm leading-4 font-medium rounded-md text-gray-500 bg-white hover:text-gray-700 focus:outline-none transition ease-in-out duration-150">
+                                        <div>HR Management</div>
+                                        <div class="ms-1">
+                                            <svg class="fill-current h-4 w-4" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20">
+                                                <path fill-rule="evenodd" d="M5.293 7.293a1 1 0 011.414 0L10 10.586l3.293-3.293a1 1 0 111.414 1.414l-4 4a1 1 0 01-1.414 0l-4-4a1 1 0 010-1.414z" clip-rule="evenodd" />
+                                            </svg>
+                                        </div>
+                                    </button>
+                                </x-slot>
+
+                                <x-slot name="content">
+                                    <x-dropdown-link :href="route('employees.index')">
+                                        {{ __('Employees') }}
+                                    </x-dropdown-link>
+                                    <x-dropdown-link :href="route('attendance.manage')">
+                                        {{ __('Attendance Records') }}
+                                    </x-dropdown-link>
+                                    <x-dropdown-link :href="route('dtr.admin-index')">
+                                        {{ __('DTR Management') }}
+                                    </x-dropdown-link>
+                                    <x-dropdown-link :href="route('leaves.manage')">
+                                        {{ __('Leave Requests') }}
+                                    </x-dropdown-link>
+                                    <x-dropdown-link :href="route('transactions.admin-index')">
+                                        {{ __('Transactions') }}
+                                    </x-dropdown-link>
+                                    <x-dropdown-link :href="route('leave-types.index')">
+                                        {{ __('Leave Types') }}
+                                    </x-dropdown-link>
+                                    <x-dropdown-link :href="route('payroll.periods')">
+                                        {{ __('Payroll Periods') }}
+                                    </x-dropdown-link>
+                                    @if(auth()->user()->isAccounting())
+                                        <x-dropdown-link :href="route('payroll.computation.dashboard')">
+                                            {{ __('Payroll Computation') }}
+                                        </x-dropdown-link>
+                                    @endif
+                                    <x-dropdown-link :href="route('payroll.index')">
+                                        {{ __('All Payrolls') }}
+                                    </x-dropdown-link>
+                                    @if(auth()->user()->isAdmin())
+                                        <x-dropdown-link :href="route('concerns.index')">
+                                            {{ __('Concerns & Tickets') }}
+                                        </x-dropdown-link>
+                                    @endif
+                                </x-slot>
+                            </x-dropdown>
+                        </div>
+
+                        <!-- System Configuration -->
+                        @if(auth()->user()->isAdmin())
+                            <div class="hidden sm:flex sm:items-center">
+                                <x-dropdown align="left" width="48">
+                                    <x-slot name="trigger">
+                                        <button class="inline-flex items-center px-3 py-2 border border-transparent text-sm leading-4 font-medium rounded-md text-gray-500 bg-white hover:text-gray-700 focus:outline-none transition ease-in-out duration-150">
+                                            <div>System Config</div>
+                                            <div class="ms-1">
+                                                <svg class="fill-current h-4 w-4" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20">
+                                                    <path fill-rule="evenodd" d="M11.414 10l5.293-5.293a1 1 0 00-1.414-1.414L10 8.586 4.707 3.293a1 1 0 00-1.414 1.414L8.586 10l-5.293 5.293a1 1 0 001.414 1.414L10 11.414l5.293 5.293a1 1 0 001.414-1.414L11.414 10z" clip-rule="evenodd" />
+                                                </svg>
+                                            </div>
+                                        </button>
+                                    </x-slot>
+
+                                    <x-slot name="content">
+                                        <x-dropdown-link :href="route('sites.index')">
+                                            {{ __('Manage Sites') }}
+                                        </x-dropdown-link>
+                                        <x-dropdown-link :href="route('campaigns.index')">
+                                            {{ __('Manage Campaigns') }}
+                                        </x-dropdown-link>
+                                        <x-dropdown-link :href="route('accounts.index')">
+                                            {{ __('Manage Roles (Accounts)') }}
+                                        </x-dropdown-link>
+                                        <div class="border-t border-gray-100"></div>
+                                        <x-dropdown-link :href="route('schedules.index')">
+                                            {{ __('Work Schedules') }}
+                                        </x-dropdown-link>
+                                        <x-dropdown-link :href="route('automation.index')">
+                                            {{ __('System Automation') }}
+                                        </x-dropdown-link>
+                                    </x-slot>
+                                </x-dropdown>
+                            </div>
+                        @endif
+                    @endif
+                </div>
+            </div>
+
+            <!-- Right Side -->
+            <div class="hidden sm:flex sm:items-center sm:ms-6 gap-4">
+                <span class="text-sm text-gray-500">
+                    {{ ucfirst(auth()->user()->role) }}
+                </span>
+                
+                <x-dropdown align="right" width="48">
+                    <x-slot name="trigger">
+                        <button class="inline-flex items-center px-3 py-2 border border-transparent text-sm leading-4 font-medium rounded-md text-gray-500 bg-white hover:text-gray-700 focus:outline-none transition ease-in-out duration-150">
+                            @if(Auth::user()->profile_photo)
+                                <img class="h-8 w-8 rounded-full object-cover me-2 border border-gray-200" src="{{ asset('storage/' . Auth::user()->profile_photo) }}" alt="{{ Auth::user()->name }}">
+                            @else
+                                <div class="h-8 w-8 rounded-full bg-indigo-100 flex items-center justify-center me-2 border border-indigo-200">
+                                    <span class="text-indigo-700 font-medium text-xs">{{ strtoupper(substr(Auth::user()->name, 0, 2)) }}</span>
+                                </div>
+                            @endif
+                            <div>{{ Auth::user()->name }}</div>
+
+                            <div class="ms-1">
+                                <svg class="fill-current h-4 w-4" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20">
+                                    <path fill-rule="evenodd" d="M5.293 7.293a1 1 0 011.414 0L10 10.586l3.293-3.293a1 1 0 111.414 1.414l-4 4a1 1 0 01-1.414 0l-4-4a1 1 0 010-1.414z" clip-rule="evenodd" />
+                                </svg>
+                            </div>
+                        </button>
+                    </x-slot>
+
+                    <x-slot name="content">
+                        <x-dropdown-link :href="route('profile.edit')">
+                            {{ __('Profile') }}
+                        </x-dropdown-link>
+
+                        <!-- Authentication -->
+                        <form method="POST" action="{{ route('logout') }}">
+                            @csrf
+
+                            <x-dropdown-link :href="route('logout')"
+                                    onclick="event.preventDefault();
+                                                this.closest('form').submit();">
+                                {{ __('Log Out') }}
+                            </x-dropdown-link>
+                        </form>
+                    </x-slot>
+                </x-dropdown>
+            </div>
+
+            <!-- Hamburger -->
+            <div class="-me-2 flex items-center sm:hidden">
+                <button @click="open = ! open" class="inline-flex items-center justify-center p-2 rounded-md text-gray-400 hover:text-gray-500 hover:bg-gray-100 focus:outline-none focus:bg-gray-100 focus:text-gray-500 transition duration-150 ease-in-out">
+                    <svg class="h-6 w-6" stroke="currentColor" fill="none" viewBox="0 0 24 24">
+                        <path :class="{'hidden': open, 'inline-flex': ! open }" class="inline-flex" stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 6h16M4 12h16M4 18h16" />
+                        <path :class="{'hidden': ! open, 'inline-flex': open }" class="hidden" stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12" />
+                    </svg>
+                </button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Responsive Navigation Menu -->
+    <div :class="{'block': open, 'hidden': ! open}" class="hidden sm:hidden">
+        <div class="pt-2 pb-3 space-y-1">
+            <x-responsive-nav-link :href="route('dashboard')" :active="request()->routeIs('dashboard')">
+                {{ __('Dashboard') }}
+            </x-responsive-nav-link>
+            <x-responsive-nav-link :href="route('attendance.index')" :active="request()->routeIs('attendance.*')">
+                {{ __('Attendance') }}
+            </x-responsive-nav-link>
+            <x-responsive-nav-link :href="route('dtr.index')" :active="request()->routeIs('dtr.*')">
+                {{ __('My DTR') }}
+            </x-responsive-nav-link>
+            <x-responsive-nav-link :href="route('transactions.index')" :active="request()->routeIs('transactions.*')">
+                {{ __('Transactions') }}
+            </x-responsive-nav-link>
+            <x-responsive-nav-link :href="route('payroll.my-payslips')" :active="request()->routeIs('payroll.my-payslips')">
+                {{ __('My Payslips') }}
+            </x-responsive-nav-link>
+            
+            @if(auth()->user()->isAdmin() || auth()->user()->isHr())
+                <div class="border-t border-gray-200 pt-2">
+                    <div class="px-4 text-xs text-gray-500 uppercase">HR Management</div>
+                </div>
+                <x-responsive-nav-link :href="route('employees.index')">
+                    {{ __('Employees') }}
+                </x-responsive-nav-link>
+                <x-responsive-nav-link :href="route('attendance.manage')">
+                    {{ __('Attendance Records') }}
+                </x-responsive-nav-link>
+                <x-responsive-nav-link :href="route('leaves.manage')">
+                    {{ __('Leave Approvals') }}
+                </x-responsive-nav-link>
+                <x-responsive-nav-link :href="route('transactions.admin-index')">
+                    {{ __('Transactions') }}
+                </x-responsive-nav-link>
+                <x-responsive-nav-link :href="route('payroll.periods')" :active="request()->routeIs('payroll.periods*')">
+                    {{ __('Payroll Periods') }}
+                </x-responsive-nav-link>
+                @if(auth()->user()->isAccounting())
+                    <x-responsive-nav-link :href="route('payroll.computation.dashboard')" :active="request()->routeIs('payroll.computation.*')">
+                        {{ __('Payroll Computation') }}
+                    </x-responsive-nav-link>
+                @endif
+                @if(auth()->user()->isAdmin())
+                    <x-responsive-nav-link :href="route('concerns.index')">
+                        {{ __('Concerns & Tickets') }}
+                    </x-responsive-nav-link>
+                @endif
+                
+                @if(auth()->user()->isAdmin())
+                    <div class="border-t border-gray-200 mt-4 pt-2">
+                        <div class="px-4 text-xs text-gray-500 uppercase">System Configuration</div>
+                    </div>
+                    <x-responsive-nav-link :href="route('sites.index')">
+                        {{ __('Manage Sites') }}
+                    </x-responsive-nav-link>
+                    <x-responsive-nav-link :href="route('campaigns.index')">
+                        {{ __('Manage Campaigns') }}
+                    </x-responsive-nav-link>
+                    <x-responsive-nav-link :href="route('accounts.index')">
+                        {{ __('Manage Roles') }}
+                    </x-responsive-nav-link>
+                    <x-responsive-nav-link :href="route('schedules.index')">
+                        {{ __('Work Schedules') }}
+                    </x-responsive-nav-link>
+                    <x-responsive-nav-link :href="route('automation.index')">
+                        {{ __('Automation') }}
+                    </x-responsive-nav-link>
+                @endif
+            @endif
+        </div>
+
+        <!-- Responsive Settings Options -->
+        <div class="pt-4 pb-1 border-t border-gray-200">
+            <div class="flex items-center justify-between px-4">
+                <div>
+                    <div class="font-medium text-base text-gray-800">{{ Auth::user()->name }}</div>
+                    <div class="font-medium text-sm text-gray-500">{{ Auth::user()->email }}</div>
+                </div>
+            </div>
+
+            <div class="mt-3 space-y-1">
+                <x-responsive-nav-link :href="route('profile.edit')">
+                    {{ __('Profile') }}
+                </x-responsive-nav-link>
+
+                <!-- Authentication -->
+                <form method="POST" action="{{ route('logout') }}">
+                    @csrf
+
+                    <x-responsive-nav-link :href="route('logout')"
+                            onclick="event.preventDefault();
+                                        this.closest('form').submit();">
+                        {{ __('Log Out') }}
+                    </x-responsive-nav-link>
+                </form>
+            </div>
+        </div>
+    </div>
+</nav>
