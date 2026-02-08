@@ -14,7 +14,7 @@ use Illuminate\Queue\SerializesModels;
 /**
  * Event: Leave Request Approved
  * 
- * Fired when a leave request receives full approval (both HR and Admin).
+ * Fired when a leave request receives full approval.
  * This triggers automated workflows:
  * 1. Create DTR entries for leave dates
  * 2. Deduct leave balance

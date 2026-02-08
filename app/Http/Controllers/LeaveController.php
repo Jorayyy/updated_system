@@ -181,14 +181,14 @@ class LeaveController extends Controller
             );
         }
         
-        // Notify Admin users
-        $adminUsers = User::where('role', 'admin')->where('is_active', true)->get();
+        // Notify Admin users about the new leave request
+        $adminUsers = User::whereIn('role', ['admin', 'super_admin'])->where('is_active', true)->get();
         foreach ($adminUsers as $admin) {
             Notification::send(
                 $admin->id,
                 Notification::TYPE_LEAVE_SUBMITTED,
-                'New Leave Request - Admin Approval Needed',
-                "{$user->name} submitted a {$leaveType->name} request ({$startDate->format('M d')} - {$endDate->format('M d, Y')}). Your approval is required.",
+                'New Leave Request',
+                "{$user->name} submitted a {$leaveType->name} request ({$startDate->format('M d')} - {$endDate->format('M d, Y')}).",
                 route('leaves.manage'),
                 'calendar',
                 'purple'
@@ -196,7 +196,7 @@ class LeaveController extends Controller
         }
 
         return redirect()->route('leaves.index')
-            ->with('success', 'Leave request submitted successfully. It requires approval from both HR and Admin.');
+            ->with('success', 'Leave request submitted successfully. It requires approval from the Admin.');
     }
 
     /**
@@ -382,74 +382,15 @@ class LeaveController extends Controller
     }
 
     /**
-     * HR: Approve a leave request (Now only Super Admin)
+     * HR: Approve a leave request (Now only Super Admin - Bypass Multi-step)
      */
     public function hrApprove(LeaveRequest $leave)
     {
-        $user = auth()->user();
-        
-        if (!$user->isSuperAdmin()) {
-            return redirect()->back()->with('error', 'Unauthorized. Only Super Admin(s) can approve leave requests.');
-        }
-
-        if ($leave->status !== 'pending') {
-            return redirect()->back()
-                ->with('error', 'Only pending leave requests can be approved.');
-        }
-
-        if ($leave->hr_status !== 'pending') {
-            return redirect()->back()
-                ->with('error', 'HR has already processed this leave request.');
-        }
-
-        DB::beginTransaction();
-        try {
-            // Update HR approval
-            $leave->update([
-                'hr_approved_by' => auth()->id(),
-                'hr_approved_at' => now(),
-                'hr_status' => 'approved',
-            ]);
-
-            // Check if both HR and Admin have approved
-            if ($leave->admin_status === 'approved') {
-                $this->finalizeApproval($leave);
-            }
-
-            AuditLog::log(
-                'hr_approved',
-                LeaveRequest::class,
-                $leave->id,
-                ['hr_status' => 'pending'],
-                ['hr_status' => 'approved', 'hr_approved_by' => auth()->id()],
-                'Leave request HR approved'
-            );
-
-            // Notify the employee
-            Notification::send(
-                $leave->user_id,
-                'leave_hr_approved',
-                'Leave Request HR Approved',
-                "Your {$leave->leaveType->name} request has been approved by HR. " . 
-                ($leave->admin_status === 'approved' ? 'Fully approved!' : 'Awaiting Admin approval.'),
-                route('leaves.show', $leave),
-                'check-circle',
-                'blue'
-            );
-
-            DB::commit();
-
-            return redirect()->back()
-                ->with('success', 'Leave request approved by HR.' . ($leave->admin_status !== 'approved' ? ' Awaiting Admin approval.' : ' Fully approved!'));
-        } catch (\Exception $e) {
-            DB::rollBack();
-            return redirect()->back()
-                ->with('error', 'Failed to approve leave request: ' . $e->getMessage());
-        }
+        return $this->adminApprove($leave);
     }
 
     /**
-     * Admin: Approve a leave request (Now only Super Admin)
+     * Admin: Approve a leave request (Now only Super Admin - Bypass Multi-step)
      */
     public function adminApprove(LeaveRequest $leave)
     {
@@ -464,92 +405,63 @@ class LeaveController extends Controller
                 ->with('error', 'Only pending leave requests can be approved.');
         }
 
-        if ($leave->admin_status !== 'pending') {
-            return redirect()->back()
-                ->with('error', 'Admin has already processed this leave request.');
-        }
-
         DB::beginTransaction();
         try {
-            // Update Admin approval
+            // Update everything in one go
             $leave->update([
-                'admin_approved_by' => auth()->id(),
-                'admin_approved_at' => now(),
+                'status' => 'approved',
+                'approved_by' => $user->id,
+                'approved_at' => now(),
+                'hr_status' => 'approved',
+                'hr_approved_by' => $user->id,
+                'hr_approved_at' => now(),
                 'admin_status' => 'approved',
+                'admin_approved_by' => $user->id,
+                'admin_approved_at' => now(),
             ]);
 
-            // Check if both HR and Admin have approved
-            if ($leave->hr_status === 'approved') {
-                $this->finalizeApproval($leave);
+            // Deduct from leave balance
+            $balance = LeaveBalance::where('user_id', $leave->user_id)
+                ->where('leave_type_id', $leave->leave_type_id)
+                ->where('year', date('Y'))
+                ->first();
+
+            if ($balance) {
+                $balance->deductDays($leave->total_days);
             }
 
+            // Fire LeaveApproved event
+            LeaveApproved::dispatch($leave, $user, 'full');
+            
             AuditLog::log(
-                'admin_approved',
+                'leave_fully_approved',
                 LeaveRequest::class,
                 $leave->id,
-                ['admin_status' => 'pending'],
-                ['admin_status' => 'approved', 'admin_approved_by' => auth()->id()],
-                'Leave request Admin approved'
+                ['status' => 'pending'],
+                ['status' => 'approved', 'approved_by' => $user->id],
+                'Leave request fully approved by Super Admin'
             );
 
             // Notify the employee
             Notification::send(
                 $leave->user_id,
-                'leave_admin_approved',
-                'Leave Request Admin Approved',
-                "Your {$leave->leaveType->name} request has been approved by Admin. " . 
-                ($leave->hr_status === 'approved' ? 'Fully approved!' : 'Awaiting HR approval.'),
+                Notification::TYPE_LEAVE_APPROVED,
+                'Leave Request Approved',
+                "Your {$leave->leaveType->name} request has been approved.",
                 route('leaves.show', $leave),
                 'check-circle',
-                'purple'
+                'green'
             );
 
             DB::commit();
 
             return redirect()->back()
-                ->with('success', 'Leave request approved by Admin.' . ($leave->hr_status !== 'approved' ? ' Awaiting HR approval.' : ' Fully approved!'));
+                ->with('success', 'Leave request has been fully approved.');
         } catch (\Exception $e) {
             DB::rollBack();
             return redirect()->back()
                 ->with('error', 'Failed to approve leave request: ' . $e->getMessage());
         }
-    }
-
-    /**
-     * Finalize approval when both HR and Admin have approved
-     */
-    private function finalizeApproval(LeaveRequest $leave): void
-    {
-        $leave->update([
-            'status' => 'approved',
-            'approved_by' => auth()->id(),
-            'approved_at' => now(),
-        ]);
-
-        // Deduct from leave balance
-        $balance = LeaveBalance::where('user_id', $leave->user_id)
-            ->where('leave_type_id', $leave->leave_type_id)
-            ->where('year', date('Y'))
-            ->first();
-
-        if ($balance) {
-            $balance->deductDays($leave->total_days);
-        }
-
-        // Fire LeaveApproved event - triggers automation
-        // This will create DTR entries, send notifications, etc.
-        LeaveApproved::dispatch($leave, auth()->user(), 'full');
-
-        // Notify the employee about full approval
-        Notification::send(
-            $leave->user_id,
-            Notification::TYPE_LEAVE_APPROVED,
-            'Leave Request Fully Approved',
-            "Your {$leave->leaveType->name} request ({$leave->start_date->format('M d')} - {$leave->end_date->format('M d, Y')}) has been fully approved by both HR and Admin",
-            route('leaves.show', $leave),
-            'check-circle',
-            'green'
-        );
     }
 
     /**
@@ -569,7 +481,7 @@ class LeaveController extends Controller
     }
 
     /**
-     * Admin/HR: Reject a leave request
+     * Admin/HR: Reject a leave request (Now only Super Admin)
      */
     public function reject(Request $request, LeaveRequest $leave)
     {
@@ -577,23 +489,27 @@ class LeaveController extends Controller
             'rejection_reason' => 'required|string|max:500',
         ]);
 
+        $user = auth()->user();
+        if (!$user->isSuperAdmin()) {
+            return redirect()->back()->with('error', 'Unauthorized. Only Super Admin(s) can reject leave requests.');
+        }
+
         if ($leave->status !== 'pending') {
             return redirect()->back()
                 ->with('error', 'Only pending leave requests can be rejected.');
         }
-
-        $user = auth()->user();
-        $rejectorRole = $user->isAdmin() ? 'Admin' : 'HR';
 
         $leave->update([
             'status' => 'rejected',
             'rejection_reason' => $request->rejection_reason,
             'approved_by' => auth()->id(),
             'approved_at' => now(),
-            // Also update the specific role status
-            $user->isAdmin() ? 'admin_status' : 'hr_status' => 'rejected',
-            $user->isAdmin() ? 'admin_approved_by' : 'hr_approved_by' => auth()->id(),
-            $user->isAdmin() ? 'admin_approved_at' : 'hr_approved_at' => now(),
+            'admin_status' => 'rejected',
+            'admin_approved_by' => auth()->id(),
+            'admin_approved_at' => now(),
+            'hr_status' => 'rejected',
+            'hr_approved_by' => auth()->id(),
+            'hr_approved_at' => now(),
         ]);
 
         AuditLog::log(
@@ -602,7 +518,7 @@ class LeaveController extends Controller
             $leave->id,
             ['status' => 'pending'],
             ['status' => 'rejected', 'rejection_reason' => $request->rejection_reason],
-            "Leave request rejected by {$rejectorRole}"
+            "Leave request rejected by Super Admin"
         );
 
         // Notify the employee
@@ -610,7 +526,7 @@ class LeaveController extends Controller
             $leave->user_id,
             Notification::TYPE_LEAVE_REJECTED,
             'Leave Request Rejected',
-            "Your {$leave->leaveType->name} request ({$leave->start_date->format('M d')} - {$leave->end_date->format('M d, Y')}) has been rejected by {$rejectorRole}. Reason: {$request->rejection_reason}",
+            "Your {$leave->leaveType->name} request ({$leave->start_date->format('M d')} - {$leave->end_date->format('M d, Y')}) has been rejected. Reason: {$request->rejection_reason}",
             route('leaves.show', $leave),
             'x-circle',
             'red'

@@ -113,10 +113,12 @@
                                             </a>
                                             
                                             @if($leave->status == 'pending' && auth()->user()->isSuperAdmin())
-                                                <form action="{{ route('leaves.admin-approve', $leave) }}" method="POST" class="inline">
-                                                    @csrf @method('PATCH')
-                                                    <button type="submit" class="text-green-500 hover:text-green-700 transition" title="Approve Leave">
-                                                        <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"/></svg>
+                                                <form action="{{ route('leaves.admin-approve', $leave) }}" method="POST" class="inline" onsubmit="return confirm('Are you sure you want to approve this leave request?')">
+                                                    @csrf
+                                                    @method('PATCH')
+                                                    <button type="submit" class="bg-green-100 hover:bg-green-200 text-green-700 px-2 py-1 rounded text-[10px] font-bold transition flex items-center gap-1">
+                                                        <svg class="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"/></svg>
+                                                        APPROVE
                                                     </button>
                                                 </form>
                                                 <button type="button" onclick="openRejectModal({{ $leave->id }})" 

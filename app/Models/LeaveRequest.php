@@ -128,11 +128,11 @@ class LeaveRequest extends Model
     }
 
     /**
-     * Check if both HR and Admin have approved
+     * Check if the request is fully approved
      */
     public function isFullyApproved(): bool
     {
-        return $this->hr_status === 'approved' && $this->admin_status === 'approved';
+        return $this->status === 'approved';
     }
 
     /**

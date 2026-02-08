@@ -37,20 +37,6 @@ class LeaveApprovedListener implements ShouldQueue
      */
     public $backoff = 60;
 
-    /**
-     * The queue connection that the job should be sent to.
-     *
-     * @var string
-     */
-    public $connection = 'database';
-
-    /**
-     * The queue the job should be sent to.
-     *
-     * @var string
-     */
-    public $queue = 'leave-automation';
-
     protected LeaveAutomationService $leaveService;
 
     /**
@@ -134,7 +120,7 @@ class LeaveApprovedListener implements ShouldQueue
             "Your {$leaveType} request has been approved and processed. " .
             "{$processedCount} day(s) have been recorded in your DTR. " .
             "Period: {$leaveRequest->start_date->format('M d')} - {$leaveRequest->end_date->format('M d, Y')}",
-            route('my-dtr-records.index'),
+            route('dtr-records.index'),
             'calendar-check',
             'green'
         );

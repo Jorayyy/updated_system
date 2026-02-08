@@ -37,20 +37,6 @@ class LeaveCancelledListener implements ShouldQueue
      */
     public $backoff = 60;
 
-    /**
-     * The queue connection that the job should be sent to.
-     *
-     * @var string
-     */
-    public $connection = 'database';
-
-    /**
-     * The queue the job should be sent to.
-     *
-     * @var string
-     */
-    public $queue = 'leave-automation';
-
     protected LeaveAutomationService $leaveService;
 
     /**
