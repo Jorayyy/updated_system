@@ -199,6 +199,16 @@ class DtrApprovalService
         try {
             DB::beginTransaction();
 
+            $approver = User::findOrFail($rejectedBy);
+            
+            // Validate approver has permission (using same logic as approval)
+            if (!$this->canApprove($approver, $dtr, 'supervisor')) {
+                return [
+                    'success' => false,
+                    'message' => 'You do not have permission to reject this DTR',
+                ];
+            }
+
             $dtr->update([
                 'status' => 'rejected',
                 'rejection_reason' => $reason,
@@ -212,11 +222,11 @@ class DtrApprovalService
                 'action' => 'dtr_rejected',
                 'model_type' => 'DailyTimeRecord',
                 'model_id' => $dtr->id,
-                'old_values' => json_encode(['status' => 'pending']),
-                'new_values' => json_encode([
+                'old_values' => ['status' => 'pending'],
+                'new_values' => [
                     'status' => 'rejected',
                     'reason' => $reason,
-                ]),
+                ],
                 'ip_address' => request()->ip() ?? 'system',
                 'user_agent' => request()->userAgent() ?? 'System',
             ]);
@@ -303,6 +313,16 @@ class DtrApprovalService
         try {
             DB::beginTransaction();
 
+            $approver = User::findOrFail($approvedBy);
+            
+            // Validate approver has permission (using same logic as approval)
+            if (!$this->canApprove($approver, $dtr, 'supervisor')) {
+                return [
+                    'success' => false,
+                    'message' => 'You do not have permission to approve corrections for this DTR',
+                ];
+            }
+
             if (!$dtr->correction_requested) {
                 return [
                     'success' => false,
@@ -327,8 +347,8 @@ class DtrApprovalService
                 'action' => 'dtr_correction_approved',
                 'model_type' => 'DailyTimeRecord',
                 'model_id' => $dtr->id,
-                'old_values' => json_encode($oldValues),
-                'new_values' => json_encode($correctionData),
+                'old_values' => $oldValues,
+                'new_values' => $correctionData,
                 'ip_address' => request()->ip() ?? 'system',
                 'user_agent' => request()->userAgent() ?? 'System',
             ]);
@@ -442,19 +462,30 @@ class DtrApprovalService
      */
     protected function canApprove(User $approver, DailyTimeRecord $dtr, string $level): bool
     {
-        // Admin can approve at any level
+        // Hierarchy Check: Approver must have higher level than the DTR owner
+        // to manage their records, unless they are the same person (can't approve own DTR usually)
+        // or a Super Admin.
+        if (!$approver->isSuperAdmin() && $approver->hierarchy_level <= $dtr->user->hierarchy_level) {
+            return false;
+        }
+
+        // Super Admin can approve everything
+        if ($approver->isSuperAdmin()) {
+            return true;
+        }
+
+        // Admin can approve at any level (if they pass the hierarchy check above)
         if ($approver->role === 'admin') {
             return true;
         }
 
-        // HR can approve at hr and supervisor level
+        // HR can approve at hr and supervisor level (if they pass the hierarchy check above)
         if ($approver->role === 'hr' && in_array($level, ['hr', 'supervisor'])) {
             return true;
         }
 
         // Supervisor can only approve at supervisor level
         if ($approver->role === 'supervisor' && $level === 'supervisor') {
-            // Optionally check if supervisor is assigned to this employee
             return true;
         }
 
@@ -505,12 +536,12 @@ class DtrApprovalService
             'action' => 'dtr_approved_' . $level,
             'model_type' => 'DailyTimeRecord',
             'model_id' => $dtr->id,
-            'old_values' => json_encode(['status' => 'pending']),
-            'new_values' => json_encode([
+            'old_values' => ['status' => 'pending'],
+            'new_values' => [
                 'status' => 'approved',
                 'approval_level' => $level,
                 'remarks' => $remarks,
-            ]),
+            ],
             'ip_address' => request()->ip() ?? 'system',
             'user_agent' => request()->userAgent() ?? 'System',
         ]);

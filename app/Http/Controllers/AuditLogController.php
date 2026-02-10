@@ -15,6 +15,20 @@ class AuditLogController extends Controller
         $query = AuditLog::with('user')
             ->orderBy('created_at', 'desc');
 
+        // General keyword search
+        if ($request->filled('search')) {
+            $search = $request->search;
+            $query->where(function ($q) use ($search) {
+                $q->where('description', 'like', "%{$search}%")
+                    ->orWhere('action', 'like', "%{$search}%")
+                    ->orWhere('model_type', 'like', "%{$search}%")
+                    ->orWhereHas('user', function ($uq) use ($search) {
+                        $uq->where('name', 'like', "%{$search}%")
+                            ->orWhere('email', 'like', "%{$search}%");
+                    });
+            });
+        }
+
         // Filter by action
         if ($request->filled('action')) {
             $query->where('action', $request->action);
@@ -48,8 +62,10 @@ class AuditLogController extends Controller
                 'label' => class_basename($type),
             ];
         });
+        
+        $users = \App\Models\User::orderBy('name')->get(['id', 'name']);
 
-        return view('audit-logs.index', compact('logs', 'actions', 'modelTypes'));
+        return view('audit-logs.index', compact('logs', 'actions', 'modelTypes', 'users'));
     }
 
     /**

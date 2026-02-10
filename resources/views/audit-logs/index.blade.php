@@ -29,18 +29,33 @@
                     @endif
                 </div>
                 <div class="p-6">
-                    <form method="GET" action="{{ route('audit-logs.index') }}" class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-5 gap-4 items-end">
+                    <form method="GET" action="{{ route('audit-logs.index') }}" class="grid grid-cols-1 md:grid-cols-3 lg:grid-cols-6 gap-4 items-end">
+                        <div class="lg:col-span-2">
+                            <label class="block text-xs font-bold text-gray-500 uppercase mb-1">Search Keywords</label>
+                            <input type="text" name="search" value="{{ request('search') }}" 
+                                placeholder="Search by description, user, or entity..."
+                                class="w-full text-sm border-gray-200 rounded-xl focus:ring-indigo-500 focus:border-indigo-500 transition-all">
+                        </div>
                         <div>
                             <label class="block text-xs font-bold text-gray-500 uppercase mb-1">Action Type</label>
                             <select name="action" class="w-full text-sm border-gray-200 rounded-xl focus:ring-indigo-500 focus:border-indigo-500 transition-all">
                                 <option value="">All Actions</option>
                                 @foreach($actions as $action)
-                                    <option value="{{ $action }}" {{ request('action') == $action ? 'selected' : '' }}>{{ ucfirst($action) }}</option>
+                                    <option value="{{ $action }}" {{ request('action') == $action ? 'selected' : '' }}>{{ ucfirst(str_replace('_', ' ', $action)) }}</option>
                                 @endforeach
                             </select>
                         </div>
                         <div>
-                            <label class="block text-xs font-bold text-gray-500 uppercase mb-1">Model / Entity</label>
+                            <label class="block text-xs font-bold text-gray-500 uppercase mb-1">Performed By</label>
+                            <select name="user_id" class="w-full text-sm border-gray-200 rounded-xl focus:ring-indigo-500 focus:border-indigo-500 transition-all">
+                                <option value="">All Users</option>
+                                @foreach($users as $user)
+                                    <option value="{{ $user->id }}" {{ request('user_id') == $user->id ? 'selected' : '' }}>{{ $user->name }}</option>
+                                @endforeach
+                            </select>
+                        </div>
+                        <div>
+                            <label class="block text-xs font-bold text-gray-500 uppercase mb-1">Entity Type</label>
                             <select name="model_type" class="w-full text-sm border-gray-200 rounded-xl focus:ring-indigo-500 focus:border-indigo-500 transition-all">
                                 <option value="">All Models</option>
                                 @foreach($modelTypes as $model)
@@ -49,18 +64,18 @@
                             </select>
                         </div>
                         <div>
+                            <button type="submit" class="w-full bg-indigo-600 text-white font-bold py-2.5 px-4 rounded-xl hover:bg-indigo-700 transition-all shadow-md shadow-indigo-100 flex items-center justify-center gap-2 text-sm">
+                                <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"></path></svg>
+                                Search Logs
+                            </button>
+                        </div>
+                        <div class="lg:col-span-2">
                             <label class="block text-xs font-bold text-gray-500 uppercase mb-1">Start Date</label>
                             <input type="date" name="start_date" value="{{ request('start_date') }}" class="w-full text-sm border-gray-200 rounded-xl focus:ring-indigo-500 focus:border-indigo-500 transition-all">
                         </div>
-                        <div>
+                        <div class="lg:col-span-2">
                             <label class="block text-xs font-bold text-gray-500 uppercase mb-1">End Date</label>
                             <input type="date" name="end_date" value="{{ request('end_date') }}" class="w-full text-sm border-gray-200 rounded-xl focus:ring-indigo-500 focus:border-indigo-500 transition-all">
-                        </div>
-                        <div>
-                            <button type="submit" class="w-full bg-indigo-600 text-white font-bold py-2.5 px-4 rounded-xl hover:bg-indigo-700 transition-all shadow-md shadow-indigo-100 flex items-center justify-center gap-2">
-                                <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 4a1 1 0 011-1h16a1 1 0 011 1v2.586a1 1 0 01-.293.707l-6.414 6.414a1 1 0 00-.293.707V17l-4 4v-6.586a1 1 0 00-.293-.707L3.293 7.293A1 1 0 013 6.586V4z"></path></svg>
-                                Apply Filters
-                            </button>
                         </div>
                     </form>
                 </div>
@@ -101,18 +116,23 @@
                                     <td class="px-6 py-4 whitespace-nowrap">
                                         @php
                                             $actionStyles = [
-                                                'create' => 'bg-emerald-100 text-emerald-800 border-emerald-200',
-                                                'update' => 'bg-blue-100 text-blue-800 border-blue-200',
-                                                'delete' => 'bg-rose-100 text-rose-800 border-rose-200',
+                                                'created' => 'bg-emerald-100 text-emerald-800 border-emerald-200',
+                                                'updated' => 'bg-blue-100 text-blue-800 border-blue-200',
+                                                'deleted' => 'bg-rose-100 text-rose-800 border-rose-200',
+                                                'approved' => 'bg-emerald-50 text-emerald-700 border-emerald-100',
+                                                'rejected' => 'bg-rose-50 text-rose-700 border-rose-100',
                                                 'login' => 'bg-purple-100 text-purple-800 border-purple-200',
                                                 'logout' => 'bg-gray-100 text-gray-800 border-gray-200',
                                             ];
-                                            $style = $actionStyles[$log->action] ?? 'bg-gray-100 text-gray-800 border-gray-200';
+                                            $style = $actionStyles[$log->action] ?? 'bg-gray-50 text-gray-600 border-gray-100';
                                         @endphp
-                                        <span class="px-2.5 py-1 text-[10px] font-bold uppercase rounded-lg border {{ $style }}">
-                                            {{ $log->action }}
+                                        <span class="px-2.5 py-1 text-[10px] font-bold uppercase rounded-lg border {{ $style }} shadow-sm">
+                                            {{ str_replace('_', ' ', $log->action) }}
                                         </span>
-                                        <div class="text-[10px] font-bold text-gray-400 mt-1.5 uppercase tracking-tighter">{{ class_basename($log->model_type) }}</div>
+                                        <div class="text-[9px] font-extrabold text-gray-400 mt-2 uppercase tracking-[0.1em] flex items-center gap-1.5">
+                                            <span class="w-1 h-1 bg-gray-300 rounded-full"></span>
+                                            {{ class_basename($log->model_type) }}
+                                        </div>
                                     </td>
                                     <td class="px-6 py-4">
                                         <div class="text-sm text-gray-700 line-clamp-2 max-w-sm">{{ $log->description ?? 'No extra details provided.' }}</div>

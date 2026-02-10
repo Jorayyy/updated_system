@@ -105,8 +105,8 @@ class DtrService
     }
 
     /**
-     * Generate DTR for a specific date and all active employees
-     * Called by end-of-day scheduled job
+     * Generate DTR for a specific date and active employees
+     * Called by end-of-day scheduled job and manual period generation
      */
     public function generateDtrForDate(Carbon $date, ?int $payrollPeriodId = null): array
     {
@@ -119,10 +119,26 @@ class DtrService
             'errors' => [],
         ];
 
-        // Get all active employees
-        $employees = User::where('is_active', true)
-            ->where('role', 'employee')
-            ->get();
+        // Get employees based on scope
+        $query = User::where('is_active', true)
+            ->where('role', 'employee');
+
+        // If generating for a specific period, respect the group
+        if ($payrollPeriodId) {
+            $period = PayrollPeriod::find($payrollPeriodId);
+            if ($period) {
+                if ($period->payroll_group_id) {
+                    $query->where('payroll_group_id', $period->payroll_group_id);
+                } else {
+                    // Global period: Only users NOT in any group
+                    $query->whereNull('payroll_group_id');
+                }
+            }
+        }
+        // If payrollPeriodId is NULL (e.g. Scheduled Job), we process ALL active employees
+        // regardless of group.
+
+        $employees = $query->get();
 
         foreach ($employees as $employee) {
             try {
@@ -141,6 +157,7 @@ class DtrService
                 ];
             }
         }
+
 
         // Log the batch processing
         AuditLog::log(
@@ -507,10 +524,17 @@ class DtrService
             }
 
             // Update period status
+            $totalEmployees = User::where('is_active', true)->where('role', 'employee');
+            if ($period->payroll_group_id) {
+                $totalEmployees->where('payroll_group_id', $period->payroll_group_id);
+            } else {
+                $totalEmployees->whereNull('payroll_group_id');
+            }
+            
             $period->update([
                 'dtr_generated' => true,
                 'dtr_generated_at' => now(),
-                'total_employees' => User::where('is_active', true)->where('role', 'employee')->count(),
+                'total_employees' => $totalEmployees->count(),
             ]);
 
             // Update DTR counts

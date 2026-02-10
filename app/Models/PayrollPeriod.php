@@ -12,14 +12,30 @@ class PayrollPeriod extends Model
     use HasFactory;
 
     protected $fillable = [
+        'name',
+        'payroll_group_id',
         'start_date',
         'end_date',
         'pay_date',
         'status',
         'period_type',
+        'cover_month',
+        'cover_year',
+        'cut_off_label',
+        'type', // covering bases if duplicate column exists
+        'description',
         'remarks',
         'processed_by',
         'processed_at',
+        'dtr_generated',
+        'dtr_generated_at',
+        'total_employees',
+        'approved_dtr_count',
+        'pending_dtr_count',
+        'payroll_computed',
+        'payroll_computed_at',
+        'payslips_generated',
+        'payslips_generated_at',
     ];
 
     protected $casts = [
@@ -28,6 +44,11 @@ class PayrollPeriod extends Model
         'pay_date' => 'date',
         'processed_at' => 'datetime',
     ];
+
+    public function payrollGroup(): BelongsTo
+    {
+        return $this->belongsTo(PayrollGroup::class);
+    }
 
     /**
      * Get payrolls for this period

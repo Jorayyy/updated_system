@@ -104,9 +104,11 @@ class EmployeeController extends Controller
             $profilePhotoPath = $request->file('profile_photo')->store('profile-photos', 'public');
         }
 
-        // Security Check for Super Admin assignments
-        if (($role === 'super_admin' || $account->hierarchy_level == 100) && !auth()->user()->isSuperAdmin()) {
-            return back()->with('error', 'Only the Super Admin can assign Super Admin level roles.')->withInput();
+        // Hierarchy Check
+        if (!auth()->user()->isSuperAdmin()) {
+            if ($account->hierarchy_level >= auth()->user()->hierarchy_level) {
+                return back()->with('error', 'Hierarchy Restriction: You cannot create an account with an equal or higher level than yours.')->withInput();
+            }
         }
 
         User::create([
@@ -150,6 +152,11 @@ class EmployeeController extends Controller
      */
     public function edit(User $employee)
     {
+        // Hierarchy Check: Cannot manage higher or equal ranks (except self)
+        if (!auth()->user()->canManage($employee)) {
+            return redirect()->route('employees.index')->with('error', 'Hierarchy Restriction: You do not have permission to edit this employee.');
+        }
+
         $sites = Site::all();
         $accounts = Account::all();
         return view('employees.edit', compact('employee', 'sites', 'accounts'));
@@ -160,6 +167,11 @@ class EmployeeController extends Controller
      */
     public function update(Request $request, User $employee)
     {
+        // Hierarchy Check: Cannot manage higher or equal ranks (except self)
+        if (!auth()->user()->canManage($employee)) {
+            return back()->with('error', 'Hierarchy Restriction: You do not have permission to edit this employee.');
+        }
+
         $request->validate([
             'employee_id' => 'required|string|max:50|unique:users,employee_id,' . $employee->id,
             'name' => 'required|string|max:255',
@@ -172,6 +184,14 @@ class EmployeeController extends Controller
             'hourly_rate' => 'nullable|numeric|min:0',
             'daily_rate' => 'nullable|numeric|min:0',
             'monthly_salary' => 'nullable|numeric|min:0',
+            'meal_allowance' => 'nullable|numeric|min:0',
+            'transportation_allowance' => 'nullable|numeric|min:0',
+            'communication_allowance' => 'nullable|numeric|min:0',
+            'perfect_attendance_bonus' => 'nullable|numeric|min:0',
+            'site_incentive' => 'nullable|numeric|min:0',
+            'attendance_incentive' => 'nullable|numeric|min:0',
+            'cola' => 'nullable|numeric|min:0',
+            'other_allowance' => 'nullable|numeric|min:0',
             'date_hired' => 'nullable|date',
             'is_active' => 'boolean',
             'profile_photo' => 'nullable|image|mimes:jpeg,png,jpg,gif|max:2048',
@@ -179,6 +199,19 @@ class EmployeeController extends Controller
 
         $account = Account::find($request->account_id);
         $role = $account->system_role ?? 'employee';
+
+        // Check for role elevation
+        if (!auth()->user()->isSuperAdmin()) {
+            // Cannot assign a level higher than your own to anyone (including self)
+            if ($account->hierarchy_level > auth()->user()->hierarchy_level) {
+                return back()->with('error', 'Hierarchy Restriction: You cannot assign a role higher than your own level.')->withInput();
+            }
+            
+            // Cannot assign your own level to OTHERS (only higher ranks can do this)
+            if ($account->hierarchy_level == auth()->user()->hierarchy_level && $employee->id !== auth()->id()) {
+                return back()->with('error', 'Hierarchy Restriction: You cannot assign your own level to others. Only higher ranks can do this.')->withInput();
+            }
+        }
 
         $data = [
             'employee_id' => $request->employee_id,
@@ -192,14 +225,17 @@ class EmployeeController extends Controller
             'hourly_rate' => $request->hourly_rate ?? 0,
             'daily_rate' => $request->daily_rate ?? 0,
             'monthly_salary' => $request->monthly_salary ?? 0,
+            'meal_allowance' => $request->meal_allowance ?? 0,
+            'transportation_allowance' => $request->transportation_allowance ?? 0,
+            'communication_allowance' => $request->communication_allowance ?? 0,
+            'perfect_attendance_bonus' => $request->perfect_attendance_bonus ?? 0,
+            'site_incentive' => $request->site_incentive ?? 0,
+            'attendance_incentive' => $request->attendance_incentive ?? 0,
+            'cola' => $request->cola ?? 0,
+            'other_allowance' => $request->other_allowance ?? 0,
             'date_hired' => $request->date_hired,
             'is_active' => $request->boolean('is_active', true),
         ];
-
-        // Security Check for Super Admin assignments
-        if (($role === 'super_admin' || $account->hierarchy_level == 100) && !auth()->user()->isSuperAdmin()) {
-            return back()->with('error', 'Only the Super Admin can assign Super Admin level roles.')->withInput();
-        }
 
         if ($request->hasFile('profile_photo')) {
             // Delete old photo if exists
@@ -224,6 +260,11 @@ class EmployeeController extends Controller
      */
     public function destroy(Request $request, User $employee)
     {
+        // Hierarchy Check
+        if (!auth()->user()->canManage($employee)) {
+            return redirect()->route('employees.index')->with('error', 'Hierarchy Restriction: You do not have permission to deactivate this employee.');
+        }
+
         // Require admin password for deactivation of an employee
         if (!Hash::check($request->admin_password, auth()->user()->password)) {
             return back()->with('error', 'Unauthorized. Incorrect admin password provided.');
@@ -252,6 +293,11 @@ class EmployeeController extends Controller
      */
     public function toggleStatus(Request $request, User $employee)
     {
+        // Hierarchy Check
+        if (!auth()->user()->canManage($employee)) {
+            return redirect()->route('employees.index')->with('error', 'Hierarchy Restriction: You do not have permission to change this employee\'s status.');
+        }
+
         // Require password when deactivating (not activating)
         if ($employee->is_active && !Hash::check($request->admin_password, auth()->user()->password)) {
             return back()->with('error', 'Unauthorized. Incorrect admin password provided.');

@@ -304,9 +304,9 @@ class LeaveController extends Controller
      */
     public function manage(Request $request)
     {
+        // 1. Fetch from LeaveRequest model
         $query = LeaveRequest::with(['user', 'leaveType']);
 
-        // Search filter
         if ($request->filled('search')) {
             $query->whereHas('user', function($q) use ($request) {
                 $q->where('name', 'like', '%' . $request->search . '%')
@@ -314,24 +314,20 @@ class LeaveController extends Controller
             });
         }
 
-        // Status filter
         if ($request->filled('status')) {
             $query->where('status', $request->status);
         }
 
-        // Leave type filter
         if ($request->filled('leave_type')) {
             $query->where('leave_type_id', $request->leave_type);
         }
 
-        // Department filter
         if ($request->filled('department')) {
             $query->whereHas('user', function($q) use ($request) {
                 $q->where('department', $request->department);
             });
         }
 
-        // Date range filter
         if ($request->filled('date_from')) {
             $query->where('start_date', '>=', $request->date_from);
         }
@@ -339,16 +335,95 @@ class LeaveController extends Controller
             $query->where('end_date', '<=', $request->date_to);
         }
 
-        $leaveRequests = $query->orderBy('created_at', 'desc')->get();
+        $leaves = $query->orderBy('created_at', 'desc')->get()->map(function($item) {
+            $item->is_transaction = false;
+            return $item;
+        });
+
+        // 2. Fetch from EmployeeTransaction model (type=leave)
+        $tQuery = \App\Models\EmployeeTransaction::where('transaction_type', 'leave')->with(['user', 'leaveType']);
+
+        if ($request->filled('search')) {
+            $tQuery->whereHas('user', function($q) use ($request) {
+                $q->where('name', 'like', '%' . $request->search . '%')
+                    ->orWhere('employee_id', 'like', '%' . $request->search . '%');
+            });
+        }
+
+        if ($request->filled('status')) {
+            // Map statuses if necessary
+            if ($request->status == 'pending') {
+                $tQuery->whereIn('status', ['pending', 'hr_approved']);
+            } else {
+                $tQuery->where('status', $request->status);
+            }
+        }
+
+        if ($request->filled('leave_type')) {
+            $tQuery->where('leave_type_id', $request->leave_type);
+        }
+
+        if ($request->filled('department')) {
+            $tQuery->whereHas('user', function($q) use ($request) {
+                $q->where('department', $request->department);
+            });
+        }
+
+        if ($request->filled('date_from')) {
+            $tQuery->where('effective_date', '>=', $request->date_from);
+        }
+        if ($request->filled('date_to')) {
+            $tQuery->where('effective_date_end', '<=', $request->date_to);
+        }
+
+        $transactions = $tQuery->orderBy('created_at', 'desc')->get()->map(function($item) {
+            $item->is_transaction = true;
+            // Map fields to match LeaveRequest structure for the view
+            $item->start_date = $item->effective_date;
+            $item->end_date = $item->effective_date_end;
+            $item->total_days = $item->days_count;
+            
+            // Map statuses for columns
+            if ($item->status === 'hr_approved') {
+                $item->hr_status = 'approved';
+                $item->admin_status = 'pending';
+                $item->status = 'pending';
+            } elseif ($item->status === 'approved') {
+                $item->hr_status = 'approved';
+                $item->admin_status = 'approved';
+            } elseif ($item->status === 'rejected') {
+                $item->hr_status = 'rejected';
+                $item->admin_status = 'rejected';
+            } else {
+                $item->hr_status = 'pending';
+                $item->admin_status = 'pending';
+            }
+            
+            return $item;
+        });
+
+        // 3. Merge and combine
+        $leaveRequests = $leaves->concat($transactions)->sortByDesc('created_at');
+
         $leaveTypes = LeaveType::all();
         $departments = \App\Models\User::distinct()->pluck('department')->filter();
 
-        // Stats
+        // Stats - combining both
+        $pendingLeaves = LeaveRequest::where('status', 'pending')->count();
+        $pendingTrans = \App\Models\EmployeeTransaction::where('transaction_type', 'leave')->whereIn('status', ['pending', 'hr_approved'])->count();
+        
+        $approvedLeaves = LeaveRequest::where('status', 'approved')->count();
+        $approvedTrans = \App\Models\EmployeeTransaction::where('transaction_type', 'leave')->where('status', 'approved')->count();
+
+        $rejectedLeaves = LeaveRequest::where('status', 'rejected')->count();
+        $rejectedTrans = \App\Models\EmployeeTransaction::where('transaction_type', 'leave')->where('status', 'rejected')->count();
+
         $stats = [
-            'pending' => LeaveRequest::where('status', 'pending')->count(),
-            'approved' => LeaveRequest::where('status', 'approved')->count(),
-            'rejected' => LeaveRequest::where('status', 'rejected')->count(),
-            'total_month' => LeaveRequest::whereMonth('created_at', now()->month)->count(),
+            'pending' => $pendingLeaves + $pendingTrans,
+            'approved' => $approvedLeaves + $approvedTrans,
+            'rejected' => $rejectedLeaves + $rejectedTrans,
+            'total_month' => LeaveRequest::whereMonth('created_at', now()->month)->count() + 
+                           \App\Models\EmployeeTransaction::where('transaction_type', 'leave')->whereMonth('created_at', now()->month)->count(),
         ];
 
         return view('leaves.admin-index', compact('leaveRequests', 'leaveTypes', 'departments', 'stats'));
@@ -370,18 +445,13 @@ class LeaveController extends Controller
     {
         $user = auth()->user();
         
-        if (!$user->isHr() && !$user->isAdmin()) {
-            abort(403);
+        if (!$user->isSuperAdmin()) {
+            abort(403, 'Only SuperAdmin can approve leaves.');
         }
 
         if ($leave->status !== 'pending') {
             return redirect()->back()
                 ->with('error', 'Only pending leave requests can be approved.');
-        }
-
-        if ($leave->hr_status !== 'pending') {
-            return redirect()->back()
-                ->with('error', 'HR has already processed this leave request.');
         }
 
         DB::beginTransaction();
@@ -393,36 +463,41 @@ class LeaveController extends Controller
                 'hr_status' => 'approved',
             ]);
 
-            // Check if both HR and Admin have approved
-            if ($leave->admin_status === 'approved') {
-                $this->finalizeApproval($leave);
+            // For SuperAdmin, we can auto-approve admin status too or just finalize
+            if ($leave->admin_status !== 'approved') {
+                $leave->update([
+                    'admin_approved_by' => auth()->id(),
+                    'admin_approved_at' => now(),
+                    'admin_status' => 'approved',
+                ]);
             }
 
+            $this->finalizeApproval($leave);
+
             AuditLog::log(
-                'hr_approved',
+                'superadmin_approved',
                 LeaveRequest::class,
                 $leave->id,
-                ['hr_status' => 'pending'],
-                ['hr_status' => 'approved', 'hr_approved_by' => auth()->id()],
-                'Leave request HR approved'
+                ['status' => 'pending'],
+                ['status' => 'approved', 'approved_by' => auth()->id()],
+                'Leave request approved by SuperAdmin'
             );
 
             // Notify the employee
             Notification::send(
                 $leave->user_id,
-                'leave_hr_approved',
-                'Leave Request HR Approved',
-                "Your {$leave->leaveType->name} request has been approved by HR. " . 
-                ($leave->admin_status === 'approved' ? 'Fully approved!' : 'Awaiting Admin approval.'),
+                'leave_approved',
+                'Leave Request Approved',
+                "Your {$leave->leaveType->name} request has been approved by SuperAdmin.",
                 route('leaves.show', $leave),
                 'check-circle',
-                'blue'
+                'green'
             );
 
             DB::commit();
 
             return redirect()->back()
-                ->with('success', 'Leave request approved by HR.' . ($leave->admin_status !== 'approved' ? ' Awaiting Admin approval.' : ' Fully approved!'));
+                ->with('success', 'Leave request fully approved.');
         } catch (\Exception $e) {
             DB::rollBack();
             return redirect()->back()
@@ -435,66 +510,7 @@ class LeaveController extends Controller
      */
     public function adminApprove(LeaveRequest $leave)
     {
-        $user = auth()->user();
-        
-        if (!$user->isAdmin()) {
-            abort(403);
-        }
-
-        if ($leave->status !== 'pending') {
-            return redirect()->back()
-                ->with('error', 'Only pending leave requests can be approved.');
-        }
-
-        if ($leave->admin_status !== 'pending') {
-            return redirect()->back()
-                ->with('error', 'Admin has already processed this leave request.');
-        }
-
-        DB::beginTransaction();
-        try {
-            // Update Admin approval
-            $leave->update([
-                'admin_approved_by' => auth()->id(),
-                'admin_approved_at' => now(),
-                'admin_status' => 'approved',
-            ]);
-
-            // Check if both HR and Admin have approved
-            if ($leave->hr_status === 'approved') {
-                $this->finalizeApproval($leave);
-            }
-
-            AuditLog::log(
-                'admin_approved',
-                LeaveRequest::class,
-                $leave->id,
-                ['admin_status' => 'pending'],
-                ['admin_status' => 'approved', 'admin_approved_by' => auth()->id()],
-                'Leave request Admin approved'
-            );
-
-            // Notify the employee
-            Notification::send(
-                $leave->user_id,
-                'leave_admin_approved',
-                'Leave Request Admin Approved',
-                "Your {$leave->leaveType->name} request has been approved by Admin. " . 
-                ($leave->hr_status === 'approved' ? 'Fully approved!' : 'Awaiting HR approval.'),
-                route('leaves.show', $leave),
-                'check-circle',
-                'purple'
-            );
-
-            DB::commit();
-
-            return redirect()->back()
-                ->with('success', 'Leave request approved by Admin.' . ($leave->hr_status !== 'approved' ? ' Awaiting HR approval.' : ' Fully approved!'));
-        } catch (\Exception $e) {
-            DB::rollBack();
-            return redirect()->back()
-                ->with('error', 'Failed to approve leave request: ' . $e->getMessage());
-        }
+        return $this->hrApprove($leave);
     }
 
     /**
@@ -555,6 +571,12 @@ class LeaveController extends Controller
      */
     public function reject(Request $request, LeaveRequest $leave)
     {
+        $user = auth()->user();
+
+        if (!$user->isSuperAdmin()) {
+            abort(403, 'Only SuperAdmin can reject leaves.');
+        }
+
         $request->validate([
             'rejection_reason' => 'required|string|max:500',
         ]);
@@ -564,18 +586,17 @@ class LeaveController extends Controller
                 ->with('error', 'Only pending leave requests can be rejected.');
         }
 
-        $user = auth()->user();
-        $rejectorRole = $user->isAdmin() ? 'Admin' : 'HR';
-
         $leave->update([
             'status' => 'rejected',
             'rejection_reason' => $request->rejection_reason,
             'approved_by' => auth()->id(),
             'approved_at' => now(),
-            // Also update the specific role status
-            $user->isAdmin() ? 'admin_status' : 'hr_status' => 'rejected',
-            $user->isAdmin() ? 'admin_approved_by' : 'hr_approved_by' => auth()->id(),
-            $user->isAdmin() ? 'admin_approved_at' : 'hr_approved_at' => now(),
+            'admin_status' => 'rejected',
+            'hr_status' => 'rejected',
+            'admin_approved_by' => auth()->id(),
+            'hr_approved_by' => auth()->id(),
+            'admin_approved_at' => now(),
+            'hr_approved_at' => now(),
         ]);
 
         AuditLog::log(
@@ -584,7 +605,7 @@ class LeaveController extends Controller
             $leave->id,
             ['status' => 'pending'],
             ['status' => 'rejected', 'rejection_reason' => $request->rejection_reason],
-            "Leave request rejected by {$rejectorRole}"
+            "Leave request rejected by SuperAdmin"
         );
 
         // Notify the employee
@@ -592,7 +613,7 @@ class LeaveController extends Controller
             $leave->user_id,
             Notification::TYPE_LEAVE_REJECTED,
             'Leave Request Rejected',
-            "Your {$leave->leaveType->name} request ({$leave->start_date->format('M d')} - {$leave->end_date->format('M d, Y')}) has been rejected by {$rejectorRole}. Reason: {$request->rejection_reason}",
+            "Your {$leave->leaveType->name} request ({$leave->start_date->format('M d')} - {$leave->end_date->format('M d, Y')}) has been rejected by SuperAdmin. Reason: {$request->rejection_reason}",
             route('leaves.show', $leave),
             'x-circle',
             'red'

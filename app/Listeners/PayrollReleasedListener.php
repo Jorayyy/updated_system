@@ -42,12 +42,12 @@ class PayrollReleasedListener implements ShouldQueue
             'action' => 'payroll_released',
             'model_type' => 'Payroll',
             'model_id' => $payroll->id,
-            'old_values' => json_encode(['status' => 'approved']),
-            'new_values' => json_encode([
+            'old_values' => ['status' => 'approved'],
+            'new_values' => [
                 'status' => 'released',
                 'released_at' => now()->toISOString(),
                 'net_pay' => $payroll->net_pay,
-            ]),
+            ],
             'ip_address' => request()->ip() ?? 'system',
             'user_agent' => request()->userAgent() ?? 'Event Listener',
         ]);

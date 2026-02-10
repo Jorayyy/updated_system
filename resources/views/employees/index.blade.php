@@ -22,42 +22,57 @@
         }
     }">
         <div class="max-w-full mx-auto sm:px-6 lg:px-8">
-            <!-- Bulk Actions -->
-            <div x-show="selectedEmployees.length > 0" x-cloak
-                class="bg-indigo-50 border-l-4 border-indigo-400 p-4 mb-6 flex flex-wrap items-center justify-between gap-4 sticky top-0 z-10 shadow-md rounded-r-lg">
-                <div class="flex items-center">
-                    <span class="text-indigo-700 font-medium" x-text="selectedEmployees.length + ' employees selected'"></span>
-                </div>
-                <div class="flex items-center gap-4">
-                    <!-- Bulk Site Assign -->
-                    <form action="{{ route('employees.bulk-assign-site') }}" method="POST" class="flex items-center gap-2">
-                        @csrf
-                        <template x-for="id in selectedEmployees">
-                            <input type="hidden" name="employee_ids[]" :value="id">
-                        </template>
-                        <select name="site_id" required class="text-sm border-gray-300 rounded-md focus:ring-indigo-500 focus:border-indigo-500">
-                            <option value="">Move to Site...</option>
-                            @foreach($allSites as $site)
-                                <option value="{{ $site->id }}">{{ $site->name }}</option>
-                            @endforeach
-                        </select>
-                        <button type="submit" class="bg-indigo-600 text-white px-3 py-1.5 rounded text-sm hover:bg-indigo-700">Assign Site</button>
-                    </form>
+            <!-- Bulk Actions & Selection -->
+            <div class="bg-white overflow-hidden shadow-sm sm:rounded-lg mb-6 transition-all duration-200 border-l-4 border-indigo-400">
+                <div class="p-4 flex flex-wrap items-center justify-between gap-4">
+                    <div class="flex items-center gap-4">
+                        <label class="flex items-center cursor-pointer group">
+                            <input type="checkbox" x-model="selectAll" @change="toggleSelectAll()" 
+                                class="rounded border-gray-300 text-indigo-600 focus:ring-indigo-500 transition-all cursor-pointer">
+                            <span class="ml-2 text-sm text-gray-700 font-bold uppercase tracking-wider group-hover:text-indigo-600 transition-colors">Select All</span>
+                        </label>
+                        <div x-show="selectedEmployees.length > 0" x-cloak class="flex items-center gap-2 px-3 py-1 bg-indigo-50 text-indigo-700 rounded-full text-xs font-bold ring-1 ring-indigo-100">
+                            <span x-text="selectedEmployees.length"></span>
+                            <span>SELECTED</span>
+                        </div>
+                    </div>
 
-                    <!-- Bulk Account Assign -->
-                    <form action="{{ route('employees.bulk-assign-account') }}" method="POST" class="flex items-center gap-2 border-l pl-4 border-indigo-200">
-                        @csrf
-                        <template x-for="id in selectedEmployees">
-                            <input type="hidden" name="employee_ids[]" :value="id">
-                        </template>
-                        <select name="account_id" required class="text-sm border-gray-300 rounded-md focus:ring-indigo-500 focus:border-indigo-500">
-                            <option value="">Move to Account...</option>
-                            @foreach($allAccounts as $account)
-                                <option value="{{ $account->id }}">{{ $account->name }}</option>
-                            @endforeach
-                        </select>
-                        <button type="submit" class="bg-blue-600 text-white px-3 py-1.5 rounded text-sm hover:bg-blue-700">Assign Account</button>
-                    </form>
+                    <div x-show="selectedEmployees.length > 0" x-cloak 
+                        class="flex flex-wrap items-center gap-4"
+                        x-transition:enter="transition ease-out duration-300"
+                        x-transition:enter-start="opacity-0 transform -translate-y-2"
+                        x-transition:enter-end="opacity-100 transform translate-y-0">
+                        
+                        <!-- Bulk Site Assign -->
+                        <form action="{{ route('employees.bulk-assign-site') }}" method="POST" class="flex items-center gap-2">
+                            @csrf
+                            <template x-for="id in selectedEmployees">
+                                <input type="hidden" name="employee_ids[]" :value="id">
+                            </template>
+                            <select name="site_id" required class="text-sm border-gray-300 rounded-md focus:ring-indigo-500 focus:border-indigo-500 py-1.5 focus:shadow-sm">
+                                <option value="">Move to Site...</option>
+                                @foreach($allSites as $site)
+                                    <option value="{{ $site->id }}">{{ $site->name }}</option>
+                                @endforeach
+                            </select>
+                            <button type="submit" class="bg-indigo-600 text-white px-4 py-1.5 rounded text-sm font-medium hover:bg-indigo-700 transition shadow-sm">Assign Site</button>
+                        </form>
+
+                        <!-- Bulk Account Assign -->
+                        <form action="{{ route('employees.bulk-assign-account') }}" method="POST" class="flex items-center gap-2 border-l pl-4 border-gray-200">
+                            @csrf
+                            <template x-for="id in selectedEmployees">
+                                <input type="hidden" name="employee_ids[]" :value="id">
+                            </template>
+                            <select name="account_id" required class="text-sm border-gray-300 rounded-md focus:ring-indigo-500 focus:border-indigo-500 py-1.5 focus:shadow-sm">
+                                <option value="">Move to Account...</option>
+                                @foreach($allAccounts as $account)
+                                    <option value="{{ $account->id }}">{{ $account->name }}</option>
+                                @endforeach
+                            </select>
+                            <button type="submit" class="bg-blue-600 text-white px-4 py-1.5 rounded text-sm font-medium hover:bg-blue-700 transition shadow-sm">Assign Account</button>
+                        </form>
+                    </div>
                 </div>
             </div>
 
@@ -122,9 +137,7 @@
                         <table class="min-w-full divide-y divide-gray-200">
                             <thead class="bg-gray-50">
                                 <tr>
-                                    <th class="px-4 py-3 text-left">
-                                        <input type="checkbox" x-model="selectAll" @change="toggleSelectAll()" class="rounded border-gray-300 text-indigo-600 focus:ring-indigo-500">
-                                    </th>
+                                    <th class="px-4 py-3"></th>
                                     <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">Employee ID</th>
                                     <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">Name</th>
                                     <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">Account/Site</th>

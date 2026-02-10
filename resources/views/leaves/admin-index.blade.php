@@ -75,6 +75,7 @@
                             <thead class="bg-gray-50">
                                 <tr>
                                     <th class="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase">Employee</th>
+                                    <th class="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase">Context</th>
                                     <th class="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase">Department</th>
                                     <th class="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase">Leave Type</th>
                                     <th class="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase">Period</th>
@@ -91,6 +92,17 @@
                                         <td class="px-4 py-4 whitespace-nowrap">
                                             <div class="text-sm font-medium text-gray-900">{{ $leave->user->name }}</div>
                                             <div class="text-xs text-gray-500">{{ $leave->user->employee_id }}</div>
+                                        </td>
+                                        <td class="px-4 py-4 whitespace-nowrap">
+                                            @if($leave->is_transaction)
+                                                <span class="px-2 py-0.5 text-[10px] bg-amber-50 text-amber-600 border border-amber-200 rounded font-bold uppercase tracking-tight">
+                                                    Transaction
+                                                </span>
+                                            @else
+                                                <span class="px-2 py-0.5 text-[10px] bg-indigo-50 text-indigo-600 border border-indigo-200 rounded font-bold uppercase tracking-tight">
+                                                    Leave Request
+                                                </span>
+                                            @endif
                                         </td>
                                         <td class="px-4 py-4 whitespace-nowrap text-sm text-gray-500">
                                             {{ $leave->user->department ?? '-' }}
@@ -137,34 +149,20 @@
                                         </td>
                                         <td class="px-4 py-4 whitespace-nowrap text-center">
                                             <div class="flex items-center justify-center gap-2">
-                                                <a href="{{ route('leaves.admin-show', $leave) }}" 
+                                                <a href="{{ $leave->is_transaction ? route('transactions.show', $leave) : route('leaves.admin-show', $leave) }}" 
                                                     class="inline-flex items-center px-2 py-1 bg-indigo-50 text-indigo-700 hover:bg-indigo-100 rounded-md text-xs font-medium transition-colors border border-indigo-100">
                                                     View
                                                 </a>
                                                 
-                                                @if($leave->status == 'pending')
-                                                    @if(auth()->user()->isHr() && $leave->hr_status == 'pending')
-                                                        <form action="{{ route('leaves.hr-approve', $leave) }}" method="POST" class="inline">
-                                                            @csrf
-                                                            @method('PATCH')
-                                                            <button type="submit" class="inline-flex items-center px-2 py-1 bg-blue-50 text-blue-700 hover:bg-blue-100 rounded-md text-xs font-medium transition-colors border border-blue-100">
-                                                                HR Approve
-                                                            </button>
-                                                        </form>
-                                                    @endif
-                                                    
-                                                    @if(auth()->user()->isAdmin() && $leave->admin_status == 'pending')
-                                                        <form action="{{ route('leaves.admin-approve', $leave) }}" method="POST" class="inline">
-                                                            @csrf
-                                                            @method('PATCH')
-                                                            <button type="submit" class="inline-flex items-center px-2 py-1 bg-purple-50 text-purple-700 hover:bg-purple-100 rounded-md text-xs font-medium transition-colors border border-purple-100">
-                                                                Admin Approve
-                                                            </button>
-                                                        </form>
-                                                    @endif
+                                                @if($leave->status == 'pending' && auth()->user()->isSuperAdmin())
+                                                    <button type="button" 
+                                                        onclick="confirmApprove('{{ $leave->is_transaction ? route('transactions.admin-approve', $leave) : route('leaves.admin-approve', $leave) }}')"
+                                                        class="inline-flex items-center px-2 py-1 bg-green-50 text-green-700 hover:bg-green-100 rounded-md text-xs font-medium transition-colors border border-green-100">
+                                                        Approve
+                                                    </button>
                                                     
                                                     <button type="button" 
-                                                        onclick="openRejectModal({{ $leave->id }})"
+                                                        onclick="confirmReject('{{ $leave->is_transaction ? route('transactions.reject', $leave) : route('leaves.reject', $leave) }}')"
                                                         class="inline-flex items-center px-2 py-1 bg-red-50 text-red-700 hover:bg-red-100 rounded-md text-xs font-medium transition-colors border border-red-100">
                                                         Reject
                                                     </button>
@@ -185,55 +183,64 @@
         </div>
     </div>
 
-    <!-- Reject Modal -->
-    <div id="reject-modal" class="fixed inset-0 bg-gray-600 bg-opacity-50 hidden overflow-y-auto h-full w-full z-50">
-        <div class="relative top-20 mx-auto p-5 border w-96 shadow-lg rounded-md bg-white">
-            <div class="mt-3">
-                <h3 class="text-lg font-medium text-gray-900 mb-4">Reject Leave Request</h3>
-                <form id="reject-form" method="POST">
-                    @csrf
-                    @method('PATCH')
-                    <div class="mb-4">
-                        <label class="block text-sm font-medium text-gray-700 mb-2">Rejection Reason</label>
-                        <textarea name="rejection_reason" rows="4" required
-                            class="w-full border-gray-300 rounded-md shadow-sm focus:border-indigo-500 focus:ring-indigo-500"
-                            placeholder="Please provide a reason for rejecting this leave request..."></textarea>
-                    </div>
-                    <div class="flex justify-end gap-3">
-                        <button type="button" onclick="closeRejectModal()" 
-                            class="px-4 py-2 bg-gray-200 text-gray-800 rounded-md hover:bg-gray-300">
-                            Cancel
-                        </button>
-                        <button type="submit" 
-                            class="px-4 py-2 bg-red-600 text-white rounded-md hover:bg-red-700">
-                            Reject
-                        </button>
-                    </div>
-                </form>
-            </div>
-        </div>
-    </div>
+    <form id="submission-form" method="POST" class="hidden">
+        @csrf
+        @method('PATCH')
+        <input type="hidden" name="rejection_reason" id="submission-reason">
+    </form>
 
     @push('scripts')
     <script>
-        function openRejectModal(leaveId) {
-            const modal = document.getElementById('reject-modal');
-            const form = document.getElementById('reject-form');
-            form.action = `/leaves/${leaveId}/reject`;
-            modal.classList.remove('hidden');
+        function confirmApprove(url) {
+            Swal.fire({
+                title: 'Approve Leave Request?',
+                text: "This will finalize the leave request and update the employee's balanced credits.",
+                icon: 'question',
+                showCancelButton: true,
+                confirmButtonColor: '#10B981',
+                cancelButtonColor: '#6B7280',
+                confirmButtonText: 'Yes, Approve',
+                cancelButtonText: 'Cancel',
+                reverseButtons: true
+            }).then((result) => {
+                if (result.isConfirmed) {
+                    const form = document.getElementById('submission-form');
+                    form.action = url;
+                    form.submit();
+                }
+            });
         }
 
-        function closeRejectModal() {
-            const modal = document.getElementById('reject-modal');
-            modal.classList.add('hidden');
+        function confirmReject(url) {
+            Swal.fire({
+                title: 'Reject Leave Request?',
+                text: "Please provide a reason for rejection:",
+                icon: 'warning',
+                input: 'textarea',
+                inputPlaceholder: 'Enter rejection reason here...',
+                inputAttributes: {
+                    'aria-label': 'Enter rejection reason'
+                },
+                showCancelButton: true,
+                confirmButtonColor: '#EF4444',
+                cancelButtonColor: '#6B7280',
+                confirmButtonText: 'Reject Request',
+                cancelButtonText: 'Cancel',
+                reverseButtons: true,
+                inputValidator: (value) => {
+                    if (!value) {
+                        return 'You need to provide a reason!'
+                    }
+                }
+            }).then((result) => {
+                if (result.isConfirmed) {
+                    const form = document.getElementById('submission-form');
+                    form.action = url;
+                    document.getElementById('submission-reason').value = result.value;
+                    form.submit();
+                }
+            });
         }
-
-        // Close modal when clicking outside
-        document.getElementById('reject-modal').addEventListener('click', function(e) {
-            if (e.target === this) {
-                closeRejectModal();
-            }
-        });
     </script>
     @endpush
 </x-app-layout>

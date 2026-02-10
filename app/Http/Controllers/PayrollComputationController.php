@@ -7,6 +7,8 @@ use App\Models\DailyTimeRecord;
 use App\Models\Payroll;
 use App\Models\PayrollPeriod;
 use App\Models\User;
+use App\Models\Site;
+use App\Models\Account;
 use App\Services\PayrollComputationService;
 use App\Services\DtrService;
 use Illuminate\Http\Request;
@@ -82,8 +84,11 @@ class PayrollComputationController extends Controller
     /**
      * Show payroll computation dashboard
      */
-    public function dashboard()
+    public function dashboard(Request $request)
     {
+        $siteId = $request->get('site_id');
+        $accountId = $request->get('account_id');
+
         // Get periods ready for computation (all DTRs approved AND has at least one DTR)
         $readyPeriods = PayrollPeriod::where('status', 'draft')
             ->whereHas('dailyTimeRecords')
@@ -121,6 +126,10 @@ class PayrollComputationController extends Controller
             ->limit(10)
             ->get();
 
+        // Fetch sites and accounts for the one-stop center filtering
+        $sites = Site::orderBy('name')->get();
+        $accounts = Account::orderBy('name')->get();
+
         // Stats
         $stats = [
             'ready_count' => $readyPeriods->count(),
@@ -134,7 +143,9 @@ class PayrollComputationController extends Controller
             'pendingPeriods',
             'processingPeriods',
             'completedPeriods',
-            'stats'
+            'stats',
+            'sites',
+            'accounts'
         ));
     }
 
@@ -369,7 +380,7 @@ class PayrollComputationController extends Controller
                 'action' => 'payroll_manually_adjusted',
                 'model_type' => 'Payroll',
                 'model_id' => $payroll->id,
-                'new_values' => json_encode($validated),
+                'new_values' => $validated,
                 'ip_address' => $request->ip(),
                 'user_agent' => $request->userAgent(),
             ]);
@@ -391,6 +402,11 @@ class PayrollComputationController extends Controller
      */
     public function recompute(Payroll $payroll)
     {
+        // Hierarchy Check
+        if (!auth()->user()->isSuperAdmin() && !auth()->user()->canManage($payroll->user)) {
+            return redirect()->back()->with('error', 'Hierarchy Restriction: You cannot recompute payroll for users with equal or higher rank.');
+        }
+
         if ($payroll->status === 'released') {
             return redirect()->back()
                 ->with('error', 'Cannot recompute released payroll.');
@@ -418,13 +434,18 @@ class PayrollComputationController extends Controller
      */
     public function approve(Payroll $payroll)
     {
+        // Hierarchy Check
+        if (!auth()->user()->isSuperAdmin() && !auth()->user()->canManage($payroll->user)) {
+            return redirect()->back()->with('error', 'Hierarchy Restriction: You cannot approve payroll for users with equal or higher rank.');
+        }
+
         if ($payroll->status !== 'computed') {
             return redirect()->back()
                 ->with('error', 'Only computed payrolls can be approved.');
         }
 
         try {
-            $this->computationService->approvePayroll($payroll, auth()->user());
+            $this->computationService->approvePayroll($payroll, auth()->id());
 
             return redirect()->back()
                 ->with('success', "Payroll approved for {$payroll->user->name}.");
@@ -443,7 +464,7 @@ class PayrollComputationController extends Controller
         
         if (empty($payrollIds)) {
             // Approve all computed payrolls in the period
-            $results = $this->computationService->approvePayrollsForPeriod($period, auth()->user());
+            $results = $this->computationService->approvePayrollsForPeriod($period, auth()->id());
         } else {
             // Approve selected payrolls
             $results = ['success' => 0, 'failed' => 0];
@@ -452,7 +473,7 @@ class PayrollComputationController extends Controller
                 $payroll = Payroll::find($id);
                 if ($payroll && $payroll->status === 'computed') {
                     try {
-                        $this->computationService->approvePayroll($payroll, auth()->user());
+                        $this->computationService->approvePayroll($payroll, auth()->id());
                         $results['success']++;
                     } catch (\Exception $e) {
                         $results['failed']++;
@@ -476,7 +497,7 @@ class PayrollComputationController extends Controller
         }
 
         try {
-            $this->computationService->releasePayroll($payroll);
+            $this->computationService->releasePayroll($payroll, auth()->id());
 
             return redirect()->back()
                 ->with('success', "Payroll released for {$payroll->user->name}.");
@@ -495,7 +516,7 @@ class PayrollComputationController extends Controller
         
         if (empty($payrollIds)) {
             // Release all approved payrolls in the period
-            $results = $this->computationService->releasePayrollsForPeriod($period);
+            $results = $this->computationService->releasePayrollsForPeriod($period, auth()->id());
         } else {
             // Release selected payrolls
             $results = ['success' => 0, 'failed' => 0];
@@ -504,7 +525,7 @@ class PayrollComputationController extends Controller
                 $payroll = Payroll::find($id);
                 if ($payroll && $payroll->status === 'approved') {
                     try {
-                        $this->computationService->releasePayroll($payroll);
+                        $this->computationService->releasePayroll($payroll, auth()->id());
                         $results['success']++;
                     } catch (\Exception $e) {
                         $results['failed']++;

@@ -39,27 +39,62 @@
                 </div>
             @endif
 
+            <!-- Filtering -->
+            <div class="bg-white overflow-hidden shadow-sm sm:rounded-lg mb-6">
+                <div class="p-4 flex flex-wrap items-center gap-4">
+                    <form method="GET" action="{{ route('payroll.show-period', $period) }}" class="flex flex-wrap items-center gap-4 w-full">
+                        <div class="w-full md:w-48">
+                            <label for="site_id" class="block text-xs font-medium text-gray-700 uppercase mb-1">Filter by Site</label>
+                            <select name="site_id" id="site_id" onchange="this.form.submit()" class="block w-full text-sm border-gray-300 rounded-md focus:ring-indigo-500 focus:border-indigo-500">
+                                <option value="">All Sites</option>
+                                @foreach($sites as $site)
+                                    <option value="{{ $site->id }}" {{ request('site_id') == $site->id ? 'selected' : '' }}>
+                                        {{ $site->name }}
+                                    </option>
+                                @endforeach
+                            </select>
+                        </div>
+                        
+                        <div class="w-full md:w-48">
+                            <label for="account_id" class="block text-xs font-medium text-gray-700 uppercase mb-1">Filter by Account</label>
+                            <select name="account_id" id="account_id" onchange="this.form.submit()" class="block w-full text-sm border-gray-300 rounded-md focus:ring-indigo-500 focus:border-indigo-500">
+                                <option value="">All Accounts</option>
+                                @foreach($accounts as $account)
+                                    <option value="{{ $account->id }}" {{ request('account_id') == $account->id ? 'selected' : '' }}>
+                                        {{ $account->name }}
+                                    </option>
+                                @endforeach
+                            </select>
+                        </div>
+
+                        <div class="flex items-end h-full pt-5">
+                            <a href="{{ route('payroll.show-period', $period) }}" class="text-sm text-gray-500 hover:text-indigo-600 underline">Clear Filters</a>
+                        </div>
+                    </form>
+                </div>
+            </div>
+
             <!-- Summary Cards -->
             <div class="grid grid-cols-2 md:grid-cols-5 gap-4 mb-6">
                 <div class="bg-white overflow-hidden shadow-sm sm:rounded-lg p-4">
                     <div class="text-sm text-gray-500">Employees</div>
-                    <div class="text-2xl font-bold text-indigo-600">{{ $period->payrolls->count() }}</div>
+                    <div class="text-2xl font-bold text-indigo-600">{{ $summary['total_employees'] }}</div>
                 </div>
                 <div class="bg-white overflow-hidden shadow-sm sm:rounded-lg p-4">
                     <div class="text-sm text-gray-500">Total Gross</div>
-                    <div class="text-2xl font-bold text-gray-800">₱{{ number_format($period->payrolls->sum('gross_pay'), 2) }}</div>
+                    <div class="text-2xl font-bold text-gray-800">₱{{ number_format($summary['total_gross_pay'], 2) }}</div>
                 </div>
                 <div class="bg-white overflow-hidden shadow-sm sm:rounded-lg p-4">
                     <div class="text-sm text-gray-500">Total Deductions</div>
-                    <div class="text-2xl font-bold text-red-600">₱{{ number_format($period->payrolls->sum('total_deductions'), 2) }}</div>
+                    <div class="text-2xl font-bold text-red-600">₱{{ number_format($summary['total_deductions'], 2) }}</div>
                 </div>
                 <div class="bg-white overflow-hidden shadow-sm sm:rounded-lg p-4">
                     <div class="text-sm text-gray-500">Total Net</div>
-                    <div class="text-2xl font-bold text-green-600">₱{{ number_format($period->payrolls->sum('net_pay'), 2) }}</div>
+                    <div class="text-2xl font-bold text-green-600">₱{{ number_format($summary['total_net_pay'], 2) }}</div>
                 </div>
                 <div class="bg-white overflow-hidden shadow-sm sm:rounded-lg p-4">
                     <div class="text-sm text-gray-500">Total Overtime</div>
-                    <div class="text-2xl font-bold text-purple-600">₱{{ number_format($period->payrolls->sum('overtime_pay'), 2) }}</div>
+                    <div class="text-2xl font-bold text-purple-600">₱{{ number_format($summary['total_overtime_pay'], 2) }}</div>
                 </div>
             </div>
 
@@ -97,7 +132,7 @@
                                     Complete Payroll
                                 </button>
                             </form>
-                            <a href="{{ route('payroll.report', $period) }}" 
+                            <a href="{{ route('payroll.report', array_merge(['period' => $period->id], request()->all())) }}" 
                                 class="bg-purple-600 text-white px-6 py-2 rounded-md hover:bg-purple-700">
                                 Preview Report
                             </a>
@@ -113,7 +148,7 @@
                             <strong>✓ Completed:</strong> This payroll period has been processed. 
                             Employees can now view their payslips.
                         </div>
-                        <a href="{{ route('payroll.report', $period) }}" 
+                        <a href="{{ route('payroll.report', array_merge(['period' => $period->id], request()->all())) }}" 
                             class="bg-purple-600 text-white px-6 py-2 rounded-md hover:bg-purple-700">
                             Download Report (PDF)
                         </a>
@@ -143,7 +178,7 @@
                                 </tr>
                             </thead>
                             <tbody class="bg-white divide-y divide-gray-200">
-                                @forelse($period->payrolls as $payroll)
+                                @forelse($payrolls as $payroll)
                                     <tr>
                                         <td class="px-4 py-3 whitespace-nowrap">
                                             <div class="text-sm font-medium text-gray-900">{{ $payroll->user->name }}</div>
@@ -177,8 +212,13 @@
                                             ₱{{ number_format($payroll->net_pay, 2) }}
                                         </td>
                                         <td class="px-4 py-3 whitespace-nowrap text-center">
-                                            <a href="{{ route('payroll.payslip', $payroll) }}" 
-                                                class="text-indigo-600 hover:text-indigo-900 text-sm">Payslip</a>
+                                            <div class="flex items-center justify-center gap-2">
+                                                <a href="{{ route('payroll.payslip', $payroll) }}" 
+                                                    class="text-indigo-600 hover:text-indigo-900 text-sm font-medium">Payslip</a>
+                                                <span class="text-gray-300">|</span>
+                                                <a href="{{ route('dtr.show', [$payroll->user_id, 'start_date' => $period->start_date->format('Y-m-d'), 'end_date' => $period->end_date->format('Y-m-d')]) }}" 
+                                                    class="text-gray-600 hover:text-gray-800 text-sm">DTR</a>
+                                            </div>
                                         </td>
                                     </tr>
                                 @empty
@@ -191,20 +231,24 @@
                             </tbody>
                             <tfoot class="bg-gray-50">
                                 <tr class="font-bold">
-                                    <td class="px-4 py-3 text-sm">TOTALS</td>
+                                    <td class="px-4 py-3 text-sm">TOTALS (Filtered)</td>
                                     <td class="px-4 py-3 text-sm text-center">-</td>
-                                    <td class="px-4 py-3 text-sm text-right">₱{{ number_format($period->payrolls->sum('basic_pay'), 2) }}</td>
-                                    <td class="px-4 py-3 text-sm text-right text-purple-600">₱{{ number_format($period->payrolls->sum('overtime_pay'), 2) }}</td>
-                                    <td class="px-4 py-3 text-sm text-right">₱{{ number_format($period->payrolls->sum('gross_pay'), 2) }}</td>
-                                    <td class="px-4 py-3 text-sm text-right text-red-600">₱{{ number_format($period->payrolls->sum('sss_contribution'), 2) }}</td>
-                                    <td class="px-4 py-3 text-sm text-right text-red-600">₱{{ number_format($period->payrolls->sum('philhealth_contribution'), 2) }}</td>
-                                    <td class="px-4 py-3 text-sm text-right text-red-600">₱{{ number_format($period->payrolls->sum('pagibig_contribution'), 2) }}</td>
-                                    <td class="px-4 py-3 text-sm text-right text-red-600">₱{{ number_format($period->payrolls->sum('withholding_tax'), 2) }}</td>
-                                    <td class="px-4 py-3 text-sm text-right text-green-600">₱{{ number_format($period->payrolls->sum('net_pay'), 2) }}</td>
+                                    <td class="px-4 py-3 text-sm text-right">₱{{ number_format($summary['total_basic_pay'], 2) }}</td>
+                                    <td class="px-4 py-3 text-sm text-right text-purple-600">₱{{ number_format($summary['total_overtime_pay'], 2) }}</td>
+                                    <td class="px-4 py-3 text-sm text-right">₱{{ number_format($summary['total_gross_pay'], 2) }}</td>
+                                    <td class="px-4 py-3 text-sm text-right text-red-600">₱{{ number_format($summary['total_sss'], 2) }}</td>
+                                    <td class="px-4 py-3 text-sm text-right text-red-600">₱{{ number_format($summary['total_philhealth'], 2) }}</td>
+                                    <td class="px-4 py-3 text-sm text-right text-red-600">₱{{ number_format($summary['total_pagibig'], 2) }}</td>
+                                    <td class="px-4 py-3 text-sm text-right text-red-600">₱{{ number_format($summary['total_tax'], 2) }}</td>
+                                    <td class="px-4 py-3 text-sm text-right text-green-600">₱{{ number_format($summary['total_net_pay'], 2) }}</td>
                                     <td class="px-4 py-3"></td>
                                 </tr>
                             </tfoot>
                         </table>
+                    </div>
+                    
+                    <div class="mt-4">
+                        {{ $payrolls->links() }}
                     </div>
                 </div>
             </div>

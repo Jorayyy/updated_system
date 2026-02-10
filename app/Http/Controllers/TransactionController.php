@@ -191,8 +191,8 @@ class TransactionController extends Controller
                     ->where('leave_type_id', $validated['leave_type_id'])
                     ->first();
 
-                if ($balance && $balance->balance < $data['days_count']) {
-                    return back()->withInput()->with('error', 'Insufficient leave balance. Available: ' . $balance->balance . ' days');
+                if ($balance && $balance->remaining_days < $data['days_count']) {
+                    return back()->withInput()->with('error', 'Insufficient leave balance. Available: ' . $balance->remaining_days . ' days');
                 }
             }
 
@@ -345,6 +345,15 @@ class TransactionController extends Controller
      */
     public function hrApprove(EmployeeTransaction $transaction)
     {
+        // Hierarchy Check
+        if (!auth()->user()->isSuperAdmin() && auth()->user()->hierarchy_level <= $transaction->user->hierarchy_level) {
+            return back()->with('error', 'Hierarchy Restriction: You cannot approve transactions for users with equal or higher rank.');
+        }
+
+        if (auth()->user()->role !== 'super_admin' && $transaction->transaction_type === 'leave') {
+            return back()->with('error', 'Only SuperAdmin can approve leave requests.');
+        }
+
         if (!$transaction->needsHrApproval()) {
             return back()->with('error', 'This transaction does not need HR approval.');
         }
@@ -363,6 +372,15 @@ class TransactionController extends Controller
      */
     public function adminApprove(EmployeeTransaction $transaction)
     {
+        // Hierarchy Check
+        if (!auth()->user()->isSuperAdmin() && auth()->user()->hierarchy_level <= $transaction->user->hierarchy_level) {
+            return back()->with('error', 'Hierarchy Restriction: You cannot approve transactions for users with equal or higher rank.');
+        }
+
+        if (!auth()->user()->isSuperAdmin() && $transaction->transaction_type === 'leave') {
+            return back()->with('error', 'Only SuperAdmin can approve leave requests.');
+        }
+
         if (!$transaction->needsAdminApproval() && $transaction->status !== 'pending') {
             return back()->with('error', 'This transaction cannot be approved at this stage.');
         }
@@ -384,11 +402,11 @@ class TransactionController extends Controller
             if ($transaction->transaction_type === 'leave' && $transaction->leave_type_id) {
                 $balance = LeaveBalance::where('user_id', $transaction->user_id)
                     ->where('leave_type_id', $transaction->leave_type_id)
+                    ->where('year', date('Y'))
                     ->first();
 
                 if ($balance) {
-                    $balance->used += $transaction->days_count;
-                    $balance->save();
+                    $balance->deductDays($transaction->days_count);
                 }
             }
 
@@ -427,6 +445,11 @@ class TransactionController extends Controller
      */
     public function reject(Request $request, EmployeeTransaction $transaction)
     {
+        // Hierarchy Check
+        if (!auth()->user()->isSuperAdmin() && auth()->user()->hierarchy_level <= $transaction->user->hierarchy_level) {
+            return back()->with('error', 'Hierarchy Restriction: You cannot reject transactions for users with equal or higher rank.');
+        }
+
         $validated = $request->validate([
             'rejection_reason' => 'required|string|max:500',
         ]);

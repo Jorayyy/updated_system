@@ -64,11 +64,11 @@ class AllDtrsApprovedListener implements ShouldQueue
                 'model_type' => 'PayrollPeriod',
                 'model_id' => $payrollPeriod->id,
                 'old_values' => null,
-                'new_values' => json_encode([
+                'new_values' => [
                     'status' => 'ready_for_payroll',
                     'all_dtrs_approved' => true,
                     'approved_at' => now()->toISOString(),
-                ]),
+                ],
                 'ip_address' => 'system',
                 'user_agent' => 'Event Listener',
             ]);

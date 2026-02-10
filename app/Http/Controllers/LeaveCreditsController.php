@@ -11,6 +11,11 @@ use Illuminate\Support\Facades\DB;
 
 class LeaveCreditsController extends Controller
 {
+    public function __construct()
+    {
+        $this->middleware(['auth', 'role:super_admin']);
+    }
+
     /**
      * Display leave credits management page
      */

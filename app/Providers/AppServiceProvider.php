@@ -19,6 +19,15 @@ class AppServiceProvider extends ServiceProvider
      */
     public function boot(): void
     {
-        //
+        // Share pending leave count with all views (for sidebar badge)
+        \Illuminate\Support\Facades\View::composer('layouts.app', function ($view) {
+            if (auth()->check()) {
+                $pendingLeaves = \App\Models\LeaveRequest::where('status', 'pending')->count();
+                $pendingTransactions = \App\Models\EmployeeTransaction::where('transaction_type', 'leave')
+                    ->whereIn('status', ['pending', 'hr_approved'])
+                    ->count();
+                $view->with('pendingLeaveCount', $pendingLeaves + $pendingTransactions);
+            }
+        });
     }
 }

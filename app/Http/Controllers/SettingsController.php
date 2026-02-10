@@ -4,6 +4,7 @@ namespace App\Http\Controllers;
 
 use App\Models\CompanySetting;
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\Storage;
 
 class SettingsController extends Controller
 {
@@ -62,7 +63,13 @@ class SettingsController extends Controller
             'company_sss' => 'nullable|string|max:50',
             'company_philhealth' => 'nullable|string|max:50',
             'company_pagibig' => 'nullable|string|max:50',
+            'company_logo' => 'nullable|image|mimes:jpeg,png,jpg,gif,svg|max:2048',
         ]);
+
+        if ($request->hasFile('company_logo')) {
+            $path = $request->file('company_logo')->store('company', 'public');
+            CompanySetting::setValue('company_logo', $path, 'string', 'company');
+        }
 
         foreach ($request->only([
             'company_name', 'company_address', 'company_phone', 'company_email', 'company_website',

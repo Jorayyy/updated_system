@@ -29,6 +29,13 @@ class PayrollService
         // Calculate earnings
         $earnings = $this->calculateEarnings($user, $metrics, $period);
 
+        // If no work days, zero out basic pay and allowances (No work no pay)
+        if ($metrics['work_days'] <= 0) {
+            $earnings['basic_pay'] = 0;
+            $earnings['allowances'] = 0;
+            $earnings['holiday_pay'] = 0;
+        }
+
         // Calculate deductions
         $deductions = $this->calculateDeductions($user, $metrics, $earnings);
 
@@ -233,6 +240,20 @@ class PayrollService
 
         // Pag-IBIG Contribution
         $pagibig = $this->calculatePagIBIG($monthlyGross);
+
+        // Zero out mandatory contributions and taxes if no pay
+        if ($earnings['basic_pay'] <= 0 && $earnings['overtime_pay'] <= 0) {
+            return [
+                'sss' => 0,
+                'philhealth' => 0,
+                'pagibig' => 0,
+                'tax' => 0,
+                'late' => 0,
+                'undertime' => 0,
+                'absent' => 0,
+                'other' => 0,
+            ];
+        }
 
         // Withholding Tax (simplified BIR tax table)
         $taxableIncome = $monthlyGross - $sss - $philhealth - $pagibig;

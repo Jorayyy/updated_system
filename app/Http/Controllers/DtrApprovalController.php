@@ -147,8 +147,8 @@ class DtrApprovalController extends Controller
             'action' => 'dtr_updated',
             'model_type' => 'DailyTimeRecord',
             'model_id' => $dailyTimeRecord->id,
-            'old_values' => json_encode($oldValues),
-            'new_values' => json_encode($validated),
+            'old_values' => $oldValues,
+            'new_values' => $validated,
             'ip_address' => $request->ip(),
             'user_agent' => $request->userAgent(),
         ]);

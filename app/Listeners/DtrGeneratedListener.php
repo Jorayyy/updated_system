@@ -63,14 +63,14 @@ class DtrGeneratedListener implements ShouldQueue
                 'model_type' => 'DailyTimeRecord',
                 'model_id' => $dtr->id,
                 'old_values' => null,
-                'new_values' => json_encode([
+                'new_values' => [
                     'dtr_date' => $dtr->dtr_date,
                     'status' => $dtr->status,
                     'late_minutes' => $dtr->late_minutes,
                     'undertime_minutes' => $dtr->undertime_minutes,
                     'overtime_minutes' => $dtr->overtime_minutes,
                     'total_hours_worked' => $dtr->total_hours_worked,
-                ]),
+                ],
                 'ip_address' => request()->ip() ?? 'scheduler',
                 'user_agent' => request()->userAgent() ?? 'Laravel Scheduler',
             ]);

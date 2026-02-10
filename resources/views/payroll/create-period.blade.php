@@ -5,20 +5,68 @@
         </h2>
     </x-slot>
 
-    <div class="py-4">
-        <div class="max-w-2xl mx-auto sm:px-6 lg:px-8">
-            <div class="bg-white overflow-hidden shadow-sm sm:rounded-lg">
-                <div class="p-6">
+    <div class="py-6">
+        <div class="max-w-4xl mx-auto sm:px-6 lg:px-8">
+            <!-- Progress Steps -->
+            <div class="mb-8">
+                <div class="flex items-center justify-between relative">
+                    <div class="flex-1 text-center relative">
+                        <div class="w-10 h-10 bg-indigo-600 text-white rounded-full flex items-center justify-center mx-auto mb-2 font-bold shadow-lg ring-4 ring-indigo-100 relative z-10">1</div>
+                        <span class="text-xs font-bold text-indigo-700 uppercase tracking-wider">Define Period</span>
+                    </div>
+                    <div class="w-[80%] absolute top-5 left-[10%] -z-10 h-0.5 bg-gray-200"></div>
+                    <div class="flex-1 text-center relative">
+                        <div class="w-10 h-10 bg-white border-2 border-gray-300 text-gray-500 rounded-full flex items-center justify-center mx-auto mb-2 font-bold relative z-10">2</div>
+                        <span class="text-xs font-semibold text-gray-500 uppercase tracking-wider">Process DTR</span>
+                    </div>
+                    <div class="flex-1 text-center relative">
+                        <div class="w-10 h-10 bg-white border-2 border-gray-300 text-gray-500 rounded-full flex items-center justify-center mx-auto mb-2 font-bold relative z-10">3</div>
+                        <span class="text-xs font-semibold text-gray-500 uppercase tracking-wider">Review & Post</span>
+                    </div>
+                </div>
+            </div>
+
+            <div class="bg-white overflow-hidden shadow-xl sm:rounded-xl border border-gray-100">
+                <div class="p-8">
+                    <div class="mb-8 border-b pb-6">
+                        <h3 class="text-lg font-bold text-gray-900">Step 1: Set Payroll Range</h3>
+                        <p class="text-sm text-gray-600 mt-1">Define the date range and payroll type. The system will automatically suggest end dates and pay dates based on your selection.</p>
+                    </div>
+
                     <form method="POST" action="{{ route('payroll.store-period') }}">
                         @csrf
 
                         <div class="space-y-6">
-                            <!-- Period Name -->
+                            <!-- Cover Year and Month -->
+                            <div class="grid grid-cols-2 gap-4">
+                                <div>
+                                    <x-input-label for="cover_year" :value="__('Cover Year')" />
+                                    <select name="cover_year" id="cover_year" required
+                                        class="mt-1 block w-full border-gray-300 rounded-md shadow-sm focus:border-indigo-500 focus:ring-indigo-500">
+                                        @for($y = date('Y') - 1; $y <= date('Y') + 1; $y++)
+                                            <option value="{{ $y }}" {{ old('cover_year', date('Y')) == $y ? 'selected' : '' }}>{{ $y }}</option>
+                                        @endfor
+                                    </select>
+                                    <x-input-error :messages="$errors->get('cover_year')" class="mt-2" />
+                                </div>
+                                <div>
+                                    <x-input-label for="cover_month" :value="__('Cover Month')" />
+                                    <select name="cover_month" id="cover_month" required
+                                        class="mt-1 block w-full border-gray-300 rounded-md shadow-sm focus:border-indigo-500 focus:ring-indigo-500">
+                                        @foreach(['January', 'February', 'March', 'April', 'May', 'June', 'July', 'August', 'September', 'October', 'November', 'December'] as $month)
+                                            <option value="{{ $month }}" {{ old('cover_month', date('F')) == $month ? 'selected' : '' }}>{{ $month }}</option>
+                                        @endforeach
+                                    </select>
+                                    <x-input-error :messages="$errors->get('cover_month')" class="mt-2" />
+                                </div>
+                            </div>
+                            
+                            <!-- Cut-Off Label -->
                             <div>
-                                <x-input-label for="name" :value="__('Period Name')" />
-                                <x-text-input id="name" name="name" type="text" class="mt-1 block w-full" 
-                                    :value="old('name')" required placeholder="e.g., January 1-15, 2024" />
-                                <x-input-error :messages="$errors->get('name')" class="mt-2" />
+                                <x-input-label for="cut_off_label" :value="__('Cut-Off Label')" />
+                                <x-text-input id="cut_off_label" name="cut_off_label" type="text" class="mt-1 block w-full" 
+                                    :value="old('cut_off_label')" placeholder="e.g. 1st Cut-off, 2nd Cut-off, Month Long" />
+                                <x-input-error :messages="$errors->get('cut_off_label')" class="mt-2" />
                             </div>
 
                             <!-- Period Type -->
@@ -33,6 +81,41 @@
                                 </select>
                                 <x-input-error :messages="$errors->get('type')" class="mt-2" />
                             </div>
+
+                            <!-- Payroll Group -->
+                            <div>
+                                <x-input-label for="payroll_group_id" :value="__('Payroll Group (Optional)')" />
+                                <div class="text-xs text-gray-500 mb-1">Select a group to limit this period to specific employees. Leave empty for global payroll.</div>
+                                <select name="payroll_group_id" id="payroll_group_id"
+                                    class="mt-1 block w-full border-gray-300 rounded-md shadow-sm focus:border-indigo-500 focus:ring-indigo-500">
+                                    <option value="">-- Global / All Unassigned --</option>
+                                    @foreach($groups as $group)
+                                        <option value="{{ $group->id }}" {{ old('payroll_group_id') == $group->id ? 'selected' : '' }} 
+                                            data-type="{{ $group->period_type }}">
+                                            {{ $group->name }} ({{ ucfirst($group->period_type) }})
+                                        </option>
+                                    @endforeach
+                                </select>
+                                <x-input-error :messages="$errors->get('payroll_group_id')" class="mt-2" />
+                            </div>
+
+                            <script>
+                                document.getElementById('payroll_group_id').addEventListener('change', function() {
+                                    var selectedOption = this.options[this.selectedIndex];
+                                    var type = selectedOption.getAttribute('data-type');
+                                    var typeSelect = document.getElementById('type');
+                                    
+                                    if (type) {
+                                        // Attempt to match group type to payroll type
+                                        for (var i = 0; i < typeSelect.options.length; i++) {
+                                            if (typeSelect.options[i].value === type) {
+                                                typeSelect.selectedIndex = i;
+                                                break;
+                                            }
+                                        }
+                                    }
+                                });
+                            </script>
 
                             <!-- Date Range -->
                             <div class="grid grid-cols-2 gap-4">
@@ -58,7 +141,7 @@
                                 <x-text-input type="date" name="pay_date" id="pay_date" 
                                     class="mt-1 block w-full"
                                     :value="old('pay_date')" required />
-                                <p class="text-xs text-gray-500 mt-1">The date when employees will receive their salary</p>
+                                <p class="text-xs text-gray-500 mt-1">The date employees get paid (Optimized for <span class="text-blue-600 font-bold">Every Friday</span> for weekly payroll)</p>
                                 <x-input-error :messages="$errors->get('pay_date')" class="mt-2" />
                             </div>
 
@@ -72,14 +155,20 @@
                             </div>
 
                             <!-- Info Box -->
-                            <div class="p-4 bg-blue-50 rounded-lg">
-                                <h4 class="text-sm font-medium text-blue-800 mb-2">What happens next?</h4>
-                                <ul class="text-sm text-blue-700 space-y-1">
-                                    <li>• The payroll period will be created in "Draft" status</li>
-                                    <li>• You can review and adjust individual payroll records</li>
-                                    <li>• Click "Process" to calculate all employee payrolls</li>
-                                    <li>• Once completed, payslips will be available for employees</li>
-                                </ul>
+                            <div class="p-5 bg-gradient-to-r from-blue-50 to-indigo-50 rounded-xl border border-blue-100 flex gap-4">
+                                <div class="bg-blue-100 p-2 rounded-lg h-fit text-blue-600">
+                                    <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
+                                    </svg>
+                                </div>
+                                <div class="space-y-2">
+                                    <h4 class="text-sm font-bold text-blue-900 uppercase tracking-tight">System Workflow Guide</h4>
+                                    <ul class="text-sm text-blue-800 space-y-1.5 list-disc list-inside">
+                                        <li><span class="font-semibold">Creation:</span> Period starts as a <span class="px-2 py-0.5 bg-blue-100 rounded text-xs">Draft</span>.</li>
+                                        <li><span class="font-semibold">Calculation:</span> Use the <span class="font-bold">Process</span> button on the next screen to scan all DTRs.</li>
+                                        <li><span class="font-semibold">Release:</span> Once approved, employees can view their payslips in their Profile.</li>
+                                    </ul>
+                                </div>
                             </div>
 
                             <!-- Submit -->
@@ -105,7 +194,6 @@
             const startDate = document.getElementById('start_date');
             const endDate = document.getElementById('end_date');
             const payDate = document.getElementById('pay_date');
-            const nameInput = document.getElementById('name');
 
             function updateDates() {
                 if (!startDate.value) return;
@@ -132,24 +220,26 @@
                     case 'weekly':
                         end = new Date(start);
                         end.setDate(end.getDate() + 6);
+                        
+                        // Default pay date to the next Friday after the end date
                         pay = new Date(end);
-                        pay.setDate(pay.getDate() + 3);
+                        let dayToFriday = (5 - pay.getDay() + 7) % 7;
+                        if (dayToFriday === 0) dayToFriday = 7; // If end is Friday, next Friday
+                        pay.setDate(pay.getDate() + dayToFriday);
                         break;
                     case 'bi-weekly':
                         end = new Date(start);
                         end.setDate(end.getDate() + 13);
+                        // Default pay date to the next Friday
                         pay = new Date(end);
-                        pay.setDate(pay.getDate() + 5);
+                        let dayToFridayBi = (5 - pay.getDay() + 7) % 7;
+                        if (dayToFridayBi === 0) dayToFridayBi = 7;
+                        pay.setDate(pay.getDate() + dayToFridayBi);
                         break;
                 }
 
                 endDate.value = end.toISOString().split('T')[0];
                 payDate.value = pay.toISOString().split('T')[0];
-
-                // Auto-generate name
-                const months = ['January', 'February', 'March', 'April', 'May', 'June', 
-                               'July', 'August', 'September', 'October', 'November', 'December'];
-                nameInput.value = `${months[start.getMonth()]} ${start.getDate()}-${end.getDate()}, ${start.getFullYear()}`;
             }
 
             typeSelect.addEventListener('change', updateDates);

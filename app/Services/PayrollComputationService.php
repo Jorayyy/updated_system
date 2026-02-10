@@ -57,36 +57,49 @@ class PayrollComputationService
     /**
      * Compute payroll for a single employee using DTR data
      */
-    public function computeFromDtr(User $user, PayrollPeriod $period): array
+    public function computeFromDtr(User $user, PayrollPeriod $period, ?Collection $dtrs = null, ?Collection $loans = null, ?Collection $transactions = null): array
     {
         try {
             DB::beginTransaction();
 
-            // Get approved DTRs for the period
-            $dtrs = DailyTimeRecord::where('user_id', $user->id)
-                ->where('payroll_period_id', $period->id)
-                ->where('status', 'approved')
-                ->orderBy('date')
-                ->get();
-
-            if ($dtrs->isEmpty()) {
-                return [
-                    'success' => false,
-                    'message' => 'No approved DTRs found for this period',
-                ];
+            // Get approved DTRs for the period if not provided
+            if ($dtrs === null) {
+                $dtrs = DailyTimeRecord::where('user_id', $user->id)
+                    ->where('payroll_period_id', $period->id)
+                    ->where('status', 'approved')
+                    ->orderBy('date')
+                    ->get();
             }
 
-            // Calculate metrics from DTRs
+            // Calculate metrics from DTRs (even if empty, will return 0s)
             $metrics = $this->calculateDtrMetrics($dtrs);
 
             // Get pay rates
             $rates = $this->getPayRates($user, $period);
 
             // Calculate earnings
-            $earnings = $this->calculateEarnings($user, $metrics, $rates, $period);
+            $earnings = $this->calculateEarnings($user, $metrics, $rates, $period, $transactions);
+
+            // Apply "No Work, No Pay" rule
+            if ($metrics['work_days'] <= 0 && $metrics['overtime_minutes'] <= 0 && $metrics['holiday_days'] <= 0) {
+                $earnings['basic_pay'] = 0;
+                $earnings['allowances'] = 0;
+                $earnings['bonuses'] = 0;
+                $earnings['holiday_pay'] = 0;
+                $earnings['night_diff_pay'] = 0;
+                $earnings['rest_day_pay'] = 0;
+            }
 
             // Calculate deductions
-            $deductions = $this->calculateDeductions($user, $metrics, $rates, $earnings, $period);
+            $deductions = $this->calculateDeductions($user, $metrics, $rates, $earnings, $period, $loans, $transactions);
+
+            // If earnings are zero, zero out mandatory government deductions for this period
+            if ($earnings['basic_pay'] <= 0 && $earnings['overtime_pay'] <= 0) {
+                $deductions['sss'] = 0;
+                $deductions['philhealth'] = 0;
+                $deductions['pagibig'] = 0;
+                $deductions['tax'] = 0;
+            }
 
             // Calculate totals
             $grossPay = $earnings['basic_pay'] + 
@@ -178,11 +191,11 @@ class PayrollComputationService
                 'model_type' => 'Payroll',
                 'model_id' => $payroll->id,
                 'old_values' => null,
-                'new_values' => json_encode([
+                'new_values' => [
                     'gross_pay' => $grossPay,
                     'net_pay' => $netPay,
                     'source' => 'dtr',
-                ]),
+                ],
                 'ip_address' => request()->ip() ?? 'system',
                 'user_agent' => request()->userAgent() ?? 'System',
             ]);
@@ -238,35 +251,78 @@ class PayrollComputationService
             'failed' => 0,
             'skipped' => 0,
             'errors' => [],
+            'success' => [], // Added to match controller expectations
         ];
 
         // Get employees
         $query = User::where('is_active', true)
             ->whereIn('role', ['employee', 'hr']);
+            
+        // Filter by Payroll Group if defined
+        if ($period->payroll_group_id) {
+            $query->where('payroll_group_id', $period->payroll_group_id);
+        } else {
+            // If period is global (no specific group), only process users who are NOT assigned to any group
+            // OR process everyone if no groups exist? 
+            // Better to stick to "No Group ID" -> "Users with No Group ID" for consistency.
+            $query->whereNull('payroll_group_id');
+        }
 
         if ($userIds) {
             $query->whereIn('id', $userIds);
         }
 
         $employees = $query->get();
+        $employeeIds = $employees->pluck('id');
+
+        // Optimized: Batch fetch all necessary data once
+        $pendingDtrCounts = DailyTimeRecord::where('payroll_period_id', $period->id)
+            ->whereIn('user_id', $employeeIds)
+            ->whereIn('status', ['draft', 'pending', 'correction_pending'])
+            ->select('user_id', DB::raw('count(*) as count'))
+            ->groupBy('user_id')
+            ->pluck('count', 'user_id');
+
+        $allApprovedDtrs = DailyTimeRecord::where('payroll_period_id', $period->id)
+            ->whereIn('user_id', $employeeIds)
+            ->where('status', 'approved')
+            ->orderBy('date')
+            ->get()
+            ->groupBy('user_id');
+
+        $allLoans = \App\Models\Loan::whereIn('user_id', $employeeIds)
+            ->where('status', 'approved')
+            ->where('remaining_balance', '>', 0)
+            ->get()
+            ->groupBy('user_id');
+
+        $allTransactions = \App\Models\EmployeeTransaction::whereIn('user_id', $employeeIds)
+            ->where('status', 'approved')
+            ->whereBetween('effective_date', [$period->start_date, $period->end_date])
+            ->get()
+            ->groupBy('user_id');
 
         foreach ($employees as $employee) {
-            // Check if all DTRs are approved
-            $pendingDtrs = DailyTimeRecord::where('user_id', $employee->id)
-                ->where('payroll_period_id', $period->id)
-                ->whereIn('status', ['draft', 'pending', 'correction_pending'])
-                ->count();
+            $pendingCount = $pendingDtrCounts[$employee->id] ?? 0;
 
-            if ($pendingDtrs > 0) {
+            if ($pendingCount > 0) {
                 $results['skipped']++;
                 $results['errors'][$employee->id] = 'Has pending DTRs';
                 continue;
             }
 
-            $result = $this->computeFromDtr($employee, $period);
+            // Pass pre-fetched data to optimize performance
+            $result = $this->computeFromDtr(
+                $employee, 
+                $period, 
+                $allApprovedDtrs->get($employee->id, new Collection()),
+                $allLoans->get($employee->id, new Collection()),
+                $allTransactions->get($employee->id, new Collection())
+            );
 
             if ($result['success']) {
                 $results['computed']++;
+                $results['success'][] = $employee->id;
             } else {
                 $results['failed']++;
                 $results['errors'][$employee->id] = $result['message'];
@@ -276,7 +332,7 @@ class PayrollComputationService
         // Update period status
         if ($results['computed'] > 0) {
             $period->update([
-                'status' => 'processing',
+                'status' => 'completed',
                 'payroll_computed_at' => now(),
             ]);
         }
@@ -335,7 +391,7 @@ class PayrollComputationService
     /**
      * Calculate earnings breakdown
      */
-    protected function calculateEarnings(User $user, array $metrics, array $rates, PayrollPeriod $period): array
+    protected function calculateEarnings(User $user, array $metrics, array $rates, PayrollPeriod $period, ?Collection $transactions = null): array
     {
         // Basic pay based on period type
         if ($period->period_type === 'monthly') {
@@ -367,8 +423,32 @@ class PayrollComputationService
         $allowances += $user->transportation_allowance ?? 0;
         $allowances += $user->communication_allowance ?? 0;
 
+        // Custom Incentives from Employee Profile
+        // Site Incentive (Daily)
+        if ($user->site_incentive > 0) {
+            $allowances += ($user->site_incentive * $metrics['work_days']);
+        }
+
+        // Attendance Incentive (Daily)
+        if ($user->attendance_incentive > 0) {
+            $allowances += ($user->attendance_incentive * $metrics['work_days']);
+        }
+
+        // COLA (Daily)
+        if ($user->cola > 0) {
+            $allowances += ($user->cola * $metrics['work_days']);
+        }
+
+        // Other Allowance (Flat)
+        $allowances += $user->other_allowance ?? 0;
+
+        // Perfect Attendance Bonus Logic (Flat)
+        if ($metrics['absent_days'] == 0 && $metrics['late_minutes'] == 0 && $metrics['undertime_minutes'] == 0 && $metrics['work_days'] > 0) {
+            $allowances += $user->perfect_attendance_bonus ?? 0;
+        }
+
         // Bonuses (check for any active bonuses)
-        $bonuses = $this->calculateBonuses($user, $period);
+        $bonuses = $this->calculateBonuses($user, $period, $transactions);
 
         return [
             'basic_pay' => $basicPay,
@@ -384,8 +464,13 @@ class PayrollComputationService
     /**
      * Calculate bonuses for the period
      */
-    protected function calculateBonuses(User $user, PayrollPeriod $period): float
+    protected function calculateBonuses(User $user, PayrollPeriod $period, ?Collection $transactions = null): float
     {
+        // Use pre-fetched transactions if provided
+        if ($transactions !== null) {
+            return $transactions->where('type', 'bonus')->sum('amount');
+        }
+
         // Check employee_transactions for bonuses in this period
         $bonuses = \App\Models\EmployeeTransaction::where('user_id', $user->id)
             ->where('type', 'bonus')
@@ -399,7 +484,7 @@ class PayrollComputationService
     /**
      * Calculate deductions breakdown
      */
-    protected function calculateDeductions(User $user, array $metrics, array $rates, array $earnings, PayrollPeriod $period): array
+    protected function calculateDeductions(User $user, array $metrics, array $rates, array $earnings, PayrollPeriod $period, ?Collection $loans = null, ?Collection $transactions = null): array
     {
         // Estimate monthly for government deductions
         $monthlyGross = $period->period_type === 'monthly' 
@@ -462,14 +547,18 @@ class PayrollComputationService
         }
 
         // Loan deductions
-        $loanDeductions = $this->calculateLoanDeductions($user, $period);
+        $loanDeductions = $this->calculateLoanDeductions($user, $period, $loans);
 
         // Other deductions from transactions
-        $otherDeductions = \App\Models\EmployeeTransaction::where('user_id', $user->id)
-            ->where('type', 'deduction')
-            ->where('status', 'approved')
-            ->whereBetween('effective_date', [$period->start_date, $period->end_date])
-            ->sum('amount');
+        if ($transactions !== null) {
+            $otherDeductions = $transactions->where('type', 'deduction')->sum('amount');
+        } else {
+            $otherDeductions = \App\Models\EmployeeTransaction::where('user_id', $user->id)
+                ->where('type', 'deduction')
+                ->where('status', 'approved')
+                ->whereBetween('effective_date', [$period->start_date, $period->end_date])
+                ->sum('amount');
+        }
 
         return [
             'sss' => max(0, $sss),
@@ -488,12 +577,14 @@ class PayrollComputationService
     /**
      * Calculate loan deductions due this period
      */
-    protected function calculateLoanDeductions(User $user, PayrollPeriod $period): float
+    protected function calculateLoanDeductions(User $user, PayrollPeriod $period, ?Collection $loans = null): float
     {
-        $loans = \App\Models\Loan::where('user_id', $user->id)
-            ->where('status', 'approved')
-            ->where('remaining_balance', '>', 0)
-            ->get();
+        if ($loans === null) {
+            $loans = \App\Models\Loan::where('user_id', $user->id)
+                ->where('status', 'approved')
+                ->where('remaining_balance', '>', 0)
+                ->get();
+        }
 
         $totalDeduction = 0;
 
@@ -574,16 +665,26 @@ class PayrollComputationService
     /**
      * Approve payroll
      */
-    public function approvePayroll(Payroll $payroll, int $approvedBy): array
+    public function approvePayroll(Payroll $payroll, int $approvedById): array
     {
         try {
+            $approver = User::findOrFail($approvedById);
+            
+            // Hierarchy Check
+            if (!$approver->isSuperAdmin() && !$approver->canManage($payroll->user)) {
+                return [
+                    'success' => false, 
+                    'message' => 'Hierarchy Restriction: You cannot approve payroll for users with equal or higher rank.'
+                ];
+            }
+
             $payroll->update([
                 'status' => 'approved',
-                'approved_by' => $approvedBy,
+                'approved_by' => $approvedById,
                 'approved_at' => now(),
             ]);
 
-            event(new PayrollApproved($payroll, $approvedBy));
+            event(new PayrollApproved($payroll, $approvedById));
 
             return ['success' => true, 'message' => 'Payroll approved'];
         } catch (\Exception $e) {
@@ -594,16 +695,26 @@ class PayrollComputationService
     /**
      * Release payroll
      */
-    public function releasePayroll(Payroll $payroll, int $releasedBy): array
+    public function releasePayroll(Payroll $payroll, int $releasedById): array
     {
         try {
+            $releaser = User::findOrFail($releasedById);
+            
+            // Hierarchy Check
+            if (!$releaser->isSuperAdmin() && !$releaser->canManage($payroll->user)) {
+                return [
+                    'success' => false, 
+                    'message' => 'Hierarchy Restriction: You cannot release payroll for users with equal or higher rank.'
+                ];
+            }
+
             $payroll->update([
                 'status' => 'released',
-                'released_by' => $releasedBy,
+                'released_by' => $releasedById,
                 'released_at' => now(),
             ]);
 
-            event(new PayrollReleased($payroll, $releasedBy));
+            event(new PayrollReleased($payroll, $releasedById));
 
             // Create notification for employee
             \App\Models\Notification::create([
@@ -644,7 +755,8 @@ class PayrollComputationService
         }
 
         if ($results['failed'] === 0 && $results['approved'] > 0) {
-            $period->update(['status' => 'approved']);
+            // Keep status as processing until released (completed)
+            $period->touch();
         }
 
         return $results;
@@ -702,5 +814,29 @@ class PayrollComputationService
                 'released' => $payrolls->where('status', 'released')->count(),
             ],
         ];
+    }
+
+    /**
+     * Complete payroll period (Compatibility with PayrollService)
+     */
+    public function completePayrollPeriod(PayrollPeriod $period): void
+    {
+        $period->update(['status' => 'completed']);
+        
+        // Mark all payrolls as approved if they aren't already
+        Payroll::where('payroll_period_id', $period->id)
+            ->where('status', 'computed')
+            ->update(['status' => 'approved']);
+
+        // Log action
+        \App\Models\AuditLog::create([
+            'user_id' => auth()->id() ?? null,
+            'action' => 'payroll_period_completed',
+            'model_type' => 'PayrollPeriod',
+            'model_id' => $period->id,
+            'new_values' => ['status' => 'completed'],
+            'ip_address' => request()->ip() ?? 'system',
+            'user_agent' => request()->userAgent() ?? 'System',
+        ]);
     }
 }

@@ -28,6 +28,9 @@
     setInterval(() => fetchUnreadCount(), 30000);
     
     @if(session('info')) addNotification('info', '{{ session('info') }}'); @endif
+    @if(session('success')) addNotification('success', '{{ session('success') }}'); @endif
+    @if(session('error')) addNotification('error', '{{ session('error') }}'); @endif
+    @if(session('status')) addNotification('success', '{{ session('status') }}'); @endif
 ">
     <head>
         <meta charset="utf-8">
@@ -42,6 +45,7 @@
 
         <!-- Scripts -->
         @vite(['resources/css/app.css', 'resources/js/app.js'])
+        <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
         
         <style>
             [x-cloak] { display: none !important; }
@@ -261,12 +265,20 @@
             <aside :class="sidebarOpen ? 'sidebar-expanded sidebar-open' : 'sidebar-collapsed'" class="fixed inset-y-0 left-0 bg-gray-800 text-white sidebar-transition z-30 flex flex-col">
                 <!-- Logo Section with Notification Bell and Toggle -->
                 <div class="h-16 flex items-center justify-between px-4 border-b border-gray-700">
-                    <div class="flex items-center gap-3">
-                        <a href="{{ route('dashboard') }}" class="flex items-center gap-3">
-                            <div class="w-10 h-10 bg-gradient-to-br from-blue-500 to-purple-600 rounded-lg flex items-center justify-center font-bold text-lg flex-shrink-0">
-                                M
-                            </div>
-                            <span x-show="sidebarOpen" x-cloak class="font-bold text-lg sidebar-text" :class="sidebarOpen ? 'sidebar-text-visible' : 'sidebar-text-hidden'">MEBS HIYAS</span>
+                    <div class="flex items-center gap-3 overflow-hidden">
+                        <a x-show="sidebarOpen" x-cloak x-transition:enter="transition ease-out duration-300" x-transition:enter-start="opacity-0 -translate-x-4" x-transition:enter-end="opacity-100 translate-x-0" href="{{ route('dashboard') }}" class="flex items-center gap-3">
+                            @php
+                                $logo = \App\Models\CompanySetting::getValue('company_logo');
+                                $companyName = \App\Models\CompanySetting::getValue('company_name', 'MEBS HIYAS');
+                            @endphp
+                            @if($logo)
+                                <img src="{{ asset('storage/' . $logo) }}" alt="Logo" class="w-12 h-12 object-contain rounded-xl flex-shrink-0 bg-white p-1 shadow-sm border border-gray-700/50">
+                            @else
+                                <div class="w-12 h-12 bg-gradient-to-br from-blue-500 to-purple-600 rounded-xl flex items-center justify-center font-bold text-xl flex-shrink-0 shadow-lg">
+                                    {{ substr($companyName, 0, 1) }}
+                                </div>
+                            @endif
+                            <span class="font-bold text-lg sidebar-text sidebar-text-visible truncate">{{ $companyName }}</span>
                         </a>
                     </div>
                     <div class="flex items-center gap-2">
@@ -282,107 +294,10 @@
 
                 <!-- Navigation Links -->
                 <nav id="sidebar-nav" class="flex-1 px-3 py-4 space-y-1 overflow-y-auto">
-                    <!-- Notifications -->
-                    <div class="relative nav-item">
-                        <a href="{{ route('notifications.index') }}" class="flex items-center gap-3 px-3 py-2.5 rounded-lg transition {{ request()->routeIs('notifications.*') ? 'bg-blue-600 text-white' : 'text-gray-300 hover:bg-gray-700 hover:text-white' }}">
-                            <div class="w-8 h-8 flex items-center justify-center flex-shrink-0 relative">
-                                <svg class="w-5 h-5 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 17h5l-1.405-1.405A2.032 2.032 0 0118 14.158V11a6.002 6.002 0 00-4-5.659V5a2 2 0 10-4 0v.341C7.67 6.165 6 8.388 6 11v3.159c0 .538-.214 1.055-.595 1.436L4 17h5m6 0v1a3 3 0 11-6 0v-1m6 0H9"/>
-                                </svg>
-                                <template x-if="unreadCount > 0">
-                                    <span class="absolute top-0 right-0 flex h-4 w-4 items-center justify-center rounded-full bg-red-500 text-[10px] font-bold text-white shadow-sm">
-                                        <span x-text="unreadCount > 99 ? '99+' : unreadCount"></span>
-                                    </span>
-                                </template>
-                            </div>
-                            <span x-show="sidebarOpen" x-cloak class="sidebar-text" :class="sidebarOpen ? 'sidebar-text-visible' : 'sidebar-text-hidden'">Notifications</span>
-                        </a>
-                        <div x-show="!sidebarOpen" class="tooltip">Notifications</div>
-                    </div>
-
-                    <!-- Dashboard -->
-                    <div class="relative nav-item">
-                        <a href="{{ route('dashboard') }}" class="flex items-center gap-3 px-3 py-2.5 rounded-lg transition {{ request()->routeIs('dashboard') ? 'bg-blue-600 text-white' : 'text-gray-300 hover:bg-gray-700 hover:text-white' }}">
-                            <div class="w-8 h-8 flex items-center justify-center flex-shrink-0">
-                                <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 12l2-2m0 0l7-7 7 7M5 10v10a1 1 0 001 1h3m10-11l2 2m-2-2v10a1 1 0 01-1 1h-3m-6 0a1 1 0 001-1v-4a1 1 0 011-1h2a1 1 0 011 1v4a1 1 0 001 1m-6 0h6"/>
-                                </svg>
-                            </div>
-                            <span x-show="sidebarOpen" x-cloak class="sidebar-text" :class="sidebarOpen ? 'sidebar-text-visible' : 'sidebar-text-hidden'">Dashboard</span>
-                        </a>
-                        <div x-show="!sidebarOpen" class="tooltip">Dashboard</div>
-                    </div>
-
-                    <!-- Attendance -->
-                    <div class="relative nav-item">
-                        <a href="{{ route('attendance.index') }}" class="flex items-center gap-3 px-3 py-2.5 rounded-lg transition {{ request()->routeIs('attendance.index', 'attendance.history') ? 'bg-blue-600 text-white' : 'text-gray-300 hover:bg-gray-700 hover:text-white' }}">
-                            <div class="w-8 h-8 flex items-center justify-center flex-shrink-0">
-                                <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z"/>
-                                </svg>
-                            </div>
-                            <span x-show="sidebarOpen" x-cloak class="sidebar-text" :class="sidebarOpen ? 'sidebar-text-visible' : 'sidebar-text-hidden'">Attendance</span>
-                        </a>
-                        <div x-show="!sidebarOpen" class="tooltip">Attendance</div>
-                    </div>
-
-                    <!-- My DTR -->
-                    <div class="relative nav-item">
-                        <a href="{{ route('dtr.index') }}" class="flex items-center gap-3 px-3 py-2.5 rounded-lg transition {{ request()->routeIs('dtr.index') ? 'bg-blue-600 text-white' : 'text-gray-300 hover:bg-gray-700 hover:text-white' }}">
-                            <div class="w-8 h-8 flex items-center justify-center flex-shrink-0">
-                                <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2m-3 7h3m-3 4h3m-6-4h.01M9 16h.01"/>
-                                </svg>
-                            </div>
-                            <span x-show="sidebarOpen" x-cloak class="sidebar-text" :class="sidebarOpen ? 'sidebar-text-visible' : 'sidebar-text-hidden'">My DTR</span>
-                        </a>
-                        <div x-show="!sidebarOpen" class="tooltip">My DTR</div>
-                    </div>
-
-                    <!-- Payslips -->
-                    <div class="relative nav-item">
-                        <a href="{{ route('payroll.my-payslips') }}" class="flex items-center gap-3 px-3 py-2.5 rounded-lg transition {{ request()->routeIs('payroll.my-payslips', 'payroll.my-payslip') ? 'bg-blue-600 text-white' : 'text-gray-300 hover:bg-gray-700 hover:text-white' }}">
-                            <div class="w-8 h-8 flex items-center justify-center flex-shrink-0">
-                                <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 9V7a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2m2 4h10a2 2 0 002-2v-6a2 2 0 00-2-2H9a2 2 0 00-2 2v6a2 2 0 002 2zm7-5a2 2 0 11-4 0 2 2 0 014 0z"/>
-                                </svg>
-                            </div>
-                            <span x-show="sidebarOpen" x-cloak class="sidebar-text" :class="sidebarOpen ? 'sidebar-text-visible' : 'sidebar-text-hidden'">Payslips</span>
-                        </a>
-                        <div x-show="!sidebarOpen" class="tooltip">Payslips</div>
-                    </div>
-
-                    <!-- Transactions -->
-                    <div class="relative nav-item">
-                        <a href="{{ route('transactions.index') }}" class="flex items-center gap-3 px-3 py-2.5 rounded-lg transition {{ request()->routeIs('transactions.*') ? 'bg-blue-600 text-white' : 'text-gray-300 hover:bg-gray-700 hover:text-white' }}">
-                            <div class="w-8 h-8 flex items-center justify-center flex-shrink-0">
-                                <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2m-6 9l2 2 4-4"/>
-                                </svg>
-                            </div>
-                            <span x-show="sidebarOpen" x-cloak class="sidebar-text" :class="sidebarOpen ? 'sidebar-text-visible' : 'sidebar-text-hidden'">Transactions</span>
-                        </a>
-                        <div x-show="!sidebarOpen" class="tooltip">Transactions</div>
-                    </div>
-
-                    <!-- My Concerns -->
-                    <div class="relative nav-item">
-                        <a href="{{ route('concerns.my') }}" class="flex items-center gap-3 px-3 py-2.5 rounded-lg transition {{ request()->routeIs('concerns.my', 'concerns.user-create', 'concerns.user-show') ? 'bg-blue-600 text-white' : 'text-gray-300 hover:bg-gray-700 hover:text-white' }}">
-                            <div class="w-8 h-8 flex items-center justify-center flex-shrink-0">
-                                <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M18.364 5.636l-3.536 3.536m0 5.656l3.536 3.536M9.172 9.172L5.636 5.636m3.536 9.192l-3.536 3.536M21 12a9 9 0 11-18 0 9 9 0 0118 0zm-5 0a4 4 0 11-8 0 4 4 0 018 0z"/>
-                                </svg>
-                            </div>
-                            <span x-show="sidebarOpen" x-cloak class="sidebar-text" :class="sidebarOpen ? 'sidebar-text-visible' : 'sidebar-text-hidden'">My Concerns</span>
-                        </a>
-                        <div x-show="!sidebarOpen" class="tooltip">My Concerns</div>
-                    </div>
-
                     @if(auth()->user()->isAdmin() || auth()->user()->isHr())
                         <!-- HR Management Section -->
                         <div class="pt-4 mt-4 border-t border-gray-700">
                             <p x-show="sidebarOpen" x-cloak class="px-3 text-xs font-semibold text-gray-400 uppercase tracking-wider mb-2 sidebar-text" :class="sidebarOpen ? 'sidebar-text-visible' : 'sidebar-text-hidden'">HR Management</p>
-                            <p x-show="!sidebarOpen" x-cloak class="px-3 text-center mb-2">👥</p>
                         </div>
 
                         <!-- Sites -->
@@ -396,19 +311,6 @@
                                 <span x-show="sidebarOpen" x-cloak class="sidebar-text" :class="sidebarOpen ? 'sidebar-text-visible' : 'sidebar-text-hidden'">Sites</span>
                             </a>
                             <div x-show="!sidebarOpen" class="tooltip">Sites</div>
-                        </div>
-
-                        <!-- User Roles -->
-                        <div class="relative nav-item">
-                            <a href="{{ route('accounts.index') }}" class="flex items-center gap-3 px-3 py-2.5 rounded-lg transition {{ request()->routeIs('accounts.*') ? 'bg-blue-600 text-white' : 'text-gray-300 hover:bg-gray-700 hover:text-white' }}">
-                                <div class="w-8 h-8 flex items-center justify-center flex-shrink-0">
-                                    <svg class="w-5 h-5 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4.354a4 4 0 110 5.292M15 21H3v-1a6 6 0 0112 0v1zm0 0h6v-1a6 6 0 00-9-5.197M13 7a4 4 0 11-8 0 4 4 0 018 0z" />
-                                    </svg>
-                                </div>
-                                <span x-show="sidebarOpen" x-cloak class="sidebar-text" :class="sidebarOpen ? 'sidebar-text-visible' : 'sidebar-text-hidden'">User Roles</span>
-                            </a>
-                            <div x-show="!sidebarOpen" class="tooltip">User Roles</div>
                         </div>
 
                         <!-- Schedules -->
@@ -479,10 +381,15 @@
                         <!-- Leave Requests -->
                         <div class="relative nav-item">
                             <a href="{{ route('leaves.manage') }}" class="flex items-center gap-3 px-3 py-2.5 rounded-lg transition {{ request()->routeIs('leaves.manage') ? 'bg-blue-600 text-white' : 'text-gray-300 hover:bg-gray-700 hover:text-white' }}">
-                                <div class="w-8 h-8 flex items-center justify-center flex-shrink-0">
+                                <div class="w-8 h-8 flex items-center justify-center flex-shrink-0 relative">
                                     <svg class="w-5 h-5 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                                         <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"/>
                                     </svg>
+                                    @if(isset($pendingLeaveCount) && $pendingLeaveCount > 0)
+                                        <span class="absolute -top-1 -right-1 flex h-4 w-4 items-center justify-center rounded-full bg-red-500 text-[10px] font-bold text-white shadow-sm ring-1 ring-white">
+                                            {{ $pendingLeaveCount > 99 ? '99+' : $pendingLeaveCount }}
+                                        </span>
+                                    @endif
                                 </div>
                                 <span x-show="sidebarOpen" x-cloak class="sidebar-text" :class="sidebarOpen ? 'sidebar-text-visible' : 'sidebar-text-hidden'">Leave Requests</span>
                             </a>
@@ -501,6 +408,7 @@
                         </div>
 
                         <!-- Leave Credits -->
+                        @if(Auth::user()->role === 'super_admin')
                         <div class="relative nav-item">
                             <a href="{{ route('leave-credits.index') }}" class="flex items-center gap-3 px-3 py-2.5 rounded-lg transition {{ request()->routeIs('leave-credits.*') ? 'bg-blue-600 text-white' : 'text-gray-300 hover:bg-gray-700 hover:text-white' }}">
                                 <svg class="w-5 h-5 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -510,40 +418,41 @@
                             </a>
                             <div x-show="!sidebarOpen" class="tooltip">Leave Credits</div>
                         </div>
+                        @endif
 
-                        <!-- Payroll Section -->
+                        <!-- Payroll Module -->
                         <div class="pt-4 mt-4 border-t border-gray-700">
-                            <p x-show="sidebarOpen" x-cloak class="px-3 text-xs font-semibold text-gray-400 uppercase tracking-wider mb-2 sidebar-text" :class="sidebarOpen ? 'sidebar-text-visible' : 'sidebar-text-hidden'">Payroll</p>
-                            <p x-show="!sidebarOpen" x-cloak class="px-3 text-center mb-2">💰</p>
+                            <p x-show="sidebarOpen" x-cloak class="px-3 text-xs font-semibold text-gray-400 uppercase tracking-wider mb-2 sidebar-text" :class="sidebarOpen ? 'sidebar-text-visible' : 'sidebar-text-hidden'">Payroll Management</p>
                         </div>
 
-                        <!-- Payroll Periods -->
-                        <div class="relative nav-item">
-                            <a href="{{ route('payroll.periods') }}" class="flex items-center gap-3 px-3 py-2.5 rounded-lg transition {{ request()->routeIs('payroll.periods', 'payroll.create-period', 'payroll.show-period') ? 'bg-blue-600 text-white' : 'text-gray-300 hover:bg-gray-700 hover:text-white' }}">
-                                <svg class="w-5 h-5 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z"/>
+                        <div class="relative nav-item" x-data="{ open: {{ request()->routeIs('payroll.*') ? 'true' : 'false' }} }">
+                            <button @click="open = !open" type="button" class="w-full flex items-center justify-between gap-3 px-3 py-2.5 rounded-lg transition {{ request()->routeIs('payroll.*') ? 'bg-blue-600 text-white shadow-lg ring-1 ring-blue-400' : 'text-gray-300 hover:bg-gray-700 hover:text-white' }}">
+                                <div class="flex items-center gap-3">
+                                    <div class="w-8 h-8 flex items-center justify-center flex-shrink-0">
+                                        <svg class="w-5 h-5 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8c-1.657 0-3 .895-3 2s1.343 2 3 2 3 .895 3 2-1.343 2-3 2m0-8c1.11 0 2.08.402 2.599 1M12 8V7m0 1v8m0 0v1m0-1c-1.11 0-2.08-.402-2.599-1M21 12a9 9 0 11-18 0 9 9 0 0118 0z"/>
+                                        </svg>
+                                    </div>
+                                    <span x-show="sidebarOpen" x-cloak class="sidebar-text font-medium" :class="sidebarOpen ? 'sidebar-text-visible' : 'sidebar-text-hidden'">Payroll Center</span>
+                                </div>
+                                <svg x-show="sidebarOpen" :class="open ? 'rotate-180' : ''" class="w-4 h-4 transition-transform duration-200" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7"/>
                                 </svg>
-                                <span x-show="sidebarOpen" x-cloak class="sidebar-text" :class="sidebarOpen ? 'sidebar-text-visible' : 'sidebar-text-hidden'">Payroll Periods</span>
-                            </a>
-                            <div x-show="!sidebarOpen" class="tooltip">Payroll Periods</div>
-                        </div>
+                            </button>
+                            <div x-show="!sidebarOpen" class="tooltip">Payroll Center</div>
 
-                        <!-- All Payrolls -->
-                        <div class="relative nav-item">
-                            <a href="{{ route('payroll.index') }}" class="flex items-center gap-3 px-3 py-2.5 rounded-lg transition {{ request()->routeIs('payroll.index', 'payroll.show') ? 'bg-blue-600 text-white' : 'text-gray-300 hover:bg-gray-700 hover:text-white' }}">
-                                <svg class="w-5 h-5 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8c-1.657 0-3 .895-3 2s1.343 2 3 2 3 .895 3 2-1.343 2-3 2m0-8c1.11 0 2.08.402 2.599 1M12 8V7m0 1v8m0 0v1m0-1c-1.11 0-2.08-.402-2.599-1M21 12a9 9 0 11-18 0 9 9 0 0118 0z"/>
-                                </svg>
-                                <span x-show="sidebarOpen" x-cloak class="sidebar-text" :class="sidebarOpen ? 'sidebar-text-visible' : 'sidebar-text-hidden'">All Payrolls</span>
-                            </a>
-                            <div x-show="!sidebarOpen" class="tooltip">All Payrolls</div>
+                            <!-- Submenu (only visible when sidebar is expanded) -->
+                            <div x-show="sidebarOpen && open" x-cloak class="mt-1 ml-11 space-y-1" x-transition:enter="transition ease-out duration-200" x-transition:enter-start="opacity-0 -translate-y-2" x-transition:enter-end="opacity-100 translate-y-0">
+                                <a href="{{ route('payroll.computation.dashboard') }}" class="block px-3 py-2 text-sm rounded-md transition {{ request()->routeIs('payroll.computation.dashboard') ? 'text-white font-bold' : 'text-gray-400 hover:text-white hover:bg-gray-700' }}">Dashboard</a>
+                                <a href="{{ route('payroll.periods') }}" class="block px-3 py-2 text-sm rounded-md transition {{ request()->routeIs('payroll.periods') ? 'text-white font-bold' : 'text-gray-400 hover:text-white hover:bg-gray-700' }}">Pay Periods</a>
+                                <a href="{{ route('payroll.index') }}" class="block px-3 py-2 text-sm rounded-md transition {{ request()->routeIs('payroll.index') ? 'text-white font-bold' : 'text-gray-400 hover:text-white hover:bg-gray-700' }}">History</a>
+                            </div>
                         </div>
 
                         @if(auth()->user()->isSuperAdmin())
                         <!-- Tools & Reports Section -->
                         <div class="pt-4 mt-4 border-t border-gray-700">
                             <p x-show="sidebarOpen" x-cloak class="px-3 text-xs font-semibold text-gray-400 uppercase tracking-wider mb-2 sidebar-text" :class="sidebarOpen ? 'sidebar-text-visible' : 'sidebar-text-hidden'">Tools & Reports</p>
-                            <p x-show="!sidebarOpen" x-cloak class="px-3 text-center mb-2">📈</p>
                         </div>
 
                         <!-- Holidays -->
@@ -593,8 +502,22 @@
                             <!-- Admin Section -->
                             <div class="pt-4 mt-4 border-t border-gray-700">
                                 <p x-show="sidebarOpen" x-cloak class="px-3 text-xs font-semibold text-gray-400 uppercase tracking-wider mb-2 sidebar-text" :class="sidebarOpen ? 'sidebar-text-visible' : 'sidebar-text-hidden'">Administration</p>
-                                <p x-show="!sidebarOpen" x-cloak class="px-3 text-center mb-2">⚙️</p>
                             </div>
+
+                            <!-- User Roles -->
+                            @if(auth()->user()->isSuperAdmin())
+                            <div class="relative nav-item">
+                                <a href="{{ route('accounts.index') }}" class="flex items-center gap-3 px-3 py-2.5 rounded-lg transition {{ request()->routeIs('accounts.*') ? 'bg-blue-600 text-white' : 'text-gray-300 hover:bg-gray-700 hover:text-white' }}">
+                                    <div class="w-8 h-8 flex items-center justify-center flex-shrink-0">
+                                        <svg class="w-5 h-5 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4.354a4 4 0 110 5.292M15 21H3v-1a6 6 0 0112 0v1zm0 0h6v-1a6 6 0 00-9-5.197M13 7a4 4 0 11-8 0 4 4 0 018 0z" />
+                                        </svg>
+                                    </div>
+                                    <span x-show="sidebarOpen" x-cloak class="sidebar-text" :class="sidebarOpen ? 'sidebar-text-visible' : 'sidebar-text-hidden'">User Roles</span>
+                                </a>
+                                <div x-show="!sidebarOpen" class="tooltip">User Roles</div>
+                            </div>
+                            @endif
 
                             <!-- Settings -->
                             <div class="relative nav-item">
@@ -638,7 +561,7 @@
                     <!-- User Info -->
                     <div x-data="{ userMenuOpen: false }" class="relative">
                         <button @click="userMenuOpen = !userMenuOpen" class="w-full flex items-center gap-3 px-3 py-2.5 rounded-lg text-gray-300 hover:bg-gray-700 hover:text-white transition">
-                            <div class="w-8 h-8 bg-gradient-to-br from-green-500 to-teal-600 rounded-full flex items-center justify-center text-sm font-medium flex-shrink-0">
+                            <div class="w-8 h-8 bg-gray-600 rounded-full flex items-center justify-center text-sm font-medium flex-shrink-0 border border-gray-500">
                                 {{ substr(auth()->user()->name, 0, 1) }}
                             </div>
                             <div x-show="sidebarOpen" x-cloak class="flex-1 text-left min-w-0 sidebar-text" :class="sidebarOpen ? 'sidebar-text-visible' : 'sidebar-text-hidden'">
@@ -660,7 +583,88 @@
                              x-transition:leave="transition ease-in duration-75"
                              x-transition:leave-start="transform opacity-100 scale-100"
                              x-transition:leave-end="transform opacity-0 scale-95"
-                             class="absolute bottom-full left-0 right-0 mb-2 bg-gray-700 rounded-lg shadow-lg overflow-hidden">
+                             class="absolute bottom-full left-0 right-0 mb-2 bg-gray-700 rounded-lg shadow-lg overflow-hidden overflow-y-auto max-h-80 custom-scrollbar">
+                            
+                            <!-- Notifications -->
+                            <a href="{{ route('notifications.index') }}" class="block px-4 py-2.5 text-sm text-gray-300 hover:bg-gray-600 hover:text-white transition {{ request()->routeIs('notifications.*') ? 'bg-gray-600 text-white' : '' }}">
+                                <span class="flex items-center justify-between">
+                                    <span class="flex items-center gap-2">
+                                        <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 17h5l-1.405-1.405A2.032 2.032 0 0118 14.158V11a6.002 6.002 0 00-4-5.659V5a2 2 0 10-4 0v.341C7.67 6.165 6 8.388 6 11v3.159c0 .538-.214 1.055-.595 1.436L4 17h5m6 0v1a3 3 0 11-6 0v-1m6 0H9"/>
+                                        </svg>
+                                        Notifications
+                                    </span>
+                                    @php $unreadCount = auth()->user()->unreadNotifications->count(); @endphp
+                                    @if($unreadCount > 0)
+                                        <span class="bg-red-500 text-white text-[10px] font-bold px-1.5 py-0.5 rounded-full">
+                                            {{ $unreadCount > 99 ? '99+' : $unreadCount }}
+                                        </span>
+                                    @endif
+                                </span>
+                            </a>
+
+                            <!-- Dashboard -->
+                            <a href="{{ route('dashboard') }}" class="block px-4 py-2.5 text-sm text-gray-300 hover:bg-gray-600 hover:text-white transition {{ request()->routeIs('dashboard') ? 'bg-gray-600 text-white' : '' }}">
+                                <span class="flex items-center gap-2">
+                                    <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 12l2-2m0 0l7-7 7 7M5 10v10a1 1 0 001 1h3m10-11l2 2m-2-2v10a1 1 0 01-1 1h-3m-6 0a1 1 0 001-1v-4a1 1 0 011-1h2a1 1 0 011 1v4a1 1 0 001 1m-6 0h6"/>
+                                    </svg>
+                                    Dashboard
+                                </span>
+                            </a>
+
+                            <!-- Attendance -->
+                            <a href="{{ route('attendance.index') }}" class="block px-4 py-2.5 text-sm text-gray-300 hover:bg-gray-600 hover:text-white transition {{ request()->routeIs('attendance.index', 'attendance.history') ? 'bg-gray-600 text-white' : '' }}">
+                                <span class="flex items-center gap-2">
+                                    <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z"/>
+                                    </svg>
+                                    Attendance
+                                </span>
+                            </a>
+
+                            <!-- My DTR -->
+                            <a href="{{ route('dtr.index') }}" class="block px-4 py-2.5 text-sm text-gray-300 hover:bg-gray-600 hover:text-white transition {{ request()->routeIs('dtr.index') ? 'bg-gray-600 text-white' : '' }}">
+                                <span class="flex items-center gap-2">
+                                    <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2m-3 7h3m-3 4h3m-6-4h.01M9 16h.01"/>
+                                    </svg>
+                                    My DTR
+                                </span>
+                            </a>
+
+                            <!-- Payslips -->
+                            <a href="{{ route('payroll.my-payslips') }}" class="block px-4 py-2.5 text-sm text-gray-300 hover:bg-gray-600 hover:text-white transition {{ request()->routeIs('payroll.my-payslips', 'payroll.my-payslip') ? 'bg-gray-600 text-white' : '' }}">
+                                <span class="flex items-center gap-2">
+                                    <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 9V7a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2m2 4h10a2 2 0 002-2v-6a2 2 0 00-2-2H9a2 2 0 00-2 2v6a2 2 0 002 2zm7-5a2 2 0 11-4 0 2 2 0 014 0z"/>
+                                    </svg>
+                                    Payslips
+                                </span>
+                            </a>
+
+                            <!-- Transactions -->
+                            <a href="{{ route('transactions.index') }}" class="block px-4 py-2.5 text-sm text-gray-300 hover:bg-gray-600 hover:text-white transition {{ request()->routeIs('transactions.index', 'transactions.history') ? 'bg-gray-600 text-white' : '' }}">
+                                <span class="flex items-center gap-2">
+                                    <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2m-6 9l2 2 4-4"/>
+                                    </svg>
+                                    Transactions
+                                </span>
+                            </a>
+
+                            <!-- My Concerns -->
+                            <a href="{{ route('concerns.my') }}" class="block px-4 py-2.5 text-sm text-gray-300 hover:bg-gray-600 hover:text-white transition {{ request()->routeIs('concerns.my', 'concerns.user-create', 'concerns.user-show') ? 'bg-gray-600 text-white' : '' }}">
+                                <span class="flex items-center gap-2">
+                                    <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M18.364 5.636l-3.536 3.536m0 5.656l3.536 3.536M9.172 9.172L5.636 5.636m3.536 9.192l-3.536 3.536M21 12a9 9 0 11-18 0 9 9 0 0118 0zm-5 0a4 4 0 11-8 0 4 4 0 018 0z"/>
+                                    </svg>
+                                    My Concerns
+                                </span>
+                            </a>
+
+                            <div class="border-t border-gray-600 my-1"></div>
+
                             <a href="{{ route('profile.edit') }}" class="block px-4 py-2.5 text-sm text-gray-300 hover:bg-gray-600 hover:text-white transition">
                                 <span class="flex items-center gap-2">
                                     <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -770,6 +774,11 @@
                         <template x-if="notif.type === 'error'">
                             <svg class="h-6 w-6 text-red-500" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                                 <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v4m0 4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
+                            </svg>
+                        </template>
+                        <template x-if="notif.type === 'info'">
+                            <svg class="h-6 w-6 text-blue-500" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
                             </svg>
                         </template>
                     </div>

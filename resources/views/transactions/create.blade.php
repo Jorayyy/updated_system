@@ -39,7 +39,7 @@
                                             <option value="{{ $leaveType->id }}" {{ old('leave_type_id') == $leaveType->id ? 'selected' : '' }}>
                                                 {{ $leaveType->name }}
                                                 @if(isset($leaveBalances[$leaveType->id]))
-                                                    (Available: {{ $leaveBalances[$leaveType->id]->balance }} days)
+                                                    (Available: {{ $leaveBalances[$leaveType->id]->remaining_days }} days)
                                                 @endif
                                             </option>
                                         @endforeach

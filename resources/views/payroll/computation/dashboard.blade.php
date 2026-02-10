@@ -10,8 +10,48 @@
         </div>
     </x-slot>
 
-    <div class="py-12">
+    <div class="py-6">
         <div class="max-w-7xl mx-auto sm:px-6 lg:px-8">
+            {{-- Unified Filter Bar --}}
+            <div class="bg-white p-4 rounded-xl shadow-sm border border-gray-100 mb-8 flex flex-wrap items-center justify-between gap-4">
+                <div class="flex items-center gap-4 flex-wrap">
+                    <h3 class="text-sm font-bold text-gray-500 uppercase tracking-widest mr-2">Filters:</h3>
+                    
+                    {{-- Site Filter --}}
+                    <div class="w-48">
+                        <select onchange="window.location.href = this.value" class="w-full border-gray-200 rounded-lg text-sm focus:ring-blue-500 focus:border-blue-500">
+                            <option value="{{ route('payroll.computation.dashboard') }}">All Sites</option>
+                            @foreach($sites as $site)
+                                <option value="{{ route('payroll.computation.dashboard', ['site_id' => $site->id]) }}" {{ request('site_id') == $site->id ? 'selected' : '' }}>
+                                    {{ $site->name }}
+                                </option>
+                            @endforeach
+                        </select>
+                    </div>
+
+                    {{-- Account Filter --}}
+                    <div class="w-48">
+                        <select onchange="window.location.href = this.value" class="w-full border-gray-200 rounded-lg text-sm focus:ring-blue-500 focus:border-blue-500">
+                            <option value="{{ route('payroll.computation.dashboard') }}">All Accounts</option>
+                            @foreach($accounts as $account)
+                                <option value="{{ route('payroll.computation.dashboard', ['account_id' => $account->id]) }}" {{ request('account_id') == $account->id ? 'selected' : '' }}>
+                                    {{ $account->name }}
+                                </option>
+                            @endforeach
+                        </select>
+                    </div>
+                </div>
+
+                <div class="flex gap-2">
+                    <a href="{{ route('payroll.create-period') }}" class="inline-flex items-center px-4 py-2 bg-blue-600 text-white rounded-lg text-sm font-bold hover:bg-blue-700 transition shadow-sm">
+                        <svg class="w-4 h-4 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-8H4" />
+                        </svg>
+                        New Pay Period
+                    </a>
+                </div>
+            </div>
+
             {{-- Flash Messages --}}
             @if (session('success'))
                 <div class="mb-4 bg-green-100 border border-green-400 text-green-700 px-4 py-3 rounded">

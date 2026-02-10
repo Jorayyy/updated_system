@@ -1,5 +1,32 @@
 <!DOCTYPE html>
-<html lang="{{ str_replace('_', '-', app()->getLocale()) }}">
+<html lang="{{ str_replace('_', '-', app()->getLocale()) }}" x-data="{ 
+    show: false,
+    notifications: [],
+    addNotification(type, message) {
+        if (!message) return;
+        const id = Date.now();
+        this.notifications.push({ id, type, message });
+        setTimeout(() => {
+            this.notifications = this.notifications.filter(n => n.id !== id);
+        }, 5000);
+    }
+}" x-init="
+    setTimeout(() => {
+        show = true;
+        @if(session('info')) 
+            addNotification('info', '{{ addslashes(session('info')) }}'); 
+        @endif
+        @if(session('success')) 
+            addNotification('success', '{{ addslashes(session('success')) }}'); 
+        @endif
+        @if(session('error')) 
+            addNotification('error', '{{ addslashes(session('error')) }}'); 
+        @endif
+        @if(session('status')) 
+            addNotification('info', '{{ addslashes(session('status')) }}'); 
+        @endif
+    }, 500);
+">
     <head>
         <meta charset="utf-8">
         <meta name="viewport" content="width=device-width, initial-scale=1">
@@ -47,6 +74,43 @@
                     radial-gradient(at 50% 0%, hsla(187,100%,92%,1) 0, transparent 50%), 
                     radial-gradient(at 100% 0%, hsla(54,100%,90%,1) 0, transparent 50%);
             }
+
+            /* Toast Notifications Overlay */
+            .toast-wrapper {
+                position: fixed;
+                bottom: 1.5rem;
+                right: 1.5rem;
+                z-index: 10000;
+                display: flex;
+                flex-direction: column;
+                gap: 0.75rem;
+                pointer-events: none;
+            }
+
+            .toast-notification {
+                pointer-events: auto;
+                min-width: 320px;
+                max-width: 480px;
+                background: white;
+                color: #1f2937;
+                padding: 1rem;
+                border-radius: 0.75rem;
+                box-shadow: 0 10px 15px -3px rgba(0, 0, 0, 0.1), 0 4px 6px -2px rgba(0, 0, 0, 0.05);
+                display: flex;
+                align-items: center;
+                gap: 0.75rem;
+                animation: toast-in 0.3s ease-out;
+                border-left-width: 4px;
+            }
+
+            @keyframes toast-in {
+                from { transform: translateX(100%); opacity: 0; }
+                to { transform: translateX(0); opacity: 1; }
+            }
+
+            .toast-success { border-left-color: #10b981; }
+            .toast-error { border-left-color: #ef4444; }
+            .toast-info { border-left-color: #3b82f6; }
         </style>
 
         <div class="min-h-screen flex bg-mesh" x-data="{ show: false }" x-init="setTimeout(() => show = true, 100)">
@@ -61,7 +125,13 @@
                 <div class="text-center z-10" x-show="show" x-transition:enter="transition ease-out duration-1000" x-transition:enter-start="opacity-0 transform translate-y-10" x-transition:enter-end="opacity-100 transform translate-y-0">
                     <!-- Logo Container -->
                     <div class="mb-8 group">
-                        @if(file_exists(public_path('images/logo.png')))
+                        @php
+                            $logo = \App\Models\CompanySetting::getValue('company_logo');
+                            $companyName = \App\Models\CompanySetting::getValue('company_name', 'Mancao E-connect');
+                        @endphp
+                        @if($logo)
+                            <img src="{{ asset('storage/' . $logo) }}" alt="Logo" class="w-64 h-64 object-contain mx-auto drop-shadow-2xl transition-transform duration-500 group-hover:scale-105 bg-white p-6 rounded-3xl shadow-xl border border-gray-100">
+                        @elseif(file_exists(public_path('images/logo.png')))
                             <img src="{{ asset('images/logo.png') }}" alt="MEBS Logo" class="w-72 h-auto mx-auto drop-shadow-2xl transition-transform duration-500 group-hover:scale-105">
                         @else
                             <!-- Text-based Logo -->
@@ -77,7 +147,7 @@
                         @endif
                     </div>
                     
-                    <h1 class="text-5xl font-extrabold text-slate-800 mb-2 reveal-text" style="animation-delay: 0.2s opacity: 0;">Mancao E-connect</h1>
+                    <h1 class="text-5xl font-extrabold text-slate-800 mb-2 reveal-text" style="animation-delay: 0.2s; opacity: 0;">{{ $companyName }}</h1>
                     <h2 class="text-4xl font-bold text-slate-700 mb-4 reveal-text" style="animation-delay: 0.4s; opacity: 0;">Business Solutions</h2>
                     <p class="text-xl text-blue-600 font-bold tracking-[0.2em] reveal-text" style="animation-delay: 0.6s; opacity: 0;">CALL CENTER PH</p>
                     
@@ -95,11 +165,15 @@
                 <!-- Mobile Logo (shown only on small screens) -->
                 <div class="lg:hidden text-center mb-8" x-show="show" x-transition:enter="transition ease-out duration-700 delay-300">
                     <div class="flex items-center justify-center mb-4">
-                        <span class="text-5xl font-black text-gray-800">M</span>
-                        <div class="w-10 h-10 rounded-full bg-gradient-to-br from-cyan-300 to-blue-400 flex items-center justify-center border-2 border-yellow-400 mx-1">
-                            <span class="text-lg font-bold text-gray-800">e</span>
-                        </div>
-                        <span class="text-5xl font-black text-gray-800">BS</span>
+                        @if($logo)
+                            <img src="{{ asset('storage/' . $logo) }}" alt="Logo" class="w-16 h-16 object-contain bg-white p-2 rounded-xl shadow-sm border border-gray-100">
+                        @else
+                            <span class="text-5xl font-black text-gray-800">M</span>
+                            <div class="w-10 h-10 rounded-full bg-gradient-to-br from-cyan-300 to-blue-400 flex items-center justify-center border-2 border-yellow-400 mx-1">
+                                <span class="text-lg font-bold text-gray-800">e</span>
+                            </div>
+                            <span class="text-5xl font-black text-gray-800">BS</span>
+                        @endif
                     </div>
                 </div>
 
@@ -128,9 +202,47 @@
 
                 <p class="text-slate-400 text-[10px] font-bold mt-8 text-center uppercase tracking-widest"
                    x-show="show" x-transition:enter="transition ease-out duration-700 delay-500">
-                    © {{ date('Y') }} Mancao E-connect Business Solutions • PH
+                    © {{ date('Y') }} {{ $companyName }} Business Solutions • PH
                 </p>
             </div>
+        </div>
+
+        <!-- global Notification Toasts -->
+        <div class="toast-wrapper">
+            <template x-for="notif in notifications" :key="notif.id">
+                <div class="toast-notification" :class="'toast-' + notif.type" x-transition:enter="transition ease-out duration-300 transform" x-transition:enter-start="translate-x-full opacity-0" x-transition:enter-end="translate-x-0 opacity-100">
+                    <!-- Icon -->
+                    <div class="flex-shrink-0">
+                        <template x-if="notif.type === 'success'">
+                            <svg class="h-6 w-6 text-green-500" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7" />
+                            </svg>
+                        </template>
+                        <template x-if="notif.type === 'error'">
+                            <svg class="h-6 w-6 text-red-500" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v4m0 4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
+                            </svg>
+                        </template>
+                        <template x-if="notif.type === 'info'">
+                            <svg class="h-6 w-6 text-blue-500" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
+                            </svg>
+                        </template>
+                    </div>
+                    <!-- Message -->
+                    <div class="flex-1">
+                        <p class="text-sm font-medium" x-text="notif.message"></p>
+                    </div>
+                    <!-- Close -->
+                    <div class="flex items-center gap-2">
+                        <button @click="notifications = notifications.filter(n => n.id !== notif.id)" class="text-gray-400 hover:text-gray-600">
+                            <svg class="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12" />
+                            </svg>
+                        </button>
+                    </div>
+                </div>
+            </template>
         </div>
     </body>
 </html>

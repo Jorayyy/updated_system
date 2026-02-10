@@ -28,6 +28,7 @@ use App\Http\Controllers\AutomationController;
 use App\Http\Controllers\SiteController;
 use App\Http\Controllers\AccountController;
 use App\Http\Controllers\ScheduleController;
+use App\Http\Controllers\PayrollGroupController;
 use Illuminate\Support\Facades\Route;
 
 /*
@@ -143,6 +144,10 @@ Route::middleware('auth')->group(function () {
         Route::resource('sites', SiteController::class);
         Route::resource('accounts', AccountController::class);
         Route::resource('schedules', ScheduleController::class);
+        
+        Route::post('/payroll-groups/{payrollGroup}/add-employee', [PayrollGroupController::class, 'addEmployee'])->name('payroll-groups.add-employee');
+        Route::delete('/payroll-groups/{payrollGroup}/remove-employee/{user}', [PayrollGroupController::class, 'removeEmployee'])->name('payroll-groups.remove-employee');
+        Route::resource('payroll-groups', PayrollGroupController::class);
 
         // Employees Management
         Route::resource('employees', EmployeeController::class);
@@ -161,23 +166,29 @@ Route::middleware('auth')->group(function () {
         // Leave Management
         Route::get('/manage/leaves', [LeaveController::class, 'manage'])->name('leaves.manage');
         Route::get('/manage/leaves/{leave}', [LeaveController::class, 'adminShow'])->name('leaves.admin-show');
-        Route::patch('/leaves/{leave}/approve', [LeaveController::class, 'approve'])->name('leaves.approve');
-        Route::patch('/leaves/{leave}/hr-approve', [LeaveController::class, 'hrApprove'])->name('leaves.hr-approve');
-        Route::patch('/leaves/{leave}/admin-approve', [LeaveController::class, 'adminApprove'])->name('leaves.admin-approve');
-        Route::patch('/leaves/{leave}/reject', [LeaveController::class, 'reject'])->name('leaves.reject');
-        Route::patch('/leaves/{leave}/admin-cancel', [LeaveController::class, 'adminCancel'])->name('leaves.admin-cancel');
+        
+        // Approval routes restricted to Super Admin
+        Route::middleware('role:super_admin')->group(function () {
+            Route::patch('/leaves/{leave}/approve', [LeaveController::class, 'approve'])->name('leaves.approve');
+            Route::patch('/leaves/{leave}/hr-approve', [LeaveController::class, 'hrApprove'])->name('leaves.hr-approve');
+            Route::patch('/leaves/{leave}/admin-approve', [LeaveController::class, 'adminApprove'])->name('leaves.admin-approve');
+            Route::patch('/leaves/{leave}/reject', [LeaveController::class, 'reject'])->name('leaves.reject');
+            Route::patch('/leaves/{leave}/admin-cancel', [LeaveController::class, 'adminCancel'])->name('leaves.admin-cancel');
+        });
 
-        // Leave Types Management
+        // Leave Types Management (HR can still manage types)
         Route::resource('leave-types', LeaveTypeController::class);
 
-        // Leave Credits Management
-        Route::get('/leave-credits', [LeaveCreditsController::class, 'index'])->name('leave-credits.index');
-        Route::get('/leave-credits/{employee}/edit', [LeaveCreditsController::class, 'edit'])->name('leave-credits.edit');
-        Route::put('/leave-credits/{employee}', [LeaveCreditsController::class, 'update'])->name('leave-credits.update');
-        Route::post('/leave-credits/bulk-allocate', [LeaveCreditsController::class, 'bulkAllocate'])->name('leave-credits.bulk-allocate');
-        Route::post('/leave-credits/carry-over', [LeaveCreditsController::class, 'carryOver'])->name('leave-credits.carry-over');
-        Route::post('/leave-credits/{employee}/adjust', [LeaveCreditsController::class, 'adjust'])->name('leave-credits.adjust');
-        Route::get('/leave-credits/{employee}/history', [LeaveCreditsController::class, 'history'])->name('leave-credits.history');
+        // Leave Credits Management (SuperAdmin Only)
+        Route::middleware('role:super_admin')->group(function () {
+            Route::get('/leave-credits', [LeaveCreditsController::class, 'index'])->name('leave-credits.index');
+            Route::get('/leave-credits/{employee}/edit', [LeaveCreditsController::class, 'edit'])->name('leave-credits.edit');
+            Route::put('/leave-credits/{employee}', [LeaveCreditsController::class, 'update'])->name('leave-credits.update');
+            Route::post('/leave-credits/bulk-allocate', [LeaveCreditsController::class, 'bulkAllocate'])->name('leave-credits.bulk-allocate');
+            Route::post('/leave-credits/carry-over', [LeaveCreditsController::class, 'carryOver'])->name('leave-credits.carry-over');
+            Route::post('/leave-credits/{employee}/adjust', [LeaveCreditsController::class, 'adjust'])->name('leave-credits.adjust');
+            Route::get('/leave-credits/{employee}/history', [LeaveCreditsController::class, 'history'])->name('leave-credits.history');
+        });
 
         // DTR Management
         Route::get('/manage/dtr', [DTRController::class, 'adminIndex'])->name('dtr.admin-index');

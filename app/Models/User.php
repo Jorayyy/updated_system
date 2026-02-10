@@ -7,6 +7,7 @@ use Illuminate\Foundation\Auth\User as Authenticatable;
 use Illuminate\Notifications\Notifiable;
 use Laravel\Sanctum\HasApiTokens;
 use Illuminate\Database\Eloquent\Relations\HasMany;
+use Illuminate\Database\Eloquent\Relations\BelongsTo;
 
 class User extends Authenticatable
 {
@@ -32,11 +33,17 @@ class User extends Authenticatable
         'meal_allowance',
         'transportation_allowance',
         'communication_allowance',
+        'perfect_attendance_bonus',
+        'site_incentive',
+        'attendance_incentive',
+        'cola',
+        'other_allowance',
         'date_hired',
         'birthday',
         'is_active',
         'site_id',
         'account_id',
+        'payroll_group_id',
     ];
 
     /**
@@ -65,8 +72,21 @@ class User extends Authenticatable
         'meal_allowance' => 'decimal:2',
         'transportation_allowance' => 'decimal:2',
         'communication_allowance' => 'decimal:2',
+        'perfect_attendance_bonus' => 'decimal:2',
+        'site_incentive' => 'decimal:2',
+        'attendance_incentive' => 'decimal:2',
+        'cola' => 'decimal:2',
+        'other_allowance' => 'decimal:2',
         'is_active' => 'boolean',
     ];
+
+    /**
+     * Get the payroll group the user belongs to
+     */
+    public function payrollGroup(): BelongsTo
+    {
+        return $this->belongsTo(PayrollGroup::class);
+    }
 
     /**
      * Check if user is super admin
@@ -106,6 +126,38 @@ class User extends Authenticatable
     public function isEmployee(): bool
     {
         return $this->role === 'employee';
+    }
+
+    /**
+     * Get the hierarchy level of the user based on their account.
+     */
+    public function getHierarchyLevelAttribute(): int
+    {
+        return $this->account ? $this->account->hierarchy_level : 0;
+    }
+
+    /**
+     * Determine if this user can manage another user based on hierarchy.
+     */
+    public function canManage(User $targetUser): bool
+    {
+        // Super Admin can manage anyone
+        if ($this->isSuperAdmin()) {
+            return true;
+        }
+
+        // Target is Super Admin, but current user is not
+        if ($targetUser->isSuperAdmin()) {
+            return false;
+        }
+
+        // Can manage self
+        if ($this->id === $targetUser->id) {
+            return true;
+        }
+
+        // Higher hierarchy level can manage lower level
+        return $this->hierarchy_level > $targetUser->hierarchy_level;
     }
 
     /**

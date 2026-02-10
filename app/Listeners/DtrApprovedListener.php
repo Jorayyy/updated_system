@@ -58,13 +58,13 @@ class DtrApprovedListener implements ShouldQueue
                 'action' => 'dtr_approved',
                 'model_type' => 'DailyTimeRecord',
                 'model_id' => $dtr->id,
-                'old_values' => json_encode(['status' => 'pending']),
-                'new_values' => json_encode([
+                'old_values' => ['status' => 'pending'],
+                'new_values' => [
                     'status' => 'approved',
                     'approved_by' => $event->approvedBy,
                     'approved_at' => now()->toISOString(),
                     'approval_level' => $event->approvalLevel,
-                ]),
+                ],
                 'ip_address' => request()->ip() ?? 'system',
                 'user_agent' => request()->userAgent() ?? 'System Process',
             ]);

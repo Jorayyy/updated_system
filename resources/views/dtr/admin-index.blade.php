@@ -62,7 +62,7 @@
                         <div class="flex items-center justify-between">
                             <div class="flex items-center gap-4">
                                 <label class="flex items-center">
-                                    <input type="checkbox" id="select-all" class="rounded border-gray-300 text-indigo-600">
+                                    <input type="checkbox" id="select-all" class="select-all-main rounded border-gray-300 text-indigo-600">
                                     <span class="ml-2 text-sm text-gray-600">Select All</span>
                                 </label>
                                 <span class="text-sm text-gray-500">
@@ -87,9 +87,7 @@
                         <table class="min-w-full divide-y divide-gray-200">
                             <thead class="bg-gray-50">
                                 <tr>
-                                    <th class="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase">
-                                        <input type="checkbox" class="rounded border-gray-300 text-indigo-600" disabled>
-                                    </th>
+                                    <th class="px-4 py-3"></th>
                                     <th class="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase">Employee ID</th>
                                     <th class="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase">Name</th>
                                     <th class="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase">Department</th>
@@ -154,7 +152,7 @@
     @push('scripts')
     <script>
         document.addEventListener('DOMContentLoaded', function() {
-            const selectAll = document.getElementById('select-all');
+            const selectAllMain = document.querySelectorAll('.select-all-main');
             const checkboxes = document.querySelectorAll('.employee-checkbox');
             const selectedCount = document.getElementById('selected-count');
             const bulkDownload = document.getElementById('bulk-download');
@@ -165,17 +163,25 @@
                 bulkDownload.disabled = checked === 0;
             }
 
-            selectAll.addEventListener('change', function() {
-                checkboxes.forEach(cb => cb.checked = this.checked);
-                updateCount();
+            selectAllMain.forEach(mainCb => {
+                mainCb.addEventListener('change', function() {
+                    const isChecked = this.checked;
+                    checkboxes.forEach(cb => cb.checked = isChecked);
+                    // Sync other select-all checkboxes
+                    selectAllMain.forEach(otherMain => otherMain.checked = isChecked);
+                    updateCount();
+                });
             });
 
             checkboxes.forEach(cb => {
                 cb.addEventListener('change', function() {
+                    const totalCheckboxes = checkboxes.length;
+                    const checkedCheckboxes = document.querySelectorAll('.employee-checkbox:checked').length;
+                    
                     if (!this.checked) {
-                        selectAll.checked = false;
-                    } else if (document.querySelectorAll('.employee-checkbox:checked').length === checkboxes.length) {
-                        selectAll.checked = true;
+                        selectAllMain.forEach(main => main.checked = false);
+                    } else if (checkedCheckboxes === totalCheckboxes) {
+                        selectAllMain.forEach(main => main.checked = true);
                     }
                     updateCount();
                 });
