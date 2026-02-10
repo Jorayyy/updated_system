@@ -122,7 +122,7 @@ class PayrollComputationController extends Controller
 
         // Get recently completed periods
         $completedPeriods = PayrollPeriod::where('status', 'completed')
-            ->orderBy('completed_at', 'desc')
+            ->orderBy('payroll_computed_at', 'desc')
             ->limit(10)
             ->get();
 

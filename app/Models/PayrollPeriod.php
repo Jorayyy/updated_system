@@ -43,6 +43,9 @@ class PayrollPeriod extends Model
         'end_date' => 'date',
         'pay_date' => 'date',
         'processed_at' => 'datetime',
+        'payroll_computed_at' => 'datetime',
+        'payslips_generated_at' => 'datetime',
+        'dtr_generated_at' => 'datetime',
     ];
 
     public function payrollGroup(): BelongsTo
