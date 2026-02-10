@@ -1,0 +1,65 @@
+name: Build and Deploy to Hostinger
+
+on:
+  push:
+    branches: [ "master" ]
+
+jobs:
+  deploy:
+    name: Build and Deploy
+    runs-on: ubuntu-latest
+    
+    steps:
+    - name: 🚚 Get latest code
+      uses: actions/checkout@v4
+
+    - name: 📂 Setup PHP
+      uses: shivammathur/setup-php@v2
+      with:
+        php-version: '8.2'
+        extensions: mbstring, xml, ctype, iconv, mysql, zip
+        coverage: none
+
+    - name: 📦 Cache Composer dependencies
+      uses: actions/cache@v3
+      with:
+        path: vendor
+        key: composer-${{ hashFiles('**/composer.lock') }}
+        restore-keys: composer-
+
+    - name: 📦 Install Composer Dependencies
+      run: composer install --no-ansi --no-dev --no-interaction --no-plugins --no-progress --no-scripts --optimize-autoloader
+
+    - name: 🛠️ Setup Node.js
+      uses: actions/setup-node@v4
+      with:
+        node-version: '20'
+        cache: 'npm'
+
+    - name: 🏗️ Install NPM dependencies & Build
+      run: |
+        npm install
+        npm run build
+
+    - name: 🚀 Sync Files via FTP
+      uses: SamKirkland/FTP-Deploy-Action@v4.3.5
+      with:
+        server: ${{ secrets.FTP_SERVER }}
+        username: ${{ secrets.FTP_USERNAME }}
+        password: ${{ secrets.FTP_PASSWORD }}
+        server-dir: /public_html/
+        exclude: |
+          **/.git*
+          **/.git*/**
+          **/node_modules/**
+          **/tests/**
+          storage/**
+          .env
+          README.md
+          .editorconfig
+          .env.example
+          phpunit.xml
+          tailwind.config.js
+          vite.config.js
+          package.json
+          package-lock.json
