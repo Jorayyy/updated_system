@@ -67,7 +67,20 @@ class SettingsController extends Controller
         ]);
 
         if ($request->hasFile('company_logo')) {
-            $path = $request->file('company_logo')->store('company', 'public');
+            // Store in 'public/uploads' directly instead of 'storage/app/public'
+            // This bypasses the need for symlinks on shared hosting
+            $file = $request->file('company_logo');
+            $filename = time() . '_' . $file->getClientOriginalName();
+            $path = 'uploads/company/' . $filename;
+            
+            // Ensure directory exists in public folder
+            if (!file_exists(public_path('uploads/company'))) {
+                mkdir(public_path('uploads/company'), 0755, true);
+            }
+
+            $file->move(public_path('uploads/company'), $filename);
+
+            // Update setting with new path (relative to public root so asset() works correctly)
             CompanySetting::setValue('company_logo', $path, 'string', 'company');
         }
 
