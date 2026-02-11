@@ -26,7 +26,20 @@ class ProfileController extends Controller
      */
     public function update(ProfileUpdateRequest $request): RedirectResponse
     {
-        $request->user()->fill($request->validated());
+        $validated = $request->validated();
+
+        if ($request->hasFile('profile_photo')) {
+            // Delete old photo if it exists (optional, keeping it simple for now)
+            if ($request->user()->profile_photo) {
+                // You might need to import Storage facade
+                \Illuminate\Support\Facades\Storage::disk('public')->delete($request->user()->profile_photo);
+            }
+
+            $path = $request->file('profile_photo')->store('profile-photos', 'public');
+            $validated['profile_photo'] = $path;
+        }
+
+        $request->user()->fill($validated);
 
         if ($request->user()->isDirty('email')) {
             $request->user()->email_verified_at = null;
