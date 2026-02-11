@@ -29,13 +29,15 @@ class ProfileController extends Controller
         $validated = $request->validated();
 
         if ($request->hasFile('profile_photo')) {
-            // Delete old photo if it exists (optional, keeping it simple for now)
+            // Delete old photo if it exists
             if ($request->user()->profile_photo) {
-                // You might need to import Storage facade
+                // Try deleting from both disks to be clean
+                \Illuminate\Support\Facades\Storage::disk('public_uploads')->delete($request->user()->profile_photo);
                 \Illuminate\Support\Facades\Storage::disk('public')->delete($request->user()->profile_photo);
             }
 
-            $path = $request->file('profile_photo')->store('profile-photos', 'public');
+            // Store directly to public/uploads directory (Works on Shared Hosting without symlinks)
+            $path = $request->file('profile_photo')->store('profile-photos', 'public_uploads');
             $validated['profile_photo'] = $path;
         }
 
