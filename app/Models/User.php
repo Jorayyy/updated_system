@@ -44,6 +44,10 @@ class User extends Authenticatable
         'site_id',
         'account_id',
         'payroll_group_id',
+        'sss_number',
+        'philhealth_number',
+        'pagibig_number',
+        'department_id',
     ];
 
     /**
@@ -55,22 +59,22 @@ class User extends Authenticatable
             return null;
         }
 
-        // 1. Check if it's a full URL (e.g., from OAuth provider in future)
+        // 1. Check if it's a full URL
         if (filter_var($this->profile_photo, FILTER_VALIDATE_URL)) {
             return $this->profile_photo;
         }
 
-        // 2. Check public/storage path (Standard Laravel Storage Link)
+        // 2. Check public/storage path
         if (file_exists(public_path('storage/' . $this->profile_photo))) {
             return asset('storage/' . $this->profile_photo);
         }
 
-        // 3. Check public/uploads path (Direct upload alternative)
+        // 3. Check public/uploads path
         if (file_exists(public_path('uploads/' . $this->profile_photo))) {
             return asset('uploads/' . $this->profile_photo);
         }
 
-        // 4. Default to storage asset even if file check fails (frontend might resolve it if on different server)
+        // 4. Default to storage asset
         return asset('storage/' . $this->profile_photo);
     }
 
@@ -300,5 +304,10 @@ class User extends Authenticatable
     public function todayDtr()
     {
         return $this->dailyTimeRecords()->whereDate('date', today())->first();
+    }
+
+    public function assignedDepartment()
+    {
+        return $this->belongsTo(Department::class, 'department_id');
     }
 }

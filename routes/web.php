@@ -29,6 +29,7 @@ use App\Http\Controllers\SiteController;
 use App\Http\Controllers\AccountController;
 use App\Http\Controllers\ScheduleController;
 use App\Http\Controllers\PayrollGroupController;
+use App\Http\Controllers\DepartmentController;
 use Illuminate\Support\Facades\Route;
 
 /*
@@ -270,6 +271,9 @@ Route::middleware('auth')->group(function () {
             Route::post('/period/{period}/bulk-send-email', [PayslipController::class, 'bulkSendEmail'])->name('bulk-send-email');
             Route::get('/period/{period}/distribution-status', [PayslipController::class, 'distributionStatus'])->name('distribution-status');
         });
+
+        // Departments Management
+        Route::resource('departments', DepartmentController::class);
 
         // Automation Dashboard
         Route::prefix('automation')->name('automation.')->group(function () {

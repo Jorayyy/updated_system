@@ -96,7 +96,7 @@
                         <select name="department" class="border-gray-300 rounded-md shadow-sm">
                             <option value="">All Departments</option>
                             @foreach($departments as $dept)
-                                <option value="{{ $dept }}" {{ request('department') == $dept ? 'selected' : '' }}>{{ $dept }}</option>
+                                <option value="{{ $dept->id }}" {{ request('department') == $dept->id ? 'selected' : '' }}>{{ $dept->name }}</option>
                             @endforeach
                         </select>
 
@@ -179,7 +179,7 @@
                                             <div class="text-xs">{{ $employee->site?->name ?? 'N/A' }}</div>
                                         </td>
                                         <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
-                                            {{ $employee->department ?? '-' }}
+                                            {{ $employee->assignedDepartment?->name ?? ($employee->department ?? '-') }}
                                         </td>
                                         <td class="px-6 py-4 whitespace-nowrap">
                                             <span class="px-2 py-1 text-xs rounded-full font-bold uppercase tracking-wider

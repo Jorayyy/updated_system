@@ -67,7 +67,7 @@
                                 <div class="space-y-3">
                                     <div>
                                         <p class="text-xs text-gray-500 uppercase">Department</p>
-                                        <p class="font-medium text-gray-900">{{ $employee->department ?? 'N/A' }}</p>
+                                        <p class="font-medium text-gray-900">{{ $employee->assignedDepartment?->name ?? ($employee->department ?? 'N/A') }}</p>
                                     </div>
                                     <div>
                                         <p class="text-xs text-gray-500 uppercase">Account</p>
@@ -94,6 +94,24 @@
                                     <div>
                                         <p class="text-xs text-gray-500 uppercase">Date Hired</p>
                                         <p class="font-medium text-gray-900">{{ $employee->date_hired ? $employee->date_hired->format('M d, Y') : 'N/A' }}</p>
+                                    </div>
+                                </div>
+                            </div>
+                            
+                            <div>
+                                <h3 class="text-sm font-bold text-gray-400 uppercase tracking-wider mb-4">Government IDs</h3>
+                                <div class="space-y-3">
+                                    <div>
+                                        <p class="text-xs text-gray-500 uppercase">SSS Number</p>
+                                        <p class="font-medium text-gray-900">{{ $employee->sss_number ?? 'N/A' }}</p>
+                                    </div>
+                                    <div>
+                                        <p class="text-xs text-gray-500 uppercase">PhilHealth Number</p>
+                                        <p class="font-medium text-gray-900">{{ $employee->philhealth_number ?? 'N/A' }}</p>
+                                    </div>
+                                    <div>
+                                        <p class="text-xs text-gray-500 uppercase">Pag-IBIG Number</p>
+                                        <p class="font-medium text-gray-900">{{ $employee->pagibig_number ?? 'N/A' }}</p>
                                     </div>
                                 </div>
                             </div>

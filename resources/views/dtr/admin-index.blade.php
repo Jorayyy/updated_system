@@ -3,9 +3,7 @@
         <h2 class="font-semibold text-xl text-gray-800 leading-tight">
             {{ __('DTR Management') }}
         </h2>
-    </x-slot>
-
-    <div class="py-4">
+    </x-sl    <div class="py-4">
         <div class="max-w-full mx-auto sm:px-6 lg:px-8">
             <!-- Filters -->
             <div class="bg-white overflow-hidden shadow-sm sm:rounded-lg mb-6 transition-colors duration-200">
@@ -180,6 +178,13 @@
                     
                     if (!this.checked) {
                         selectAllMain.forEach(main => main.checked = false);
+                    } else if (checkedCheckboxes === totalCheckboxes) {
+                        selectAllMain.forEach(main => main.checked = true);
+tAll.checked = false;
+                    } else if (document.querySelectorAll('.employee-checkbox:checked').length === checkboxes.length) {
+                        selectAll.checked = true;
+>>>>>>> 769e9a168b9c48f1c12934e85fb9898739209e6c
+h(main => main.checked = false);
                     } else if (checkedCheckboxes === totalCheckboxes) {
                         selectAllMain.forEach(main => main.checked = true);
                     }

@@ -5,6 +5,7 @@ namespace App\Http\Controllers;
 use App\Models\User;
 use App\Models\Site;
 use App\Models\Account;
+use App\Models\Department;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Hash;
 use Illuminate\Validation\Rules;
@@ -35,7 +36,7 @@ class EmployeeController extends Controller
 
         // Department filter
         if ($request->filled('department')) {
-            $query->where('department', $request->department);
+            $query->where('department_id', $request->department);
         }
 
         // Status filter
@@ -55,9 +56,7 @@ class EmployeeController extends Controller
 
         $employees = $query->orderBy('name')->paginate(15);
         
-        $departments = User::whereNotNull('department')
-            ->distinct()
-            ->pluck('department');
+        $departments = Department::orderBy('name')->get();
         
         $allSites = Site::where('is_active', true)->get();
         $allAccounts = Account::where('is_active', true)->get();
@@ -72,7 +71,8 @@ class EmployeeController extends Controller
     {
         $sites = Site::where('is_active', true)->get();
         $accounts = Account::where('is_active', true)->get();
-        return view('employees.create', compact('sites', 'accounts'));
+        $departments = Department::where('is_active', true)->orderBy('name')->get();
+        return view('employees.create', compact('sites', 'accounts', 'departments'));
     }
 
     /**
@@ -86,7 +86,7 @@ class EmployeeController extends Controller
             'email' => 'required|string|email|max:255|unique:users,email',
             'password' => ['required', 'confirmed', Rules\Password::defaults()],
             'account_id' => 'required|exists:accounts,id',
-            'department' => 'nullable|string|max:100',
+            'department_id' => 'nullable|exists:departments,id',
             'position' => 'nullable|string|max:100',
             'hourly_rate' => 'nullable|numeric|min:0',
             'daily_rate' => 'nullable|numeric|min:0',
@@ -94,9 +94,13 @@ class EmployeeController extends Controller
             'date_hired' => 'nullable|date',
             'site_id' => 'nullable|exists:sites,id',
             'profile_photo' => 'nullable|image|mimes:jpeg,png,jpg,gif|max:2048',
+            'sss_number' => 'nullable|string|max:50',
+            'philhealth_number' => 'nullable|string|max:50',
+            'pagibig_number' => 'nullable|string|max:50',
         ]);
 
         $account = Account::find($request->account_id);
+        $department = $request->department_id ? Department::find($request->department_id) : null;
         $role = $account->system_role ?? 'employee';
 
         $profilePhotoPath = null;
@@ -118,7 +122,8 @@ class EmployeeController extends Controller
             'profile_photo' => $profilePhotoPath,
             'password' => Hash::make($request->password),
             'role' => $role,
-            'department' => $request->department,
+            'department_id' => $request->department_id,
+            'department' => $department ? $department->name : null, // Backwards compatibility
             'position' => $request->position,
             'hourly_rate' => $request->hourly_rate ?? 0,
             'daily_rate' => $request->daily_rate ?? 0,
@@ -127,6 +132,9 @@ class EmployeeController extends Controller
             'site_id' => $request->site_id,
             'account_id' => $request->account_id,
             'is_active' => true,
+            'sss_number' => $request->sss_number,
+            'philhealth_number' => $request->philhealth_number,
+            'pagibig_number' => $request->pagibig_number,
         ]);
 
         return redirect()->route('employees.index')
@@ -159,7 +167,8 @@ class EmployeeController extends Controller
 
         $sites = Site::all();
         $accounts = Account::all();
-        return view('employees.edit', compact('employee', 'sites', 'accounts'));
+        $departments = Department::where('is_active', true)->orderBy('name')->get();
+        return view('employees.edit', compact('employee', 'sites', 'accounts', 'departments'));
     }
 
     /**
@@ -179,7 +188,7 @@ class EmployeeController extends Controller
             'password' => ['nullable', 'confirmed', Rules\Password::defaults()],
             'site_id' => 'nullable|exists:sites,id',
             'account_id' => 'required|exists:accounts,id',
-            'department' => 'nullable|string|max:100',
+            'department_id' => 'nullable|exists:departments,id',
             'position' => 'nullable|string|max:100',
             'hourly_rate' => 'nullable|numeric|min:0',
             'daily_rate' => 'nullable|numeric|min:0',
@@ -195,9 +204,13 @@ class EmployeeController extends Controller
             'date_hired' => 'nullable|date',
             'is_active' => 'boolean',
             'profile_photo' => 'nullable|image|mimes:jpeg,png,jpg,gif|max:2048',
+            'sss_number' => 'nullable|string|max:50',
+            'philhealth_number' => 'nullable|string|max:50',
+            'pagibig_number' => 'nullable|string|max:50',
         ]);
 
         $account = Account::find($request->account_id);
+        $department = $request->department_id ? Department::find($request->department_id) : null;
         $role = $account->system_role ?? 'employee';
 
         // Check for role elevation
@@ -220,7 +233,8 @@ class EmployeeController extends Controller
             'role' => $role,
             'site_id' => $request->site_id,
             'account_id' => $request->account_id,
-            'department' => $request->department,
+            'department_id' => $request->department_id,
+            'department' => $department ? $department->name : null, // Backwards compatibility
             'position' => $request->position,
             'hourly_rate' => $request->hourly_rate ?? 0,
             'daily_rate' => $request->daily_rate ?? 0,
@@ -235,6 +249,9 @@ class EmployeeController extends Controller
             'other_allowance' => $request->other_allowance ?? 0,
             'date_hired' => $request->date_hired,
             'is_active' => $request->boolean('is_active', true),
+            'sss_number' => $request->sss_number,
+            'philhealth_number' => $request->philhealth_number,
+            'pagibig_number' => $request->pagibig_number,
         ];
 
         if ($request->hasFile('profile_photo')) {

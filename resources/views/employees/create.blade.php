@@ -101,9 +101,19 @@
 
                             <!-- Department -->
                             <div>
-                                <label for="department" class="block text-sm font-medium text-gray-700">Department</label>
-                                <input type="text" name="department" id="department" value="{{ old('department') }}"
+                                <label for="department_id" class="block text-sm font-medium text-gray-700">Department</label>
+                                <select name="department_id" id="department_id"
                                     class="mt-1 block w-full border-gray-300 rounded-md shadow-sm focus:border-indigo-500 focus:ring-indigo-500">
+                                    <option value="">Select Department</option>
+                                    @foreach($departments as $dept)
+                                        <option value="{{ $dept->id }}" {{ old('department_id') == $dept->id ? 'selected' : '' }}>
+                                            {{ $dept->name }}
+                                        </option>
+                                    @endforeach
+                                </select>
+                                @error('department_id')
+                                    <p class="mt-1 text-sm text-red-600">{{ $message }}</p>
+                                @enderror
                             </div>
 
                             <!-- Position -->
@@ -139,6 +149,36 @@
                                 <label for="hourly_rate" class="block text-sm font-medium text-gray-700">Hourly Rate (₱)</label>
                                 <input type="number" step="0.01" name="hourly_rate" id="hourly_rate" value="{{ old('hourly_rate', 0) }}"
                                     class="mt-1 block w-full border-gray-300 rounded-md shadow-sm focus:border-indigo-500 focus:ring-indigo-500">
+                            </div>
+
+                            <!-- SSS Number -->
+                            <div>
+                                <label for="sss_number" class="block text-sm font-medium text-gray-700">SSS Number</label>
+                                <input type="text" name="sss_number" id="sss_number" value="{{ old('sss_number') }}"
+                                    class="mt-1 block w-full border-gray-300 rounded-md shadow-sm focus:border-indigo-500 focus:ring-indigo-500">
+                                @error('sss_number')
+                                    <p class="mt-1 text-sm text-red-600">{{ $message }}</p>
+                                @enderror
+                            </div>
+
+                            <!-- PhilHealth Number -->
+                            <div>
+                                <label for="philhealth_number" class="block text-sm font-medium text-gray-700">PhilHealth Number</label>
+                                <input type="text" name="philhealth_number" id="philhealth_number" value="{{ old('philhealth_number') }}"
+                                    class="mt-1 block w-full border-gray-300 rounded-md shadow-sm focus:border-indigo-500 focus:ring-indigo-500">
+                                @error('philhealth_number')
+                                    <p class="mt-1 text-sm text-red-600">{{ $message }}</p>
+                                @enderror
+                            </div>
+
+                            <!-- Pag-IBIG Number -->
+                            <div>
+                                <label for="pagibig_number" class="block text-sm font-medium text-gray-700">Pag-IBIG Number</label>
+                                <input type="text" name="pagibig_number" id="pagibig_number" value="{{ old('pagibig_number') }}"
+                                    class="mt-1 block w-full border-gray-300 rounded-md shadow-sm focus:border-indigo-500 focus:ring-indigo-500">
+                                @error('pagibig_number')
+                                    <p class="mt-1 text-sm text-red-600">{{ $message }}</p>
+                                @enderror
                             </div>
 
                             <!-- Password -->

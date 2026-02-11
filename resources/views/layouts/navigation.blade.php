@@ -51,6 +51,9 @@
                                     <x-dropdown-link :href="route('employees.index')">
                                         {{ __('Employees') }}
                                     </x-dropdown-link>
+                                    <x-dropdown-link :href="route('departments.index')">
+                                        {{ __('Departments') }}
+                                    </x-dropdown-link>
                                     <x-dropdown-link :href="route('attendance.manage')">
                                         {{ __('Attendance Records') }}
                                     </x-dropdown-link>
