@@ -268,11 +268,11 @@
                     <div class="flex items-center gap-3 overflow-hidden">
                         <a x-show="sidebarOpen" x-cloak x-transition:enter="transition ease-out duration-300" x-transition:enter-start="opacity-0 -translate-x-4" x-transition:enter-end="opacity-100 translate-x-0" href="{{ route('dashboard') }}" class="flex items-center gap-3">
                             @php
-                                $logo = \App\Models\CompanySetting::getValue('company_logo');
+                                $logoUrl = \App\Models\CompanySetting::getLogoUrl();
                                 $companyName = \App\Models\CompanySetting::getValue('company_name', 'MEBS HIYAS');
                             @endphp
-                            @if($logo)
-                                <img src="{{ asset('storage/' . $logo) }}" alt="Logo" class="w-12 h-12 object-contain rounded-xl flex-shrink-0 bg-white p-1 shadow-sm border border-gray-700/50">
+                            @if($logoUrl)
+                                <img src="{{ $logoUrl }}" alt="Logo" class="w-12 h-12 object-contain rounded-xl flex-shrink-0 bg-white p-1 shadow-sm border border-gray-700/50">
                             @else
                                 <div class="w-12 h-12 bg-gradient-to-br from-blue-500 to-purple-600 rounded-xl flex items-center justify-center font-bold text-xl flex-shrink-0 shadow-lg">
                                     {{ substr($companyName, 0, 1) }}

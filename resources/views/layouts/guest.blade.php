@@ -126,11 +126,11 @@
                     <!-- Logo Container -->
                     <div class="mb-8 group">
                         @php
-                            $logo = \App\Models\CompanySetting::getValue('company_logo');
+                            $logoUrl = \App\Models\CompanySetting::getLogoUrl();
                             $companyName = \App\Models\CompanySetting::getValue('company_name', 'Mancao E-connect');
                         @endphp
-                        @if($logo)
-                            <img src="{{ asset('storage/' . $logo) }}" alt="Logo" class="w-64 h-64 object-contain mx-auto drop-shadow-2xl transition-transform duration-500 group-hover:scale-105 bg-white p-6 rounded-3xl shadow-xl border border-gray-100">
+                        @if($logoUrl)
+                            <img src="{{ $logoUrl }}" alt="Logo" class="w-64 h-64 object-contain mx-auto drop-shadow-2xl transition-transform duration-500 group-hover:scale-105 bg-white p-6 rounded-3xl shadow-xl border border-gray-100">
                         @elseif(file_exists(public_path('images/logo.png')))
                             <img src="{{ asset('images/logo.png') }}" alt="MEBS Logo" class="w-72 h-auto mx-auto drop-shadow-2xl transition-transform duration-500 group-hover:scale-105">
                         @else
@@ -165,8 +165,8 @@
                 <!-- Mobile Logo (shown only on small screens) -->
                 <div class="lg:hidden text-center mb-8" x-show="show" x-transition:enter="transition ease-out duration-700 delay-300">
                     <div class="flex items-center justify-center mb-4">
-                        @if($logo)
-                            <img src="{{ asset('storage/' . $logo) }}" alt="Logo" class="w-16 h-16 object-contain bg-white p-2 rounded-xl shadow-sm border border-gray-100">
+                        @if($logoUrl)
+                            <img src="{{ $logoUrl }}" alt="Logo" class="w-16 h-16 object-contain bg-white p-2 rounded-xl shadow-sm border border-gray-100">
                         @else
                             <span class="text-5xl font-black text-gray-800">M</span>
                             <div class="w-10 h-10 rounded-full bg-gradient-to-br from-cyan-300 to-blue-400 flex items-center justify-center border-2 border-yellow-400 mx-1">

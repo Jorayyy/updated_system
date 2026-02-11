@@ -64,6 +64,30 @@ class CompanySetting extends Model
     }
 
     /**
+     * Get the company logo URL checking multiple possible paths
+     */
+    public static function getLogoUrl()
+    {
+        $logo = self::getValue('company_logo');
+        
+        if (!$logo) {
+            return null;
+        }
+
+        // Check if file exists in public directly (SettingsController upload path)
+        if (file_exists(public_path($logo))) {
+            return asset($logo);
+        }
+        
+        // Check if file exists in storage link
+        if (file_exists(public_path('storage/' . $logo))) {
+            return asset('storage/' . $logo);
+        }
+        
+        return null;
+    }
+
+    /**
      * Get all settings by group
      */
     public static function getByGroup(string $group): array

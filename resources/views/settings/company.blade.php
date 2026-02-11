@@ -37,8 +37,11 @@
                             <div>
                                 <x-input-label for="company_logo" :value="__('Company Logo')" />
                                 <div class="mt-2 flex items-center gap-4">
-                                    @if(isset($settings['company_logo']))
-                                        <img src="{{ asset('storage/' . $settings['company_logo']) }}" alt="Logo" class="w-16 h-16 object-cover rounded-lg border">
+                                    @php
+                                        $logoUrl = \App\Models\CompanySetting::getLogoUrl();
+                                    @endphp
+                                    @if($logoUrl)
+                                        <img src="{{ $logoUrl }}" alt="Logo" class="w-16 h-16 object-cover rounded-lg border">
                                     @else
                                         <div class="w-16 h-16 bg-gray-100 rounded-lg flex items-center justify-center text-gray-400">
                                             <svg class="w-8 h-8" fill="none" stroke="currentColor" viewBox="0 0 24 24">
