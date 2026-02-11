@@ -46,11 +46,16 @@ print_error() {
 set -o errexit
 trap 'print_error "Script failed at line $LINENO"' ERR
 
-# Step 1: Navigate to app directory
-print_section "Step 1: Setting up directories"
+# Step 1: Navigate to app directory and pull latest changes
+print_section "Step 1: Setting up directories & Pulling Code"
 cd "$APP_DIR" || { print_error "Failed to navigate to app directory"; exit 1; }
 pwd
 print_success "In correct directory"
+
+# Pull latest changes
+echo "Pulling latest changes from git..."
+git pull origin master
+print_success "Code pulled successfully"
 
 # Step 2: Install PHP dependencies
 print_section "Step 2: Installing PHP dependencies"
