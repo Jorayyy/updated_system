@@ -142,8 +142,13 @@ fi
 # php artisan db:seed --force
 # print_success "Database seeded"
 
-# Step 12: Final verification
-print_section "Step 12: Deployment Verification"
+# Step 12: Clear Caches (Critical for new routes/config)
+print_section "Step 12: Clearing application caches"
+php artisan optimize:clear
+print_success "Application cache cleared"
+
+# Step 13: Final verification
+print_section "Step 13: Deployment Verification"
 echo "Checking critical files..."
 if [ -f "artisan" ]; then
     print_success "✓ artisan file exists"
