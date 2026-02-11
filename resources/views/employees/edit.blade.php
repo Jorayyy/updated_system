@@ -131,27 +131,6 @@
                                     class="mt-1 block w-full border-gray-300 rounded-md shadow-sm focus:border-indigo-500 focus:ring-indigo-500">
                             </div>
 
-                            <!-- Monthly Salary -->
-                            <div>
-                                <label for="monthly_salary" class="block text-sm font-medium text-gray-700">Monthly Salary (₱)</label>
-                                <input type="number" step="0.01" name="monthly_salary" id="monthly_salary" value="{{ old('monthly_salary', $employee->monthly_salary) }}"
-                                    class="mt-1 block w-full border-gray-300 rounded-md shadow-sm focus:border-indigo-500 focus:ring-indigo-500">
-                            </div>
-
-                            <!-- Daily Rate -->
-                            <div>
-                                <label for="daily_rate" class="block text-sm font-medium text-gray-700">Daily Rate (₱)</label>
-                                <input type="number" step="0.01" name="daily_rate" id="daily_rate" value="{{ old('daily_rate', $employee->daily_rate) }}"
-                                    class="mt-1 block w-full border-gray-300 rounded-md shadow-sm focus:border-indigo-500 focus:ring-indigo-500">
-                            </div>
-
-                            <!-- Hourly Rate -->
-                            <div>
-                                <label for="hourly_rate" class="block text-sm font-medium text-gray-700">Hourly Rate (₱)</label>
-                                <input type="number" step="0.01" name="hourly_rate" id="hourly_rate" value="{{ old('hourly_rate', $employee->hourly_rate) }}"
-                                    class="mt-1 block w-full border-gray-300 rounded-md shadow-sm focus:border-indigo-500 focus:ring-indigo-500">
-                            </div>
-
                             <!-- Status -->
                             <div>
                                 <label for="is_active" class="block text-sm font-medium text-gray-700">Status</label>
