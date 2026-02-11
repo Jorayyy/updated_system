@@ -20,8 +20,9 @@
         <div>
             <x-input-label for="profile_photo" :value="__('Profile Photo')" />
             <div class="mt-2 flex items-center gap-4">
-                @if($user->profile_photo)
-                    <img src="{{ asset('storage/' . $user->profile_photo) }}" alt="Profile Photo" class="w-20 h-20 rounded-xl object-cover border border-gray-200 shadow-sm">
+                @php $photoUrl = $user->getProfilePhotoUrl(); @endphp
+                @if($photoUrl)
+                    <img src="{{ $photoUrl }}" alt="Profile Photo" class="w-20 h-20 rounded-xl object-cover border border-gray-200 shadow-sm">
                 @else
                     <div class="w-20 h-20 rounded-xl bg-gradient-to-br from-blue-500 to-indigo-600 flex items-center justify-center text-white font-bold text-2xl shadow-sm">
                         {{ substr($user->name, 0, 1) }}

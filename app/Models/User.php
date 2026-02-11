@@ -47,6 +47,34 @@ class User extends Authenticatable
     ];
 
     /**
+     * Get the profile photo URL checking multiple possible paths
+     */
+    public function getProfilePhotoUrl()
+    {
+        if (!$this->profile_photo) {
+            return null;
+        }
+
+        // 1. Check if it's a full URL (e.g., from OAuth provider in future)
+        if (filter_var($this->profile_photo, FILTER_VALIDATE_URL)) {
+            return $this->profile_photo;
+        }
+
+        // 2. Check public/storage path (Standard Laravel Storage Link)
+        if (file_exists(public_path('storage/' . $this->profile_photo))) {
+            return asset('storage/' . $this->profile_photo);
+        }
+
+        // 3. Check public/uploads path (Direct upload alternative)
+        if (file_exists(public_path('uploads/' . $this->profile_photo))) {
+            return asset('uploads/' . $this->profile_photo);
+        }
+
+        // 4. Default to storage asset even if file check fails (frontend might resolve it if on different server)
+        return asset('storage/' . $this->profile_photo);
+    }
+
+    /**
      * The attributes that should be hidden for serialization.
      *
      * @var array<int, string>

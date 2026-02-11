@@ -296,8 +296,9 @@
                     <!-- User Info -->
                     <div x-data="{ userMenuOpen: false }" class="relative">
                         <button @click="userMenuOpen = !userMenuOpen" class="w-full flex items-center gap-3 px-3 py-2.5 rounded-xl text-gray-300 hover:bg-white/10 hover:text-white transition-all duration-200 group border border-transparent hover:border-gray-600/50">
-                            @if(auth()->user()->profile_photo)
-                                <img src="{{ asset('storage/' . auth()->user()->profile_photo) }}" alt="" class="w-9 h-9 rounded-full object-cover shadow-lg flex-shrink-0 ring-2 ring-white/10 group-hover:ring-white/30 transition-all">
+                            @php $photoUrl = auth()->user()->getProfilePhotoUrl(); @endphp
+                            @if($photoUrl)
+                                <img src="{{ $photoUrl }}" alt="" class="w-9 h-9 rounded-full object-cover shadow-lg flex-shrink-0 ring-2 ring-white/10 group-hover:ring-white/30 transition-all">
                             @else
                                 <div class="w-9 h-9 bg-gradient-to-br from-blue-500 to-indigo-600 rounded-full flex items-center justify-center text-sm font-bold text-white shadow-lg flex-shrink-0 ring-2 ring-white/10 group-hover:ring-white/30 transition-all">
                                     {{ substr(auth()->user()->name, 0, 1) }}
