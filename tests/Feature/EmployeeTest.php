@@ -3,8 +3,12 @@
 namespace Tests\Feature;
 
 use App\Models\User;
+use App\Models\Account;
+use App\Models\Site;
+use App\Models\Department;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Tests\TestCase;
+use Illuminate\Support\Facades\Hash;
 
 class EmployeeTest extends TestCase
 {
@@ -30,7 +34,12 @@ class EmployeeTest extends TestCase
 
     public function test_hr_can_create_employee(): void
     {
-        $hr = User::factory()->create(['role' => 'hr']);
+        $site = Site::create(['name' => 'Main Site', 'is_active' => true]);
+        $hrAccount = Account::create(['name' => 'HR Account', 'site_id' => $site->id, 'hierarchy_level' => 100, 'system_role' => 'hr', 'is_active' => true]);
+        $empAccount = Account::create(['name' => 'Emp Account', 'site_id' => $site->id, 'hierarchy_level' => 10, 'system_role' => 'employee', 'is_active' => true]);
+        $department = Department::create(['name' => 'IT', 'is_active' => true]);
+        
+        $hr = User::factory()->create(['role' => 'hr', 'account_id' => $hrAccount->id]);
 
         $response = $this->actingAs($hr)->post(route('employees.store'), [
             'employee_id' => 'EMP-001',
@@ -39,7 +48,10 @@ class EmployeeTest extends TestCase
             'password' => 'password123',
             'password_confirmation' => 'password123',
             'role' => 'employee',
-            'department' => 'IT',
+            'department_id' => $department->id,
+            'department' => 'Legacy Ignored',
+            'account_id' => $empAccount->id,
+            'site_id' => $site->id,
             'position' => 'Developer',
         ]);
 
@@ -48,20 +60,28 @@ class EmployeeTest extends TestCase
         $this->assertDatabaseHas('users', [
             'employee_id' => 'EMP-001',
             'email' => 'test@example.com',
+            'department' => 'IT', // Derived from ID
         ]);
     }
 
     public function test_hr_can_update_employee(): void
     {
-        $hr = User::factory()->create(['role' => 'hr']);
-        $employee = User::factory()->create(['role' => 'employee']);
+        $site = Site::create(['name' => 'Main Site', 'is_active' => true]);
+        $hrAccount = Account::create(['name' => 'HR Account', 'site_id' => $site->id, 'hierarchy_level' => 100, 'system_role' => 'hr', 'is_active' => true]);
+        $empAccount = Account::create(['name' => 'Emp Account', 'site_id' => $site->id, 'hierarchy_level' => 10, 'system_role' => 'employee', 'is_active' => true]);
+        $department = Department::create(['name' => 'HR', 'is_active' => true]);
+        
+        $hr = User::factory()->create(['role' => 'hr', 'account_id' => $hrAccount->id]);
+        $employee = User::factory()->create(['role' => 'employee', 'account_id' => $empAccount->id]);
 
         $response = $this->actingAs($hr)->put(route('employees.update', $employee), [
             'employee_id' => $employee->employee_id,
             'name' => 'Updated Name',
             'email' => $employee->email,
             'role' => 'employee',
-            'department' => 'HR',
+            'department_id' => $department->id,
+            'account_id' => $empAccount->id,
+            'site_id' => $site->id,
             'position' => 'HR Assistant',
         ]);
 
@@ -76,10 +96,16 @@ class EmployeeTest extends TestCase
 
     public function test_hr_can_toggle_employee_status(): void
     {
-        $hr = User::factory()->create(['role' => 'hr']);
-        $employee = User::factory()->create(['role' => 'employee', 'is_active' => true]);
+        $site = Site::create(['name' => 'Main Site', 'is_active' => true]);
+        $hrAccount = Account::create(['name' => 'HR Account', 'site_id' => $site->id, 'hierarchy_level' => 100, 'system_role' => 'hr', 'is_active' => true]);
+        $empAccount = Account::create(['name' => 'Emp Account', 'site_id' => $site->id, 'hierarchy_level' => 10, 'system_role' => 'employee', 'is_active' => true]);
 
-        $response = $this->actingAs($hr)->post(route('employees.toggle-status', $employee));
+        $hr = User::factory()->create(['role' => 'hr', 'account_id' => $hrAccount->id]);
+        $employee = User::factory()->create(['role' => 'employee', 'is_active' => true, 'account_id' => $empAccount->id]);
+
+        $response = $this->actingAs($hr)->post(route('employees.toggle-status', $employee), [
+            'admin_password' => 'password',
+        ]);
 
         $response->assertRedirect();
         

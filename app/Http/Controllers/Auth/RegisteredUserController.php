@@ -37,6 +37,7 @@ class RegisteredUserController extends Controller
         ]);
 
         $user = User::create([
+            'employee_id' => 'EMP-' . str_pad(mt_rand(1, 99999), 5, '0', STR_PAD_LEFT),
             'name' => $request->name,
             'email' => $request->email,
             'password' => Hash::make($request->password),

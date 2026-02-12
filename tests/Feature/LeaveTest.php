@@ -24,8 +24,11 @@ class LeaveTest extends TestCase
 
     public function test_employee_can_create_leave_request(): void
     {
-        $user = User::factory()->create(['role' => 'employee']);
-        $leaveType = LeaveType::factory()->create();
+        $user = User::factory()->create([
+            'role' => 'employee',
+            'date_hired' => now()->subYears(2),
+        ]);
+        $leaveType = LeaveType::factory()->create(['code' => 'VL', 'is_paid' => true]);
         LeaveBalance::create([
             'user_id' => $user->id,
             'leave_type_id' => $leaveType->id,
@@ -53,9 +56,9 @@ class LeaveTest extends TestCase
 
     public function test_hr_can_approve_leave_request(): void
     {
-        $hr = User::factory()->create(['role' => 'hr']);
+        $hr = User::factory()->create(['role' => 'super_admin']);
         $employee = User::factory()->create(['role' => 'employee']);
-        $leaveType = LeaveType::factory()->create();
+        $leaveType = LeaveType::factory()->create(['code' => 'VL']);
         
         $leaveRequest = LeaveRequest::factory()->create([
             'user_id' => $employee->id,
@@ -75,9 +78,9 @@ class LeaveTest extends TestCase
 
     public function test_hr_can_reject_leave_request(): void
     {
-        $hr = User::factory()->create(['role' => 'hr']);
+        $hr = User::factory()->create(['role' => 'super_admin']);
         $employee = User::factory()->create(['role' => 'employee']);
-        $leaveType = LeaveType::factory()->create();
+        $leaveType = LeaveType::factory()->create(['code' => 'VL']);
         
         $leaveRequest = LeaveRequest::factory()->create([
             'user_id' => $employee->id,

@@ -21,8 +21,8 @@ class AttendanceFactory extends Factory
             'time_in' => $timeIn->format('H:i:s'),
             'time_out' => $timeOut->format('H:i:s'),
             'status' => $this->faker->randomElement(['present', 'late', 'half_day']),
-            'total_hours' => 8.0,
-            'overtime_hours' => 0,
+            // 'total_hours' => 8.0, // Column missing
+            // 'overtime_hours' => 0, // Column might be missing or different
             'remarks' => null,
         ];
     }

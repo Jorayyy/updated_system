@@ -6,6 +6,7 @@ use App\Models\User;
 use App\Models\Attendance;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Tests\TestCase;
+use Carbon\Carbon;
 
 class AttendanceTest extends TestCase
 {
@@ -22,6 +23,7 @@ class AttendanceTest extends TestCase
 
     public function test_employee_can_time_in(): void
     {
+        Carbon::setTestNow(now()->setHour(14)); // Ensure mid-day to avoid night shift logic
         $user = User::factory()->create(['role' => 'employee']);
 
         $response = $this->actingAs($user)->post(route('attendance.step'));
@@ -30,8 +32,9 @@ class AttendanceTest extends TestCase
         
         $this->assertDatabaseHas('attendances', [
             'user_id' => $user->id,
-            'date' => today()->toDateString(),
+            'date' => today()->toDateTimeString(), // SQLite stores as datetime
         ]);
+        Carbon::setTestNow(); // Reset
     }
 
     public function test_hr_can_view_attendance_management(): void

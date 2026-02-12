@@ -124,6 +124,10 @@
                                 @endforeach
                             </tbody>
                         </table>
+                        
+                        <div class="mt-4">
+                            {{ $payrolls->links() }}
+                        </div>
                     @else
                         <p class="text-center text-gray-500 py-8">Select a payroll period to view the report.</p>
                     @endif

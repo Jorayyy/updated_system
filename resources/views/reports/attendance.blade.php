@@ -84,6 +84,10 @@
                             @endforelse
                         </tbody>
                     </table>
+                    
+                    <div class="mt-4">
+                        {{ $summary->links() }}
+                    </div>
                 </div>
             </div>
         </div>

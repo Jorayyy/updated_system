@@ -30,10 +30,10 @@ class PayrollFactory extends Factory
         return [
             'user_id' => User::factory(),
             'payroll_period_id' => PayrollPeriod::factory(),
-            'basic_salary' => $basicSalary,
-            'hourly_rate' => $basicSalary / 176, // Assuming 22 days * 8 hours
-            'total_hours_worked' => $this->faker->randomFloat(2, 160, 200),
-            'overtime_hours' => $this->faker->randomFloat(2, 0, 20),
+            'basic_pay' => $basicSalary,
+            // 'hourly_rate' => $basicSalary / 176, // Assuming 22 days * 8 hours
+            // 'total_hours_worked' => $this->faker->randomFloat(2, 160, 200),
+            // 'overtime_hours' => $this->faker->randomFloat(2, 0, 20),
             'overtime_pay' => $overtime,
             'allowances' => $allowances,
             'gross_pay' => $grossPay,

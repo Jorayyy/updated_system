@@ -238,6 +238,12 @@ Route::middleware('auth')->group(function () {
 
         // Payroll Computation (DTR-Based Workflow) - Restricted to HR Accounting
         Route::prefix('payroll/computation')->name('payroll.computation.')->middleware('role:accounting,super_admin')->group(function () {
+            // New 3-Phase Wizard
+            Route::get('/wizard/{period}', [App\Http\Controllers\PayrollWizardController::class, 'show'])->name('wizard');
+            
+            // Progress API
+            Route::get('/period/{period}/progress', [PayrollComputationController::class, 'progress'])->name('progress');
+
             Route::get('/', [PayrollComputationController::class, 'dashboard'])->name('dashboard');
             Route::get('/period/{period}/preview', [PayrollComputationController::class, 'preview'])->name('preview');
             Route::post('/period/{period}/compute', [PayrollComputationController::class, 'compute'])->name('compute');

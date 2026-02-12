@@ -13,8 +13,9 @@ class LeaveTypeFactory extends Factory
     {
         return [
             'name' => $this->faker->randomElement(['Vacation Leave', 'Sick Leave', 'Emergency Leave', 'Maternity Leave', 'Paternity Leave']),
+            'code' => $this->faker->unique()->word,
             'description' => $this->faker->sentence(),
-            'days_per_year' => $this->faker->numberBetween(5, 15),
+            'max_days' => $this->faker->numberBetween(5, 15),
             'is_paid' => $this->faker->boolean(80),
             'is_active' => true,
         ];
@@ -24,7 +25,8 @@ class LeaveTypeFactory extends Factory
     {
         return $this->state(fn (array $attributes) => [
             'name' => 'Vacation Leave',
-            'days_per_year' => 15,
+            'code' => 'VL',
+            'max_days' => 15,
             'is_paid' => true,
         ]);
     }

@@ -108,7 +108,7 @@ class DtrApprovalController extends Controller
     {
         $user = Auth::user();
 
-        if (!in_array($user->role, ['admin', 'hr'])) {
+        if (!in_array($user->role, ['admin', 'hr', 'super_admin'])) {
             abort(403, 'Unauthorized');
         }
 
@@ -124,7 +124,7 @@ class DtrApprovalController extends Controller
     {
         $user = Auth::user();
 
-        if (!in_array($user->role, ['admin', 'hr'])) {
+        if (!in_array($user->role, ['admin', 'hr', 'super_admin'])) {
             abort(403, 'Unauthorized');
         }
 
@@ -242,7 +242,7 @@ class DtrApprovalController extends Controller
     {
         $user = Auth::user();
 
-        if (!in_array($user->role, ['admin', 'hr'])) {
+        if (!in_array($user->role, ['admin', 'hr', 'super_admin'])) {
             abort(403, 'Only Admin/HR can approve all DTRs');
         }
 
@@ -277,7 +277,7 @@ class DtrApprovalController extends Controller
     {
         $user = Auth::user();
 
-        if ($dailyTimeRecord->user_id !== $user->id && !in_array($user->role, ['admin', 'hr'])) {
+        if ($dailyTimeRecord->user_id !== $user->id && !in_array($user->role, ['admin', 'hr', 'super_admin'])) {
             abort(403, 'Unauthorized');
         }
 
@@ -331,7 +331,7 @@ class DtrApprovalController extends Controller
     {
         $user = Auth::user();
 
-        if (!in_array($user->role, ['admin', 'hr'])) {
+        if (!in_array($user->role, ['admin', 'hr', 'super_admin'])) {
             abort(403, 'Unauthorized');
         }
 
@@ -352,7 +352,7 @@ class DtrApprovalController extends Controller
     {
         $user = Auth::user();
 
-        if (!in_array($user->role, ['admin', 'hr'])) {
+        if (!in_array($user->role, ['admin', 'hr', 'super_admin'])) {
             return response()->json(['success' => false, 'message' => 'Unauthorized'], 403);
         }
 
@@ -381,7 +381,7 @@ class DtrApprovalController extends Controller
 
         $user = Auth::user();
 
-        if (!in_array($user->role, ['admin', 'hr'])) {
+        if (!in_array($user->role, ['admin', 'hr', 'super_admin'])) {
             abort(403, 'Unauthorized');
         }
 
@@ -425,7 +425,7 @@ class DtrApprovalController extends Controller
     {
         $user = Auth::user();
 
-        if (!in_array($user->role, ['admin', 'hr'])) {
+        if (!in_array($user->role, ['admin', 'hr', 'super_admin'])) {
             abort(403, 'Unauthorized');
         }
 
@@ -449,7 +449,7 @@ class DtrApprovalController extends Controller
     {
         $user = Auth::user();
 
-        if (!in_array($user->role, ['admin', 'hr'])) {
+        if (!in_array($user->role, ['admin', 'hr', 'super_admin'])) {
             abort(403, 'Unauthorized');
         }
 

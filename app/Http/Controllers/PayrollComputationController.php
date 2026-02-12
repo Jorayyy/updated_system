@@ -15,6 +15,8 @@ use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Log;
 
+use Illuminate\Support\Facades\Cache;
+
 class PayrollComputationController extends Controller
 {
     protected PayrollComputationService $computationService;
@@ -27,14 +29,54 @@ class PayrollComputationController extends Controller
     }
 
     /**
+     * Get computation progress for a period
+     */
+    public function progress(PayrollPeriod $period)
+    {
+        $progress = Cache::get("payroll_progress_{$period->id}");
+
+        if (!$progress) {
+             // If no progress found, but period is processing, return minimal state
+             if ($period->status === 'processing') {
+                 return response()->json([
+                     'status' => 'processing',
+                     'percentage' => 0,
+                     'message' => 'Starting...'
+                 ]);
+             }
+             
+             // If completed, return completed state
+             if ($period->status === 'completed' || $period->payroll_computed_at) {
+                 return response()->json([
+                     'status' => 'completed',
+                     'percentage' => 100,
+                     'message' => 'Completed'
+                 ]);
+             }
+
+             return response()->json([
+                 'status' => 'idle',
+                 'percentage' => 0
+             ]);
+        }
+
+        return response()->json($progress);
+    }
+
+    /**
      * Generate DTRs for a specific period
      */
     public function generateDtrs(PayrollPeriod $period)
     {
+        // Validation: Cannot generate for future periods
+        if ($period->start_date->isFuture()) {
+            return redirect()->back()->with('error', "Cannot generate DTRs for a future period ({$period->period_label}). Please wait until the period starts.");
+        }
+        
         try {
             $results = $this->dtrService->generateDtrForPeriod($period);
             
-            return redirect()->back()->with('success', "Successfully generated {$results['created_dtrs']} DTR records for the period.");
+            return redirect()->back()->with('success', "Successfully generated {$results['total_dtrs_created']} DTR records for the period.");
         } catch (\Exception $e) {
             return redirect()->back()->with('error', "Failed to generate DTRs: " . $e->getMessage());
         }
@@ -98,11 +140,16 @@ class PayrollComputationController extends Controller
             ->orderBy('start_date', 'desc')
             ->get();
 
-        // Get periods with pending DTRs
+        // Get periods with pending DTRs OR no DTRs (Phase 1)
         $pendingPeriods = PayrollPeriod::where('status', 'draft')
-            ->whereHas('dailyTimeRecords', function ($query) {
-                $query->where('status', '!=', 'approved');
-            })
+           ->where(function($q) {
+                // Either has pending DTRs
+                $q->whereHas('dailyTimeRecords', function ($query) {
+                    $query->where('status', '!=', 'approved');
+                })
+                // OR has NO DTRs (Fresh period)
+                ->orWhereDoesntHave('dailyTimeRecords');
+           })
             ->withCount([
                 'dailyTimeRecords as total_dtrs',
                 'dailyTimeRecords as approved_dtrs' => function ($query) {
@@ -210,6 +257,18 @@ class PayrollComputationController extends Controller
                 ->with('error', 'Payroll can only be computed for draft periods.');
         }
 
+        // Check if DTRs exist
+        $totalDtrs = DailyTimeRecord::where('payroll_period_id', $period->id)->count();
+        if ($totalDtrs === 0) {
+            return redirect()->back()
+                ->with('error', "Cannot compute. No DTRs generated for this period.");
+        }
+
+        // Validation: Cannot compute future payroll
+        if ($period->start_date->isFuture()) {
+            return redirect()->back()->with('error', "Cannot compute payroll for a future period. Please wait until the period starts.");
+        }
+
         // Check if all DTRs are approved
         $unapprovedDtrs = DailyTimeRecord::where('payroll_period_id', $period->id)
             ->where('status', '!=', 'approved')
@@ -229,8 +288,11 @@ class PayrollComputationController extends Controller
         $useQueue = $request->get('use_queue', $employeeCount > 10);
 
         if ($useQueue) {
+            // Update status to processing immediately so the UI shows the loading state
+            $period->update(['status' => 'processing']);
+            
             // Dispatch to queue
-            ComputePayrollJob::dispatch($period, auth()->user())
+            ComputePayrollJob::dispatch($period, null, auth()->id())
                 ->onQueue('payroll');
 
             Log::channel('payroll')->info('Payroll computation queued', [
@@ -239,8 +301,9 @@ class PayrollComputationController extends Controller
                 'user_id' => auth()->id(),
             ]);
 
-            return redirect()->route('payroll.computation.dashboard')
-                ->with('success', "Payroll computation queued for {$employeeCount} employees. You'll be notified when complete.");
+            return redirect()->route('payroll.computation.wizard', $period)
+                ->with('success', "Payroll computation queued for {$employeeCount} employees. Please wait...");
+
         }
 
         // Synchronous computation for small batches
@@ -516,7 +579,12 @@ class PayrollComputationController extends Controller
         
         if (empty($payrollIds)) {
             // Release all approved payrolls in the period
-            $results = $this->computationService->releasePayrollsForPeriod($period, auth()->id());
+            $resultMap = $this->computationService->releasePayrollsForPeriod($period, auth()->id());
+            // Normalize keys: Service returns 'released', Controller expects 'success'
+            $results = [
+                'success' => $resultMap['released'] ?? ($resultMap['success'] ?? 0),
+                'failed' => $resultMap['failed'] ?? 0
+            ];
         } else {
             // Release selected payrolls
             $results = ['success' => 0, 'failed' => 0];

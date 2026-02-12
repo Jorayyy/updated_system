@@ -343,16 +343,6 @@
                                 </span>
                             </a>
 
-                            <!-- Dashboard -->
-                            <a href="{{ route('dashboard') }}" class="block px-4 py-2.5 text-sm text-gray-300 hover:bg-white/5 hover:text-white transition-colors {{ request()->routeIs('dashboard') ? 'bg-blue-600/20 text-blue-200' : '' }} group">
-                                <span class="flex items-center gap-2 group-hover:translate-x-1 transition-transform duration-200">
-                                    <svg class="w-4 h-4 text-gray-400 group-hover:text-white transition-colors" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 12l2-2m0 0l7-7 7 7M5 10v10a1 1 0 001 1h3m10-11l2 2m-2-2v10a1 1 0 01-1 1h-3m-6 0a1 1 0 001-1v-4a1 1 0 011-1h2a1 1 0 011 1v4a1 1 0 001 1m-6 0h6"/>
-                                    </svg>
-                                    Dashboard
-                                </span>
-                            </a>
-
                             <!-- Attendance -->
                             <a href="{{ route('attendance.index') }}" class="block px-4 py-2.5 text-sm text-gray-300 hover:bg-gray-600 hover:text-white transition {{ request()->routeIs('attendance.index', 'attendance.history') ? 'bg-gray-600 text-white' : '' }}">
                                 <span class="flex items-center gap-2">
@@ -431,10 +421,23 @@
                 <!-- Navigation Links -->
                 <nav id="sidebar-nav" class="flex-1 px-3 py-4 space-y-1 overflow-y-auto">
                     @if(auth()->user()->isAdmin() || auth()->user()->isHr())
-                        <!-- HR Management Section -->
-                        <div class="mb-2">
+                        <!-- Payroll Center (Dashboard) -->
+                        <div class="relative nav-item mb-1">
+                            <a href="{{ route('dashboard') }}" class="flex items-center gap-3 px-3 py-2.5 mx-2 rounded-xl transition-all duration-200 group {{ request()->routeIs('dashboard', 'payroll.computation.*') ? 'bg-blue-600 text-white shadow-lg ring-1 ring-white/20' : 'text-gray-400 hover:bg-white/5 hover:text-white' }}">
+                                <div class="w-8 h-8 flex items-center justify-center flex-shrink-0 transition-transform group-hover:scale-110">
+                                    <svg class="w-5 h-5 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8c-1.657 0-3 .895-3 2s1.343 2 3 2 3 .895 3 2-1.343 2-3 2m0-8c1.11 0 2.08.402 2.599 1M12 8V7m0 1v8m0 0v1m0-1c-1.11 0-2.08-.402-2.599-1M21 12a9 9 0 11-18 0 9 9 0 0118 0z"/>
+                                    </svg>
+                                </div>
+                                <span x-show="sidebarOpen" x-cloak class="sidebar-text font-medium text-sm" :class="sidebarOpen ? 'sidebar-text-visible' : 'sidebar-text-hidden'">Payroll Center</span>
+                            </a>
+                            <div x-show="!sidebarOpen" class="tooltip">Payroll Center</div>
+                        </div>
+
+                        <div class="pt-4 mt-4 border-t border-gray-700/50">
                             <p x-show="sidebarOpen" x-cloak class="px-3 text-[10px] font-bold text-gray-400 uppercase tracking-[0.2em] mb-3 sidebar-text text-shadow-sm select-none" :class="sidebarOpen ? 'sidebar-text-visible' : 'sidebar-text-hidden'">HR Management</p>
                         </div>
+
 
                         <!-- Sites -->
                         <div class="relative nav-item mb-1">
@@ -488,7 +491,8 @@
                             <div x-show="!sidebarOpen" class="tooltip">Attendance Records</div>
                         </div>
 
-                        <!-- DTR Management -->
+                        <!-- DTR Management (Hidden - merged into Payroll Center) -->
+                        <!-- 
                         <div class="relative nav-item mb-1">
                             <a href="{{ route('dtr.admin-index') }}" class="flex items-center gap-3 px-3 py-2.5 mx-2 rounded-xl transition-all duration-200 group {{ request()->routeIs('dtr.admin-index', 'dtr.admin-show') ? 'bg-blue-600 text-white shadow-lg ring-1 ring-white/20' : 'text-gray-400 hover:bg-white/5 hover:text-white' }}">
                                 <div class="w-8 h-8 flex items-center justify-center flex-shrink-0 transition-transform group-hover:scale-110">
@@ -500,8 +504,10 @@
                             </a>
                             <div x-show="!sidebarOpen" class="tooltip">DTR Management</div>
                         </div>
+                        -->
 
-                        <!-- DTR Approval (Automation) -->
+                        <!-- DTR Approval (Hidden - merged into Payroll Center) -->
+                        <!--
                         <div class="relative nav-item mb-1">
                             <a href="{{ route('dtr-approval.index') }}" class="flex items-center gap-3 px-3 py-2.5 mx-2 rounded-xl transition-all duration-200 group {{ request()->routeIs('dtr-approval.*') ? 'bg-blue-600 text-white shadow-lg ring-1 ring-white/20' : 'text-gray-400 hover:bg-white/5 hover:text-white' }}">
                                 <div class="w-8 h-8 flex items-center justify-center flex-shrink-0 transition-transform group-hover:scale-110">
@@ -513,6 +519,8 @@
                             </a>
                             <div x-show="!sidebarOpen" class="tooltip">DTR Approval</div>
                         </div>
+                        -->
+
 
                         <!-- Leave Requests -->
                         <div class="relative nav-item mb-1">
@@ -560,34 +568,7 @@
                         </div>
                         @endif
 
-                        <!-- Payroll Module -->
-                        <div class="pt-4 mt-4 border-t border-gray-700/50">
-                            <p x-show="sidebarOpen" x-cloak class="px-3 text-[10px] font-bold text-gray-400 uppercase tracking-[0.2em] mb-3 sidebar-text text-shadow-sm select-none" :class="sidebarOpen ? 'sidebar-text-visible' : 'sidebar-text-hidden'">Payroll Management</p>
-                        </div>
 
-                        <div class="relative nav-item mb-1" x-data="{ open: {{ request()->routeIs('payroll.*') ? 'true' : 'false' }} }">
-                            <button @click="open = !open" type="button" class="w-full flex items-center justify-between gap-3 px-3 py-2.5 mx-2 rounded-xl transition-all duration-200 group {{ request()->routeIs('payroll.*') ? 'bg-blue-600 text-white shadow-lg ring-1 ring-white/20' : 'text-gray-400 hover:bg-white/5 hover:text-white' }}">
-                                <div class="flex items-center gap-3">
-                                    <div class="w-8 h-8 flex items-center justify-center flex-shrink-0 transition-transform group-hover:scale-110">
-                                        <svg class="w-5 h-5 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8c-1.657 0-3 .895-3 2s1.343 2 3 2 3 .895 3 2-1.343 2-3 2m0-8c1.11 0 2.08.402 2.599 1M12 8V7m0 1v8m0 0v1m0-1c-1.11 0-2.08-.402-2.599-1M21 12a9 9 0 11-18 0 9 9 0 0118 0z"/>
-                                        </svg>
-                                    </div>
-                                    <span x-show="sidebarOpen" x-cloak class="sidebar-text font-medium text-sm" :class="sidebarOpen ? 'sidebar-text-visible' : 'sidebar-text-hidden'">Payroll Center</span>
-                                </div>
-                                <svg x-show="sidebarOpen" :class="open ? 'rotate-180' : ''" class="w-4 h-4 transition-transform duration-200" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7"/>
-                                </svg>
-                            </button>
-                            <div x-show="!sidebarOpen" class="tooltip">Payroll Center</div>
-
-                            <!-- Submenu (only visible when sidebar is expanded) -->
-                            <div x-show="sidebarOpen && open" x-cloak class="mt-1 ml-12 space-y-1" x-transition:enter="transition ease-out duration-200" x-transition:enter-start="opacity-0 -translate-y-2" x-transition:enter-end="opacity-100 translate-y-0">
-                                <a href="{{ route('payroll.computation.dashboard') }}" class="block px-3 py-2 text-sm rounded-lg transition-colors {{ request()->routeIs('payroll.computation.dashboard') ? 'text-white font-medium bg-white/10' : 'text-gray-400 hover:text-white hover:bg-white/5' }}">Dashboard</a>
-                                <a href="{{ route('payroll.periods') }}" class="block px-3 py-2 text-sm rounded-lg transition-colors {{ request()->routeIs('payroll.periods') ? 'text-white font-medium bg-white/10' : 'text-gray-400 hover:text-white hover:bg-white/5' }}">Pay Periods</a>
-                                <a href="{{ route('payroll.index') }}" class="block px-3 py-2 text-sm rounded-lg transition-colors {{ request()->routeIs('payroll.index') ? 'text-white font-medium bg-white/10' : 'text-gray-400 hover:text-white hover:bg-white/5' }}">History</a>
-                            </div>
-                        </div>
 
                         @if(auth()->user()->isSuperAdmin())
                         <!-- Tools & Reports Section -->

@@ -41,20 +41,23 @@ class PayrollTest extends TestCase
 
     public function test_hr_can_create_payroll_period(): void
     {
-        $hr = User::factory()->create(['role' => 'hr']);
+        $hr = User::factory()->create(['role' => 'accounting']);
 
         $response = $this->actingAs($hr)->post(route('payroll.store-period'), [
-            'name' => 'January 2026 - 1st Half',
             'start_date' => '2026-01-01',
             'end_date' => '2026-01-15',
             'pay_date' => '2026-01-20',
-            'type' => 'semi_monthly',
+            'period_type' => 'semi_monthly',
+            'cover_month' => 'January',
+            'cover_year' => 2026,
         ]);
 
         $response->assertRedirect();
         
         $this->assertDatabaseHas('payroll_periods', [
-            'name' => 'January 2026 - 1st Half',
+            'start_date' => '2026-01-01 00:00:00',
+            'end_date' => '2026-01-15 00:00:00',
+            'period_type' => 'semi_monthly',
         ]);
     }
 
@@ -65,7 +68,8 @@ class PayrollTest extends TestCase
         $payroll = Payroll::factory()->create([
             'user_id' => $employee->id,
             'payroll_period_id' => $period->id,
-            'status' => 'approved',
+            'status' => 'released',
+            'is_posted' => true,
         ]);
 
         $response = $this->actingAs($employee)->get(route('payroll.my-payslip', $payroll));

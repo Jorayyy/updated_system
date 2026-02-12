@@ -16,11 +16,11 @@ class PayrollPeriodFactory extends Factory
         $payDate = (clone $endDate)->modify('+5 days');
         
         return [
-            'name' => $startDate->format('F Y') . ' - ' . ($startDate->format('d') <= 15 ? '1st Half' : '2nd Half'),
+            // 'name' => $startDate->format('F Y') . ' - ' . ($startDate->format('d') <= 15 ? '1st Half' : '2nd Half'), // Column missing
             'start_date' => $startDate->format('Y-m-d'),
             'end_date' => $endDate->format('Y-m-d'),
             'pay_date' => $payDate->format('Y-m-d'),
-            'type' => 'semi_monthly',
+            'period_type' => 'semi_monthly',
             'status' => $this->faker->randomElement(['draft', 'processing', 'completed']),
         ];
     }

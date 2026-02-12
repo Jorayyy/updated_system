@@ -194,7 +194,7 @@ class PayrollController extends Controller
     {
         $request->validate([
             // Period Type moved to top
-            'type' => 'required|in:semi-monthly,monthly,weekly,bi-weekly',
+            'period_type' => 'required|in:semi_monthly,monthly,weekly',
             'start_date' => 'required|date',
             'end_date' => 'required|date|after_or_equal:start_date',
             'cover_month' => 'required|string',
@@ -206,9 +206,6 @@ class PayrollController extends Controller
         ]);
 
         $groupId = $request->payroll_group_id;
-
-        // Generate Name
-        $name = ($request->cover_month . ' ' . $request->cover_year . ($request->cut_off_label ? ' - ' . $request->cut_off_label : ''));
 
         // Check for overlapping periods
         $overlapping = PayrollPeriod::where(function ($query) use ($request) {
@@ -232,17 +229,15 @@ class PayrollController extends Controller
         }
 
         PayrollPeriod::create([
-            'name' => $name,
             'start_date' => $request->start_date,
             'end_date' => $request->end_date,
             'pay_date' => $request->pay_date,
-            'type' => $request->type,
-            'period_type' => str_replace('-', '_', $request->type), // Normalize
+            'period_type' => $request->period_type,
             'payroll_group_id' => $request->payroll_group_id,
             'cover_month' => $request->cover_month,
             'cover_year' => $request->cover_year,
             'cut_off_label' => $request->cut_off_label,
-            'description' => $request->description,
+            'remarks' => $request->description,
             'status' => 'draft',
         ]);
 

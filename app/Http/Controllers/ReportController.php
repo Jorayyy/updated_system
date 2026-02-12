@@ -38,19 +38,43 @@ class ReportController extends Controller
             $query->where('department', $department);
         }
 
-        $employees = $query->with(['attendances' => function ($q) use ($startDate, $endDate) {
+        // Optimize: Eager load relationships and use database aggregation if possible
+        // For complex counts like 'late', 'absent' based on status string, we can use withCount
+        // showing how to use withCount for filtered status
+        
+        $employees = $query->withCount([
+            'attendances as present_count' => function ($q) use ($startDate, $endDate) {
+                $q->whereBetween('date', [$startDate, $endDate])
+                  ->whereIn('status', ['present', 'late']);
+            },
+            'attendances as late_count' => function ($q) use ($startDate, $endDate) {
+                $q->whereBetween('date', [$startDate, $endDate])
+                  ->where('status', 'late');
+            },
+            'attendances as absent_count' => function ($q) use ($startDate, $endDate) {
+                $q->whereBetween('date', [$startDate, $endDate])
+                  ->where('status', 'absent');
+            }
+        ])
+        ->withSum(['attendances as total_hours' => function ($q) use ($startDate, $endDate) {
             $q->whereBetween('date', [$startDate, $endDate]);
-        }])->get();
+        }], 'total_work_minutes')
+        ->withSum(['attendances as overtime_hours' => function ($q) use ($startDate, $endDate) {
+            $q->whereBetween('date', [$startDate, $endDate]);
+        }], 'overtime_minutes')
+        ->orderBy('name')
+        ->paginate(20)
+        ->appends($request->query()); // Keep filter params in pagination links
 
-        $summary = $employees->map(function ($employee) {
-            $attendances = $employee->attendances;
+        // Use through() to map the paginator items while keeping pagination links
+        $summary = $employees->through(function ($employee) {
             return [
                 'employee' => $employee,
-                'present' => $attendances->whereIn('status', ['present', 'late'])->count(),
-                'late' => $attendances->where('status', 'late')->count(),
-                'absent' => $attendances->where('status', 'absent')->count(),
-                'total_hours' => round($attendances->sum('total_work_minutes') / 60, 1),
-                'overtime_hours' => round($attendances->sum('overtime_minutes') / 60, 1),
+                'present' => $employee->present_count,
+                'late' => $employee->late_count,
+                'absent' => $employee->absent_count,
+                'total_hours' => round($employee->total_hours / 60, 1),
+                'overtime_hours' => round($employee->overtime_hours / 60, 1),
             ];
         });
 
@@ -193,24 +217,28 @@ class ReportController extends Controller
         
         $periods = PayrollPeriod::orderBy('start_date', 'desc')->get();
         
-        $payrolls = collect();
+        // Initialize as empty paginator if no period selected
+        $payrolls = new \Illuminate\Pagination\LengthAwarePaginator([], 0, 20);
         $totals = null;
 
         if ($periodId) {
-            $payrolls = Payroll::with(['user', 'payrollPeriod'])
+            $query = Payroll::with(['user', 'payrollPeriod'])
                 ->where('payroll_period_id', $periodId)
-                ->orderBy('user_id')
-                ->get();
+                ->orderBy('user_id');
 
+            // Calculate totals using database aggregation (much faster than PHP loop)
             $totals = [
-                'gross' => $payrolls->sum('gross_pay'),
-                'deductions' => $payrolls->sum('total_deductions'),
-                'net' => $payrolls->sum('net_pay'),
-                'sss' => $payrolls->sum('sss_contribution'),
-                'philhealth' => $payrolls->sum('philhealth_contribution'),
-                'pagibig' => $payrolls->sum('pagibig_contribution'),
-                'tax' => $payrolls->sum('withholding_tax'),
+                'gross' => $query->sum('gross_pay'),
+                'deductions' => $query->sum('total_deductions'),
+                'net' => $query->sum('net_pay'),
+                'sss' => $query->sum('sss_contribution'),
+                'philhealth' => $query->sum('philhealth_contribution'),
+                'pagibig' => $query->sum('pagibig_contribution'),
+                'tax' => $query->sum('withholding_tax'),
             ];
+
+            // Get paginated results
+            $payrolls = $query->paginate(20)->appends($request->query());
         }
 
         return view('reports.payroll', compact('periods', 'payrolls', 'totals', 'periodId'));

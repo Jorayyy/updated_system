@@ -1,8 +1,13 @@
 <x-app-layout>
     <x-slot name="header">
-        <h2 class="font-semibold text-xl text-gray-800 leading-tight">
-            {{ __('Create Payroll Period') }}
-        </h2>
+        <div class="flex justify-between items-center">
+            <h2 class="font-semibold text-xl text-gray-800 leading-tight">
+                {{ __('Create Payroll Period') }}
+            </h2>
+            <a href="{{ route('payroll.computation.dashboard') }}" class="text-sm text-gray-600 hover:text-gray-900">
+                ← Back to Command Center
+            </a>
+        </div>
     </x-slot>
 
     <div class="py-6">
@@ -71,15 +76,14 @@
 
                             <!-- Period Type -->
                             <div>
-                                <x-input-label for="type" :value="__('Payroll Type')" />
-                                <select name="type" id="type" required
+                                <x-input-label for="period_type" :value="__('Payroll Type')" />
+                                <select name="period_type" id="period_type" required
                                     class="mt-1 block w-full border-gray-300 rounded-md shadow-sm focus:border-indigo-500 focus:ring-indigo-500">
-                                    <option value="semi-monthly" {{ old('type') == 'semi-monthly' ? 'selected' : '' }}>Semi-Monthly (15th & 30th)</option>
-                                    <option value="monthly" {{ old('type') == 'monthly' ? 'selected' : '' }}>Monthly</option>
-                                    <option value="weekly" {{ old('type') == 'weekly' ? 'selected' : '' }}>Weekly</option>
-                                    <option value="bi-weekly" {{ old('type') == 'bi-weekly' ? 'selected' : '' }}>Bi-Weekly</option>
+                                    <option value="semi_monthly" {{ old('period_type') == 'semi_monthly' ? 'selected' : '' }}>Semi-Monthly (15th & 30th)</option>
+                                    <option value="monthly" {{ old('period_type') == 'monthly' ? 'selected' : '' }}>Monthly</option>
+                                    <option value="weekly" {{ old('period_type') == 'weekly' ? 'selected' : '' }}>Weekly</option>
                                 </select>
-                                <x-input-error :messages="$errors->get('type')" class="mt-2" />
+                                <x-input-error :messages="$errors->get('period_type')" class="mt-2" />
                             </div>
 
                             <!-- Payroll Group -->
@@ -103,13 +107,17 @@
                                 document.getElementById('payroll_group_id').addEventListener('change', function() {
                                     var selectedOption = this.options[this.selectedIndex];
                                     var type = selectedOption.getAttribute('data-type');
-                                    var typeSelect = document.getElementById('type');
+                                    var typeSelect = document.getElementById('period_type');
                                     
                                     if (type) {
+                                        // Standardize type format if needed (e.g. semi-monthly to semi_monthly)
+                                        type = type.replace(/-/g, '_');
+                                        
                                         // Attempt to match group type to payroll type
                                         for (var i = 0; i < typeSelect.options.length; i++) {
                                             if (typeSelect.options[i].value === type) {
                                                 typeSelect.selectedIndex = i;
+                                                typeSelect.dispatchEvent(new Event('change')); // Trigger date update
                                                 break;
                                             }
                                         }
@@ -173,7 +181,7 @@
 
                             <!-- Submit -->
                             <div class="flex items-center justify-end gap-4 pt-4 border-t">
-                                <a href="{{ route('payroll.periods') }}" class="text-gray-600 hover:text-gray-800">
+                                <a href="{{ route('payroll.computation.dashboard') }}" class="text-gray-600 hover:text-gray-800">
                                     Cancel
                                 </a>
                                 <x-primary-button>
@@ -190,7 +198,7 @@
     @push('scripts')
     <script>
         document.addEventListener('DOMContentLoaded', function() {
-            const typeSelect = document.getElementById('type');
+            const typeSelect = document.getElementById('period_type');
             const startDate = document.getElementById('start_date');
             const endDate = document.getElementById('end_date');
             const payDate = document.getElementById('pay_date');
@@ -203,7 +211,7 @@
                 let end, pay;
 
                 switch(type) {
-                    case 'semi-monthly':
+                    case 'semi_monthly':
                         if (start.getDate() <= 15) {
                             end = new Date(start.getFullYear(), start.getMonth(), 15);
                         } else {
@@ -227,19 +235,10 @@
                         if (dayToFriday === 0) dayToFriday = 7; // If end is Friday, next Friday
                         pay.setDate(pay.getDate() + dayToFriday);
                         break;
-                    case 'bi-weekly':
-                        end = new Date(start);
-                        end.setDate(end.getDate() + 13);
-                        // Default pay date to the next Friday
-                        pay = new Date(end);
-                        let dayToFridayBi = (5 - pay.getDay() + 7) % 7;
-                        if (dayToFridayBi === 0) dayToFridayBi = 7;
-                        pay.setDate(pay.getDate() + dayToFridayBi);
-                        break;
                 }
 
-                endDate.value = end.toISOString().split('T')[0];
-                payDate.value = pay.toISOString().split('T')[0];
+                if (end) endDate.value = end.toISOString().split('T')[0];
+                if (pay) payDate.value = pay.toISOString().split('T')[0];
             }
 
             typeSelect.addEventListener('change', updateDates);

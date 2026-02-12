@@ -17,6 +17,7 @@ use Carbon\Carbon;
 use Illuminate\Support\Collection;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Log;
+use Illuminate\Support\Facades\Cache;
 
 /**
  * Enhanced Payroll Computation Service
@@ -246,12 +247,21 @@ class PayrollComputationService
      */
     public function computePayrollForPeriod(PayrollPeriod $period, ?array $userIds = null): array
     {
+        // Reset progress
+        Cache::put("payroll_progress_{$period->id}", [
+            'status' => 'processing',
+            'percentage' => 0,
+            'current' => 0,
+            'total' => 0,
+            'message' => 'Initializing...'
+        ], 3600);
+
         $results = [
             'computed' => 0,
             'failed' => 0,
             'skipped' => 0,
             'errors' => [],
-            'success' => [], // Added to match controller expectations
+            'success' => [],
         ];
 
         // Get employees
@@ -262,9 +272,6 @@ class PayrollComputationService
         if ($period->payroll_group_id) {
             $query->where('payroll_group_id', $period->payroll_group_id);
         } else {
-            // If period is global (no specific group), only process users who are NOT assigned to any group
-            // OR process everyone if no groups exist? 
-            // Better to stick to "No Group ID" -> "Users with No Group ID" for consistency.
             $query->whereNull('payroll_group_id');
         }
 
@@ -273,6 +280,16 @@ class PayrollComputationService
         }
 
         $employees = $query->get();
+        $totalEmployees = $employees->count(); // Total count for progress
+        
+        Cache::put("payroll_progress_{$period->id}", [
+            'status' => 'processing',
+            'percentage' => 0,
+            'current' => 0,
+            'total' => $totalEmployees,
+            'message' => 'Fetching data...'
+        ], 3600);
+        
         $employeeIds = $employees->pluck('id');
 
         // Optimized: Batch fetch all necessary data once
@@ -302,7 +319,23 @@ class PayrollComputationService
             ->get()
             ->groupBy('user_id');
 
+        $processedCount = 0;
+
         foreach ($employees as $employee) {
+            $processedCount++;
+            
+            // Update Progress in Cache (every 5 employees or so to reduce cache writes)
+            if ($processedCount % 1 == 0 || $processedCount == $totalEmployees) {
+                 $percentage = ($processedCount / $totalEmployees) * 100;
+                 Cache::put("payroll_progress_{$period->id}", [
+                    'status' => 'processing',
+                    'percentage' => round($percentage),
+                    'current' => $processedCount,
+                    'total' => $totalEmployees,
+                    'message' => "Processing {$employee->name}..."
+                ], 3600);
+            }
+
             $pendingCount = $pendingDtrCounts[$employee->id] ?? 0;
 
             if ($pendingCount > 0) {
@@ -329,12 +362,24 @@ class PayrollComputationService
             }
         }
 
+        // Finalize Progress
+        Cache::put("payroll_progress_{$period->id}", [
+            'status' => 'completed',
+            'percentage' => 100,
+            'current' => $totalEmployees,
+            'total' => $totalEmployees,
+            'message' => 'Completed!'
+        ], 3600);
+
         // Update period status
         if ($results['computed'] > 0) {
             $period->update([
                 'status' => 'completed',
                 'payroll_computed_at' => now(),
             ]);
+        } else {
+             // If nothing computed, reset to draft
+             $period->update(['status' => 'draft']);
         }
 
         return $results;
@@ -743,18 +788,18 @@ class PayrollComputationService
             ->where('status', 'computed')
             ->get();
 
-        $results = ['approved' => 0, 'failed' => 0];
+        $results = ['success' => 0, 'failed' => 0];
 
         foreach ($payrolls as $payroll) {
             $result = $this->approvePayroll($payroll, $approvedBy);
             if ($result['success']) {
-                $results['approved']++;
+                $results['success']++;
             } else {
                 $results['failed']++;
             }
         }
 
-        if ($results['failed'] === 0 && $results['approved'] > 0) {
+        if ($results['failed'] === 0 && $results['success'] > 0) {
             // Keep status as processing until released (completed)
             $period->touch();
         }

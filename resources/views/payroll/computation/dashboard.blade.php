@@ -180,15 +180,9 @@
                                             {{ $period->pay_date->format('M d, Y') }}
                                         </td>
                                         <td class="px-6 py-4 whitespace-nowrap text-right text-sm font-medium space-x-2">
-                                            <a href="{{ route('payroll.computation.preview', $period) }}" class="text-blue-600 hover:text-blue-900">
-                                                Preview
+                                            <a href="{{ route('payroll.computation.wizard', $period) }}" class="inline-flex items-center px-4 py-2 bg-blue-600 border border-transparent rounded-md font-semibold text-xs text-white uppercase tracking-widest hover:bg-blue-700 active:bg-blue-900 focus:outline-none focus:border-blue-900 focus:ring ring-blue-300 disabled:opacity-25 transition ease-in-out duration-150">
+                                                Open Wizard
                                             </a>
-                                            <form action="{{ route('payroll.computation.compute', $period) }}" method="POST" class="inline">
-                                                @csrf
-                                                <button type="submit" class="text-green-600 hover:text-green-900 font-semibold" onclick="return confirm('Compute payroll for this period?')">
-                                                    Compute Payroll
-                                                </button>
-                                            </form>
                                         </td>
                                     </tr>
                                 @endforeach
@@ -251,19 +245,19 @@
                                             </div>
                                         </td>
                                         <td class="px-6 py-4 whitespace-nowrap">
-                                            <span class="text-sm text-yellow-600">
-                                                {{ $period->pending_dtrs }} pending approval
-                                            </span>
+                                            @if($period->total_dtrs > 0)
+                                                <span class="text-sm text-yellow-600">
+                                                    {{ $period->pending_dtrs }} pending approval
+                                                </span>
+                                            @else
+                                                <span class="text-sm text-blue-600 font-semibold">
+                                                    New Period - Ready to Start
+                                                </span>
+                                            @endif
                                         </td>
                                         <td class="px-6 py-4 whitespace-nowrap text-right text-sm font-medium space-x-3">
-                                            <form action="{{ route('payroll.computation.generate-dtrs', $period) }}" method="POST" class="inline">
-                                                @csrf
-                                                <button type="submit" class="text-indigo-600 hover:text-indigo-900 font-semibold" title="Create or complete DTR records for all employees">
-                                                    {{ $period->total_dtrs == 0 ? 'Generate DTRs' : 'Regenerate/Complete DTRs' }}
-                                                </button>
-                                            </form>
-                                            <a href="{{ route('dtr-approval.index', ['period' => $period->id]) }}" class="text-indigo-600 hover:text-indigo-900">
-                                                Review DTRs
+                                            <a href="{{ route('payroll.computation.wizard', $period) }}" class="inline-flex items-center px-4 py-2 bg-yellow-600 border border-transparent rounded-md font-semibold text-xs text-white uppercase tracking-widest hover:bg-yellow-700 active:bg-yellow-900 focus:outline-none focus:border-yellow-900 focus:ring ring-yellow-300 disabled:opacity-25 transition ease-in-out duration-150">
+                                                {{ $period->total_dtrs > 0 ? 'Review DTRs' : 'Start Process' }}
                                             </a>
                                         </td>
                                     </tr>
@@ -307,8 +301,8 @@
                                             {{ $period->updated_at->diffForHumans() }}
                                         </td>
                                         <td class="px-6 py-4 whitespace-nowrap text-right text-sm font-medium">
-                                            <a href="{{ route('payroll.computation.show', $period) }}" class="text-blue-600 hover:text-blue-900">
-                                                View Progress
+                                            <a href="{{ route('payroll.computation.wizard', $period) }}" class="inline-flex items-center px-4 py-2 bg-blue-600 border border-transparent rounded-md font-semibold text-xs text-white uppercase tracking-widest hover:bg-blue-700 active:bg-blue-900 focus:outline-none focus:border-blue-900 focus:ring ring-blue-300 disabled:opacity-25 transition ease-in-out duration-150">
+                                                Open Wizard
                                             </a>
                                         </td>
                                     </tr>
@@ -356,6 +350,9 @@
                                             {{ $period->payroll_computed_at ? $period->payroll_computed_at->format('M d, Y g:i A') : '-' }}
                                         </td>
                                         <td class="px-6 py-4 whitespace-nowrap text-right text-sm font-medium space-x-2">
+                                            <a href="{{ route('payroll.computation.wizard', $period) }}" class="text-blue-600 hover:text-blue-900 font-bold">
+                                                Wizard
+                                            </a>
                                             <a href="{{ route('payroll.computation.show', $period) }}" class="text-indigo-600 hover:text-indigo-900">
                                                 View
                                             </a>
