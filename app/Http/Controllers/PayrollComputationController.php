@@ -313,7 +313,7 @@ class PayrollComputationController extends Controller
             $message = sprintf(
                 'Payroll computed successfully. %d computed, %d failed.',
                 count($results['success']),
-                count($results['failed'])
+                $results['failed']
             );
 
             Log::channel('payroll')->info('Payroll computed synchronously', [
