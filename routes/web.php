@@ -35,6 +35,10 @@ use App\Http\Controllers\OfficialBusinessController;
 use App\Http\Controllers\EmployeeDocumentController;
 use App\Http\Controllers\AnnouncementController;
 use App\Http\Controllers\ExpenseClaimController;
+use App\Http\Controllers\PerformanceReviewController;
+use App\Http\Controllers\CompanyAssetController;
+use App\Http\Controllers\ShiftChangeRequestController;
+use App\Http\Controllers\HrPolicyController;
 use Illuminate\Support\Facades\Route;
 
 /*
@@ -346,6 +350,21 @@ Route::middleware('auth')->group(function () {
     Route::resource('expense-claims', ExpenseClaimController::class);
     Route::patch('/expense-claims/{expense_claim}/approve', [ExpenseClaimController::class, 'approve'])->name('expense-claims.approve');
     Route::patch('/expense-claims/{expense_claim}/reject', [ExpenseClaimController::class, 'reject'])->name('expense-claims.reject');
+
+    // Performance Reviews
+    Route::resource('performance-reviews', PerformanceReviewController::class);
+    Route::patch('/performance-reviews/{performance_review}/acknowledge', [PerformanceReviewController::class, 'acknowledge'])->name('performance-reviews.acknowledge');
+
+    // Company Assets
+    Route::resource('company-assets', CompanyAssetController::class);
+
+    // Shift Change Requests
+    Route::resource('shift-change-requests', ShiftChangeRequestController::class);
+    Route::patch('/shift-change-requests/{shift_change_request}/approve', [ShiftChangeRequestController::class, 'approve'])->name('shift-change-requests.approve');
+    Route::patch('/shift-change-requests/{shift_change_request}/reject', [ShiftChangeRequestController::class, 'reject'])->name('shift-change-requests.reject');
+
+    // HR Policies
+    Route::resource('hr-policies', HrPolicyController::class);
 
     // ============================================
     // SUPER ADMIN ONLY ROUTES

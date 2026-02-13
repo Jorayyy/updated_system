@@ -6,6 +6,10 @@ use App\Models\User;
 use App\Models\Attendance;
 use App\Models\LeaveRequest;
 use App\Models\PayrollPeriod;
+use App\Models\ShiftChangeRequest;
+use App\Models\CompanyAsset;
+use App\Models\PerformanceReview;
+use App\Models\HrPolicy;
 use Carbon\Carbon;
 use Illuminate\Http\Request;
 
@@ -44,6 +48,23 @@ class DashboardController extends Controller
             ->limit(5)
             ->get();
 
+        // New Feature Stats
+        $pendingShiftRequests = ShiftChangeRequest::with('employee')
+            ->where('status', 'pending')
+            ->latest()
+            ->limit(5)
+            ->get();
+
+        $pendingReviewsCount = PerformanceReview::where('status', 'submitted')->count(); // Submitted means waiting for employee acknowledgement usually, or maybe 'pending' if that's the status
+        // Wait, earlier I saw 'submitted' is the status on creation. employee acknowledges -> 'acknowledged'. 
+        // So 'submitted' ones are technically "pending employee action", maybe not pending admin action?
+        // Admin creates it. Employee acknowledges it. 
+        // Ah, typically dashboard shows what *needs attention*. 
+        // If I am Admin, do I care about unacknowledged reviews? Yes, to nudge them.
+
+        $assignedAssetsCount = CompanyAsset::whereNotNull('employee_id')->count();
+        $totalAssetsCount = CompanyAsset::count();
+
         // Recent attendances
         $recentAttendances = Attendance::with('user')
             ->whereDate('date', $today)
@@ -63,6 +84,10 @@ class DashboardController extends Controller
             'onLeaveToday',
             'absentToday',
             'pendingLeaveRequests',
+            'pendingShiftRequests',
+            'pendingReviewsCount',
+            'assignedAssetsCount',
+            'totalAssetsCount',
             'recentAttendances',
             'currentPayrollPeriod'
         ));
@@ -104,11 +129,27 @@ class DashboardController extends Controller
 
         // Recent Payslips
         $recentPayslips = \App\Models\Payroll::with('payrollPeriod')
-            ->where('user_id', $user->id)
+            ->where('user_id', $user->id) // Assuming Payroll model relates to User
             ->where('is_posted', true)
             ->orderBy('created_at', 'desc')
             ->limit(3)
             ->get();
+
+        // New Feature Widgets
+        $myShiftRequests = ShiftChangeRequest::where('employee_id', $user->id)
+            ->latest()
+            ->limit(3)
+            ->get();
+
+        $myAssets = CompanyAsset::where('employee_id', $user->id)->get();
+
+        $pendingAcknowledgementReview = PerformanceReview::where('employee_id', $user->id)
+            ->where('status', 'submitted')
+            ->first();
+
+        $latestPolicy = HrPolicy::where('is_published', true)
+            ->orderBy('effective_date', 'desc')
+            ->first();
 
         return view('dashboard.employee', compact(
             'todayAttendance',
@@ -118,7 +159,11 @@ class DashboardController extends Controller
             'totalWorkHours',
             'recentLeaveRequests',
             'leaveBalances',
-            'recentPayslips'
+            'recentPayslips',
+            'myShiftRequests',
+            'myAssets',
+            'pendingAcknowledgementReview',
+            'latestPolicy'
         ));
     }
 }

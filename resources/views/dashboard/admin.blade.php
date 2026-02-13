@@ -101,6 +101,91 @@
                 </div>
             </div>
 
+            <!-- Secondary Content Grid (New Features) -->
+            <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6 mb-6">
+                <!-- Shift Change Requests -->
+                <div class="bg-white overflow-hidden shadow-sm sm:rounded-xl border border-gray-100 hover:shadow-md transition-shadow">
+                    <div class="p-5 border-b border-gray-50 flex justify-between items-center bg-gray-50/50">
+                        <div class="flex items-center gap-2">
+                            <svg class="w-5 h-5 text-indigo-500" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z"/></svg>
+                            <h3 class="font-semibold text-gray-900">Shift Requests</h3>
+                        </div>
+                         @if(isset($pendingShiftRequests) && $pendingShiftRequests->count() > 0)
+                            <span class="bg-amber-100 text-amber-800 text-xs font-bold px-2 py-1 rounded-full">{{ $pendingShiftRequests->count() }} Pending</span>
+                        @endif
+                    </div>
+                    <div class="p-4">
+                         @if(isset($pendingShiftRequests) && $pendingShiftRequests->count() > 0)
+                            <div class="space-y-3">
+                                @foreach($pendingShiftRequests as $req)
+                                    <div class="flex justify-between items-start pb-3 border-b border-gray-50 last:border-0 last:pb-0">
+                                        <div>
+                                            <p class="text-sm font-medium text-gray-900">{{ $req->employee->name }}</p>
+                                            <p class="text-xs text-gray-500 mt-0.5">{{ $req->requested_date->format('M d') }} &bull; <span class="text-gray-700">{{ $req->new_schedule }}</span></p>
+                                        </div>
+                                        <a href="{{ route('shift-change-requests.index') }}" class="text-xs bg-indigo-50 text-indigo-700 px-2 py-1 rounded hover:bg-indigo-100 transition">Review</a>
+                                    </div>
+                                @endforeach
+                            </div>
+                        @else
+                            <div class="text-center py-6">
+                                <p class="text-sm text-gray-400">No pending shift requests.</p>
+                            </div>
+                        @endif
+                    </div>
+                </div>
+
+                <!-- Asset Overview -->
+                <div class="bg-white overflow-hidden shadow-sm sm:rounded-xl border border-gray-100 hover:shadow-md transition-shadow">
+                    <div class="p-5 border-b border-gray-50 flex justify-between items-center bg-gray-50/50">
+                        <div class="flex items-center gap-2">
+                            <svg class="w-5 h-5 text-blue-500" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9.75 17L9 20l-1 1h8l-1-1-.75-3M3 13h18M5 17h14a2 2 0 002-2V5a2 2 0 00-2-2H5a2 2 0 00-2 2v10a2 2 0 002 2z"/></svg>
+                            <h3 class="font-semibold text-gray-900">Company Assets</h3>
+                        </div>
+                        <a href="{{ route('company-assets.index') }}" class="text-xs text-gray-500 hover:text-gray-900">Manage &rarr;</a>
+                    </div>
+                    <div class="p-4">
+                        <div class="flex items-center justify-between mb-4">
+                            <div class="text-center w-1/2 border-r border-gray-100">
+                                <span class="block text-2xl font-bold text-gray-900">{{ $assignedAssetsCount ?? 0 }}</span>
+                                <span class="text-xs text-gray-500 uppercase tracking-wide">Assigned</span>
+                            </div>
+                            <div class="text-center w-1/2">
+                                <span class="block text-2xl font-bold text-gray-900">{{ ($totalAssetsCount ?? 0) - ($assignedAssetsCount ?? 0) }}</span>
+                                <span class="text-xs text-gray-500 uppercase tracking-wide">Available</span>
+                            </div>
+                        </div>
+                        <div class="h-2 w-full bg-gray-100 rounded-full overflow-hidden">
+                            @php
+                                $percent = ($totalAssetsCount ?? 0) > 0 ? (($assignedAssetsCount ?? 0) / $totalAssetsCount) * 100 : 0;
+                            @endphp
+                            <div class="h-full bg-blue-500" style="width: {{ $percent }}%"></div>
+                        </div>
+                        <p class="text-xs text-center mt-2 text-gray-400">{{ $totalAssetsCount ?? 0 }} Total Assets Recorded</p>
+                    </div>
+                </div>
+
+                <!-- Performance Reviews Stats -->
+                <div class="bg-white overflow-hidden shadow-sm sm:rounded-xl border border-gray-100 hover:shadow-md transition-shadow">
+                    <div class="p-5 border-b border-gray-50 flex justify-between items-center bg-gray-50/50">
+                        <div class="flex items-center gap-2">
+                             <svg class="w-5 h-5 text-purple-500" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2a2 2 0 002-2zm0 0V9a2 2 0 012-2h2a2 2 0 012 2v10m-6 0a2 2 0 002 2h2a2 2 0 002-2m0 0V5a2 2 0 012-2h2a2 2 0 012 2v14a2 2 0 01-2 2h-2a2 2 0 01-2-2z"/></svg>
+                            <h3 class="font-semibold text-gray-900">Performance</h3>
+                        </div>
+                    </div>
+                    <div class="p-4 flex flex-col justify-center h-40">
+                         <div class="text-center">
+                            <p class="text-4xl font-bold text-purple-600 mb-1">{{ $pendingReviewsCount ?? 0 }}</p>
+                            <p class="text-sm font-medium text-gray-600">Pending Acknowledgements</p>
+                            <p class="text-xs text-gray-400 mt-2">Reviews submitted but not yet signed by employees</p>
+                         </div>
+                         <div class="mt-4 text-center">
+                            <a href="{{ route('performance-reviews.index') }}" class="text-sm text-purple-600 hover:text-purple-800 font-medium">Go to Reviews &rarr;</a>
+                         </div>
+                    </div>
+                </div>
+            </div>
+
             <!-- Main Content Grid -->
             <div class="grid grid-cols-1 xl:grid-cols-3 gap-6 mb-6">
                 <!-- Pending Leave Requests - Takes 2 columns -->

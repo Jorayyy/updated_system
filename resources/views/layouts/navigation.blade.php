@@ -16,59 +16,95 @@
                         {{ __('Dashboard') }}
                     </x-nav-link>
 
-                    <x-nav-link :href="route('announcements.index')" :active="request()->routeIs('announcements.index')">
-                        {{ __('Announcements') }}
-                    </x-nav-link>
-                    
-                    <x-nav-link :href="route('attendance.index')" :active="request()->routeIs('attendance.index', 'attendance.history')">
-                        {{ __('Attendance') }}
-                    </x-nav-link>
-                    
-                    <x-nav-link :href="route('dtr.index')" :active="request()->routeIs('dtr.index')">
-                        {{ __('My DTR') }}
-                    </x-nav-link>
-                    
-                    <x-nav-link :href="route('transactions.index')" :active="request()->routeIs('transactions.index', 'transactions.create', 'transactions.show', 'transactions.history')">
-                        {{ __('Transactions') }}
-                    </x-nav-link>
-                    
-                    <x-nav-link :href="route('payroll.my-payslips')" :active="request()->routeIs('payroll.my-payslips', 'payroll.my-payslip')">
-                        {{ __('Payslips') }}
-                    </x-nav-link>
+                    @if(!auth()->user()->hasRole('super_admin') && !auth()->user()->hasRole('hr'))
+                        <!-- Employee Menu -->
+                        <x-nav-link :href="route('announcements.index')" :active="request()->routeIs('announcements.index')">
+                            {{ __('Announcements') }}
+                        </x-nav-link>
+                        
+                        <x-nav-link :href="route('attendance.index')" :active="request()->routeIs('attendance.index', 'attendance.history')">
+                            {{ __('Attendance') }}
+                        </x-nav-link>
+                        
+                        <x-nav-link :href="route('dtr.index')" :active="request()->routeIs('dtr.index')">
+                            {{ __('My DTR') }}
+                        </x-nav-link>
+                        
+                        <x-nav-link :href="route('transactions.index')" :active="request()->routeIs('transactions.index', 'transactions.create', 'transactions.show', 'transactions.history')">
+                            {{ __('Transactions') }}
+                        </x-nav-link>
+                        
+                        <x-nav-link :href="route('payroll.my-payslips')" :active="request()->routeIs('payroll.my-payslips', 'payroll.my-payslip')">
+                            {{ __('Payslips') }}
+                        </x-nav-link>
 
-                    <!-- Applications / Requests -->
-                    <div class="hidden sm:flex sm:items-center">
-                        <x-dropdown align="left" width="48">
-                            <x-slot name="trigger">
-                                <button class="inline-flex items-center px-3 py-2 border border-transparent text-sm leading-4 font-medium rounded-md text-gray-500 bg-white hover:text-gray-700 focus:outline-none transition ease-in-out duration-150">
-                                    <div>Applications</div>
-                                    <div class="ms-1">
-                                        <svg class="fill-current h-4 w-4" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20">
-                                            <path fill-rule="evenodd" d="M5.293 7.293a1 1 0 011.414 0L10 10.586l3.293-3.293a1 1 0 111.414 1.414l-4 4a1 1 0 01-1.414 0l-4-4a1 1 0 010-1.414z" clip-rule="evenodd" />
-                                        </svg>
-                                    </div>
-                                </button>
-                            </x-slot>
+                        <!-- Applications / Requests -->
+                        <div class="hidden sm:flex sm:items-center">
+                            <x-dropdown align="left" width="48">
+                                <x-slot name="trigger">
+                                    <button class="inline-flex items-center px-3 py-2 border border-transparent text-sm leading-4 font-medium rounded-md text-gray-500 bg-white hover:text-gray-700 focus:outline-none transition ease-in-out duration-150">
+                                        <div>Applications</div>
+                                        <div class="ms-1">
+                                            <svg class="fill-current h-4 w-4" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20">
+                                                <path fill-rule="evenodd" d="M5.293 7.293a1 1 0 011.414 0L10 10.586l3.293-3.293a1 1 0 111.414 1.414l-4 4a1 1 0 01-1.414 0l-4-4a1 1 0 010-1.414z" clip-rule="evenodd" />
+                                            </svg>
+                                        </div>
+                                    </button>
+                                </x-slot>
 
-                            <x-slot name="content">
-                                <x-dropdown-link :href="route('overtime-requests.index')">
-                                    {{ __('Overtime Requests') }}
-                                </x-dropdown-link>
-                                <x-dropdown-link :href="route('official-businesses.index')">
-                                    {{ __('Official Business') }}
-                                </x-dropdown-link>
-                                <x-dropdown-link :href="route('expense-claims.index')">
-                                    {{ __('Expense Claims') }}
-                                </x-dropdown-link>
-                                <x-dropdown-link :href="route('employee-documents.index')">
-                                    {{ __('My 201 Files') }}
-                                </x-dropdown-link>
-                            </x-slot>
-                        </x-dropdown>
-                    </div>
+                                <x-slot name="content">
+                                    <x-dropdown-link :href="route('overtime-requests.index')">
+                                        {{ __('Overtime Requests') }}
+                                    </x-dropdown-link>
+                                    <x-dropdown-link :href="route('official-businesses.index')">
+                                        {{ __('Official Business') }}
+                                    </x-dropdown-link>
+                                    <x-dropdown-link :href="route('expense-claims.index')">
+                                        {{ __('Expense Claims') }}
+                                    </x-dropdown-link>
+                                    <x-dropdown-link :href="route('employee-documents.index')">
+                                        {{ __('My 201 Files') }}
+                                    </x-dropdown-link>
+                                    <x-dropdown-link :href="route('shift-change-requests.index')">
+                                        {{ __('Shift Change Requests') }}
+                                    </x-dropdown-link>
+                                    <x-dropdown-link :href="route('performance-reviews.index')">
+                                        {{ __('Performance Reviews') }}
+                                    </x-dropdown-link>
+                                    <x-dropdown-link :href="route('company-assets.index')">
+                                        {{ __('My Assets') }}
+                                    </x-dropdown-link>
+                                    <x-dropdown-link :href="route('hr-policies.index')">
+                                        {{ __('HR Policies') }}
+                                    </x-dropdown-link>
+                                </x-slot>
+                            </x-dropdown>
+                        </div>
+                    @else
+                        <!-- HR/Admin Menu (Primary Links for Admins) -->
+                        <x-nav-link :href="route('announcements.index')" :active="request()->routeIs('announcements.index')">
+                            {{ __('Announcements') }}
+                        </x-nav-link>
 
+                        <x-nav-link :href="route('employees.index')" :active="request()->routeIs('employees.*')">
+                            {{ __('Employees') }}
+                        </x-nav-link>
+
+                        <x-nav-link :href="route('attendance.manage')" :active="request()->routeIs('attendance.manage')">
+                            {{ __('Attendance') }}
+                        </x-nav-link>
+
+                        <x-nav-link :href="route('dtr.admin-index')" :active="request()->routeIs('dtr.admin-index')">
+                            {{ __('DTR') }}
+                        </x-nav-link>
+                        
+                        <x-nav-link :href="route('payroll.index')" :active="request()->routeIs('payroll.index')">
+                            {{ __('Payroll') }}
+                        </x-nav-link>
+                    @endif
+                    
                     @if(auth()->user()->isAdmin() || auth()->user()->isHr())
-                        <!-- HR/Admin Menu -->
+                        <!-- HR/Admin More Dropdown -->
                         <div class="hidden sm:flex sm:items-center">
                             <x-dropdown align="left" width="48">
                                 <x-slot name="trigger">
@@ -83,36 +119,46 @@
                                 </x-slot>
 
                                 <x-slot name="content">
-                                    <x-dropdown-link :href="route('employees.index')">
-                                        {{ __('Employees') }}
-                                    </x-dropdown-link>
-                                    <x-dropdown-link :href="route('departments.index')">
-                                        {{ __('Departments') }}
-                                    </x-dropdown-link>
-                                    <x-dropdown-link :href="route('overtime-requests.index')">
-                                        {{ __('Review Overtime') }}
-                                    </x-dropdown-link>
-                                    <x-dropdown-link :href="route('official-businesses.index')">
-                                        {{ __('Review Official Business') }}
-                                    </x-dropdown-link>
-                                    <x-dropdown-link :href="route('expense-claims.index')">
-                                        {{ __('Review Expenses') }}
-                                    </x-dropdown-link>
-                                    <x-dropdown-link :href="route('announcements.index')">
-                                        {{ __('Manage Announcements') }}
-                                    </x-dropdown-link>
-                                    <x-dropdown-link :href="route('attendance.manage')">
-                                        {{ __('Attendance Records') }}
-                                    </x-dropdown-link>
-                                    <x-dropdown-link :href="route('dtr.admin-index')">
-                                        {{ __('DTR Management') }}
-                                    </x-dropdown-link>
+                                    <div class="block px-4 py-2 text-xs text-gray-400">
+                                        {{ __('Approvals') }}
+                                    </div>
                                     <x-dropdown-link :href="route('leaves.manage')">
                                         {{ __('Leave Requests') }}
                                     </x-dropdown-link>
-                                    <x-dropdown-link :href="route('transactions.admin-index')">
-                                        {{ __('Transactions') }}
+                                    <x-dropdown-link :href="route('overtime-requests.index')">
+                                        {{ __('Overtime Requests') }}
                                     </x-dropdown-link>
+                                    <x-dropdown-link :href="route('official-businesses.index')">
+                                        {{ __('Official Business Requests') }}
+                                    </x-dropdown-link>
+                                    <x-dropdown-link :href="route('shift-change-requests.index')">
+                                        {{ __('Shift Change Requests') }}
+                                    </x-dropdown-link>
+                                    <x-dropdown-link :href="route('expense-claims.index')">
+                                        {{ __('Expense Claims') }}
+                                    </x-dropdown-link>
+
+                                    <div class="border-t border-gray-100"></div>
+                                    <div class="block px-4 py-2 text-xs text-gray-400">
+                                        {{ __('Management') }}
+                                    </div>
+                                    <x-dropdown-link :href="route('departments.index')">
+                                        {{ __('Departments') }}
+                                    </x-dropdown-link>
+                                    <x-dropdown-link :href="route('transactions.admin-index')">
+                                        {{ __('Transactions Logs') }}
+                                    </x-dropdown-link>
+                                    <x-dropdown-link :href="route('company-assets.index')">
+                                        {{ __('Asset Management') }}
+                                    </x-dropdown-link>
+                                    <x-dropdown-link :href="route('hr-policies.index')">
+                                        {{ __('Policy Management') }}
+                                    </x-dropdown-link>
+
+                                    <div class="border-t border-gray-100"></div>
+                                    <div class="block px-4 py-2 text-xs text-gray-400">
+                                        {{ __('Payroll & Settings') }}
+                                    </div>
                                     <x-dropdown-link :href="route('leave-types.index')">
                                         {{ __('Leave Types') }}
                                     </x-dropdown-link>
@@ -124,9 +170,6 @@
                                             {{ __('Payroll Computation') }}
                                         </x-dropdown-link>
                                     @endif
-                                    <x-dropdown-link :href="route('payroll.index')">
-                                        {{ __('All Payrolls') }}
-                                    </x-dropdown-link>
                                     @if(auth()->user()->isAdmin())
                                         <x-dropdown-link :href="route('concerns.index')">
                                             {{ __('Concerns & Tickets') }}
@@ -202,60 +245,104 @@
             <x-responsive-nav-link :href="route('dashboard')" :active="request()->routeIs('dashboard')">
                 {{ __('Dashboard') }}
             </x-responsive-nav-link>
-            <x-responsive-nav-link :href="route('announcements.index')" :active="request()->routeIs('announcements.*')">
-                {{ __('Announcements') }}
-            </x-responsive-nav-link>
-            <x-responsive-nav-link :href="route('attendance.index')" :active="request()->routeIs('attendance.*')">
-                {{ __('Attendance') }}
-            </x-responsive-nav-link>
-            <x-responsive-nav-link :href="route('dtr.index')" :active="request()->routeIs('dtr.*')">
-                {{ __('My DTR') }}
-            </x-responsive-nav-link>
-            
-            <div class="border-t border-gray-200 mt-2 pt-2">
-                <div class="px-4 text-xs text-gray-500 uppercase">Requests / Applications</div>
-            </div>
-            <x-responsive-nav-link :href="route('overtime-requests.index')" :active="request()->routeIs('overtime-requests.*')">
-                {{ __('Overtime') }}
-            </x-responsive-nav-link>
-             <x-responsive-nav-link :href="route('official-businesses.index')" :active="request()->routeIs('official-businesses.*')">
-                {{ __('Official Business') }}
-            </x-responsive-nav-link>
-            <x-responsive-nav-link :href="route('expense-claims.index')" :active="request()->routeIs('expense-claims.*')">
-                {{ __('Expenses') }}
-            </x-responsive-nav-link>
-             <x-responsive-nav-link :href="route('employee-documents.index')" :active="request()->routeIs('employee-documents.*')">
-                {{ __('My 201 Files') }}
-            </x-responsive-nav-link>
 
-            <div class="border-t border-gray-200 mt-2 pt-2"></div>
-
-            <x-responsive-nav-link :href="route('transactions.index')" :active="request()->routeIs('transactions.*')">
-                {{ __('Transactions') }}
-            </x-responsive-nav-link>
-            <x-responsive-nav-link :href="route('payroll.my-payslips')" :active="request()->routeIs('payroll.my-payslips')">
-                {{ __('My Payslips') }}
-            </x-responsive-nav-link>
-            
-            @if(auth()->user()->isAdmin() || auth()->user()->isHr())
-                <div class="border-t border-gray-200 pt-2">
-                    <div class="px-4 text-xs text-gray-500 uppercase">HR Management</div>
+            @if(!auth()->user()->hasRole('super_admin') && !auth()->user()->hasRole('hr'))
+                <x-responsive-nav-link :href="route('announcements.index')" :active="request()->routeIs('announcements.*')">
+                    {{ __('Announcements') }}
+                </x-responsive-nav-link>
+                <x-responsive-nav-link :href="route('attendance.index')" :active="request()->routeIs('attendance.*')">
+                    {{ __('Attendance') }}
+                </x-responsive-nav-link>
+                <x-responsive-nav-link :href="route('dtr.index')" :active="request()->routeIs('dtr.*')">
+                    {{ __('My DTR') }}
+                </x-responsive-nav-link>
+                
+                <div class="border-t border-gray-200 mt-2 pt-2">
+                    <div class="px-4 text-xs text-gray-500 uppercase">Requests / Applications</div>
                 </div>
+                <x-responsive-nav-link :href="route('overtime-requests.index')" :active="request()->routeIs('overtime-requests.*')">
+                    {{ __('Overtime') }}
+                </x-responsive-nav-link>
+                <x-responsive-nav-link :href="route('official-businesses.index')" :active="request()->routeIs('official-businesses.*')">
+                    {{ __('Official Business') }}
+                </x-responsive-nav-link>
+                <x-responsive-nav-link :href="route('expense-claims.index')" :active="request()->routeIs('expense-claims.*')">
+                    {{ __('Expenses') }}
+                </x-responsive-nav-link>
+                <x-responsive-nav-link :href="route('employee-documents.index')" :active="request()->routeIs('employee-documents.*')">
+                    {{ __('My 201 Files') }}
+                </x-responsive-nav-link>
+                <x-responsive-nav-link :href="route('shift-change-requests.index')" :active="request()->routeIs('shift-change-requests.*')">
+                    {{ __('Shift Requests') }}
+                </x-responsive-nav-link>
+                <x-responsive-nav-link :href="route('performance-reviews.index')" :active="request()->routeIs('performance-reviews.*')">
+                    {{ __('Reviews') }}
+                </x-responsive-nav-link>
+                <x-responsive-nav-link :href="route('company-assets.index')" :active="request()->routeIs('company-assets.*')">
+                    {{ __('My Assets') }}
+                </x-responsive-nav-link>
+                <x-responsive-nav-link :href="route('hr-policies.index')" :active="request()->routeIs('hr-policies.*')">
+                    {{ __('Policies') }}
+                </x-responsive-nav-link>
+
+                <div class="border-t border-gray-200 mt-2 pt-2"></div>
+
+                <x-responsive-nav-link :href="route('transactions.index')" :active="request()->routeIs('transactions.*')">
+                    {{ __('Transactions') }}
+                </x-responsive-nav-link>
+                <x-responsive-nav-link :href="route('payroll.my-payslips')" :active="request()->routeIs('payroll.my-payslips')">
+                    {{ __('My Payslips') }}
+                </x-responsive-nav-link>
+            @else
+                <!-- Admin Mobile Menu -->
+                <x-responsive-nav-link :href="route('announcements.index')" :active="request()->routeIs('announcements.index')">
+                    {{ __('Announcements') }}
+                </x-responsive-nav-link>
                 <x-responsive-nav-link :href="route('employees.index')">
                     {{ __('Employees') }}
                 </x-responsive-nav-link>
                 <x-responsive-nav-link :href="route('attendance.manage')">
                     {{ __('Attendance Records') }}
                 </x-responsive-nav-link>
+                <x-responsive-nav-link :href="route('dtr.admin-index')">
+                    {{ __('DTR Management') }}
+                </x-responsive-nav-link>
+                <x-responsive-nav-link :href="route('payroll.index')">
+                    {{ __('Payroll') }}
+                </x-responsive-nav-link>
+
+                <div class="border-t border-gray-200 pt-2">
+                    <div class="px-4 text-xs text-gray-500 uppercase">Approvals</div>
+                </div>
                 <x-responsive-nav-link :href="route('leaves.manage')">
                     {{ __('Leave Approvals') }}
                 </x-responsive-nav-link>
+                <x-responsive-nav-link :href="route('overtime-requests.index')">
+                    {{ __('Overtime Requests') }}
+                </x-responsive-nav-link>
+                <x-responsive-nav-link :href="route('official-businesses.index')">
+                    {{ __('Official Business') }}
+                </x-responsive-nav-link>
+                <x-responsive-nav-link :href="route('shift-change-requests.index')">
+                    {{ __('Shift Requests') }}
+                </x-responsive-nav-link>
+
+                <div class="border-t border-gray-200 pt-2">
+                    <div class="px-4 text-xs text-gray-500 uppercase">Management</div>
+                </div>
                 <x-responsive-nav-link :href="route('transactions.admin-index')">
                     {{ __('Transactions') }}
                 </x-responsive-nav-link>
                 <x-responsive-nav-link :href="route('payroll.periods')" :active="request()->routeIs('payroll.periods*')">
                     {{ __('Payroll Periods') }}
                 </x-responsive-nav-link>
+                <x-responsive-nav-link :href="route('hr-policies.index')">
+                    {{ __('Policies') }}
+                </x-responsive-nav-link>
+                 <x-responsive-nav-link :href="route('company-assets.index')">
+                    {{ __('Assets') }}
+                </x-responsive-nav-link>
+                
                 @if(auth()->user()->isAccounting())
                     <x-responsive-nav-link :href="route('payroll.computation.dashboard')" :active="request()->routeIs('payroll.computation.*')">
                         {{ __('Payroll Computation') }}

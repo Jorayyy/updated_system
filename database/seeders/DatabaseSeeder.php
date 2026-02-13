@@ -56,7 +56,7 @@ class DatabaseSeeder extends Seeder
         $password = Hash::make('password');
         $users = [];
 
-        // Admin
+        // Admin (Management Account)
         $users[] = User::create([
             'employee_id' => 'ADM-001',
             'name' => 'System Admin',
@@ -73,7 +73,24 @@ class DatabaseSeeder extends Seeder
             'is_active' => true,
         ]);
 
-        // HR
+        // Admin (Employee Account)
+        $users[] = User::create([
+            'employee_id' => 'ADM-001-EMP',
+            'name' => 'System Admin (Employee Mode)',
+            'email' => 'admin.emp@mebs.com',
+            'password' => $password,
+            'role' => 'employee',
+            'account_id' => $roles['employee']->id, // Restricted to employee level
+            'department' => 'Executive',
+            'position' => 'IT Director',
+            'site_id' => $tacloban->id,
+            'monthly_salary' => 80000,
+            'hourly_rate' => 80000 / 22 / 8,
+            'date_hired' => '2023-01-01',
+            'is_active' => true,
+        ]);
+
+        // HR (Management Account)
         $users[] = User::create([
             'employee_id' => 'HR-001',
             'name' => 'Maria Santos',
@@ -90,7 +107,24 @@ class DatabaseSeeder extends Seeder
             'is_active' => true,
         ]);
 
-        // Accounting
+        // HR (Employee Account)
+        $users[] = User::create([
+            'employee_id' => 'HR-001-EMP',
+            'name' => 'Maria Santos (Employee Mode)',
+            'email' => 'hr.emp@mebs.com',
+            'password' => $password,
+            'role' => 'employee',
+            'account_id' => $roles['employee']->id,
+            'department' => 'Human Resources',
+            'position' => 'HR Manager',
+            'site_id' => $tacloban->id,
+            'monthly_salary' => 45000,
+            'hourly_rate' => 45000 / 22 / 8,
+            'date_hired' => '2023-03-15',
+            'is_active' => true,
+        ]);
+
+        // Accounting (Management Account)
         $users[] = User::create([
             'employee_id' => 'FIN-001',
             'name' => 'Juan Reyes',
