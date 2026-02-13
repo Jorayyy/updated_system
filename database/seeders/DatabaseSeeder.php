@@ -47,9 +47,9 @@ class DatabaseSeeder extends Seeder
 
         // 3. Setup Leave Types
         $leaveTypes = [
-            'VL' => LeaveType::create(['name' => 'Vacation Leave', 'code' => 'VL', 'max_days' => 15, 'is_paid' => true, 'color' => 'bg-green-100']),
-            'SL' => LeaveType::create(['name' => 'Sick Leave', 'code' => 'SL', 'max_days' => 15, 'is_paid' => true, 'requires_attachment' => true, 'color' => 'bg-red-100']),
-            'EL' => LeaveType::create(['name' => 'Emergency Leave', 'code' => 'EL', 'max_days' => 5, 'is_paid' => true, 'color' => 'bg-yellow-100']),
+            'VL' => LeaveType::firstOrCreate(['code' => 'VL'], ['name' => 'Vacation Leave', 'max_days' => 15, 'is_paid' => true, 'color' => 'bg-green-100']),
+            'SL' => LeaveType::firstOrCreate(['code' => 'SL'], ['name' => 'Sick Leave', 'max_days' => 15, 'is_paid' => true, 'requires_attachment' => true, 'color' => 'bg-red-100']),
+            'EL' => LeaveType::firstOrCreate(['code' => 'EL'], ['name' => 'Emergency Leave', 'max_days' => 5, 'is_paid' => true, 'color' => 'bg-yellow-100']),
         ];
 
         // 4. Create Key Personnel
@@ -57,47 +57,52 @@ class DatabaseSeeder extends Seeder
         $users = [];
 
         // Admin (Management Account)
-        $users[] = User::create([
-            'employee_id' => 'ADM-001',
-            'name' => 'System Admin',
-            'email' => 'admin@mebs.com',
-            'password' => $password,
-            'role' => 'super_admin',
-            'account_id' => $roles['super_admin']->id,
-            'department' => 'Executive',
-            'position' => 'IT Director',
-            'site_id' => $tacloban->id,
-            'monthly_salary' => 80000,
-            'hourly_rate' => 80000 / 22 / 8,
-            'date_hired' => '2023-01-01',
-            'is_active' => true,
-        ]);
+        $users[] = User::firstOrCreate(
+            ['email' => 'admin@mebs.com'],
+            [
+                'employee_id' => 'ADM-001',
+                'name' => 'System Admin',
+                'password' => $password,
+                'role' => 'super_admin',
+                'account_id' => $roles['super_admin']->id,
+                'department' => 'Executive',
+                'position' => 'IT Director',
+                'site_id' => $tacloban->id,
+                'monthly_salary' => 80000,
+                'hourly_rate' => 80000 / 22 / 8,
+                'date_hired' => '2023-01-01',
+                'is_active' => true,
+            ]
+        );
 
         // Admin (Employee Account)
-        $users[] = User::create([
-            'employee_id' => 'ADM-001-EMP',
-            'name' => 'System Admin (Employee Mode)',
-            'email' => 'admin.emp@mebs.com',
-            'password' => $password,
-            'role' => 'employee',
-            'account_id' => $roles['employee']->id, // Restricted to employee level
-            'department' => 'Executive',
-            'position' => 'IT Director',
-            'site_id' => $tacloban->id,
-            'monthly_salary' => 80000,
-            'hourly_rate' => 80000 / 22 / 8,
-            'date_hired' => '2023-01-01',
-            'is_active' => true,
-        ]);
+        $users[] = User::firstOrCreate(
+            ['email' => 'admin.emp@mebs.com'],
+            [
+                'employee_id' => 'ADM-001-EMP',
+                'name' => 'System Admin (Employee Mode)',
+                'password' => $password,
+                'role' => 'employee',
+                'account_id' => $roles['employee']->id, // Restricted to employee level
+                'department' => 'Executive',
+                'position' => 'IT Director',
+                'site_id' => $tacloban->id,
+                'monthly_salary' => 80000,
+                'hourly_rate' => 80000 / 22 / 8,
+                'date_hired' => '2023-01-01',
+                'is_active' => true,
+            ]
+        );
 
         // HR (Management Account)
-        $users[] = User::create([
-            'employee_id' => 'HR-001',
-            'name' => 'Maria Santos',
-            'email' => 'hr@mebs.com',
-            'password' => $password,
-            'role' => 'admin',
-            'account_id' => $roles['hr']->id,
+        $users[] = User::firstOrCreate(
+            ['email' => 'hr@mebs.com'],
+            [
+                'employee_id' => 'HR-001',
+                'name' => 'Maria Santos',
+                'password' => $password,
+                'role' => 'admin',
+                'account_id' => $roles['hr']->id,
             'department' => 'Human Resources',
             'position' => 'HR Manager',
             'site_id' => $tacloban->id,
