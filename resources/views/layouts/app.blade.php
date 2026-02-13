@@ -294,7 +294,7 @@
                 <!-- User Section (Moved to Top) -->
                 <div class="border-b border-gray-700/50 p-2 bg-gradient-to-b from-slate-800/50 to-transparent">
                     <!-- User Info -->
-                    <div x-data="{ userMenuOpen: false }" class="relative">
+                    <div x-data="{ userMenuOpen: {{ request()->routeIs('notifications.*', 'attendance.*', 'dtr.index', 'payroll.my-payslip*', 'transactions.*', 'concerns.*', 'announcements.*', 'overtime-requests.*', 'official-businesses.*', 'employee-documents.*', 'expense-claims.*', 'profile.*') ? 'true' : 'false' }} }" class="relative">
                         <button @click="userMenuOpen = !userMenuOpen" class="w-full flex items-center gap-3 px-3 py-2.5 rounded-xl text-gray-300 hover:bg-white/10 hover:text-white transition-all duration-200 group border border-transparent hover:border-gray-600/50">
                             @php $photoUrl = auth()->user()->getProfilePhotoUrl(); @endphp
                             @if($photoUrl)
@@ -308,7 +308,7 @@
                                 <p class="text-sm font-semibold text-white truncate group-hover:text-blue-200 transition-colors">{{ auth()->user()->name }}</p>
                                 <p class="text-[10px] uppercase tracking-wider text-gray-400 font-medium">{{ auth()->user()->role }}</p>
                             </div>
-                            <svg x-show="sidebarOpen" x-cloak class="w-4 h-4 flex-shrink-0 sidebar-text text-gray-500 group-hover:text-white transition-colors" :class="sidebarOpen ? 'sidebar-text-visible' : 'sidebar-text-hidden'" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <svg x-show="sidebarOpen" x-cloak class="w-4 h-4 flex-shrink-0 sidebar-text text-gray-500 group-hover:text-white transition-colors transform duration-200" :class="{ 'rotate-180': userMenuOpen, 'sidebar-text-visible': sidebarOpen, 'sidebar-text-hidden': !sidebarOpen }" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                                 <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7"/>
                             </svg>
                         </button>
@@ -316,14 +316,13 @@
                         <!-- User Dropdown Menu -->
                         <div x-show="userMenuOpen" 
                              x-cloak
-                             @click.away="userMenuOpen = false"
                              x-transition:enter="transition ease-out duration-200"
-                             x-transition:enter-start="opacity-0 translateY(-10px) scale-95"
-                             x-transition:enter-end="opacity-100 translateY(0) scale-100"
+                             x-transition:enter-start="opacity-0 -translate-y-2"
+                             x-transition:enter-end="opacity-100 translate-y-0"
                              x-transition:leave="transition ease-in duration-150"
-                             x-transition:leave-start="opacity-100 translateY(0) scale-100"
-                             x-transition:leave-end="opacity-0 translateY(-10px) scale-95"
-                             class="absolute top-full left-0 right-0 mt-2 bg-slate-800 rounded-xl shadow-2xl overflow-hidden border border-gray-700/50 backdrop-blur-xl z-50 ring-1 ring-black/20">
+                             x-transition:leave-start="opacity-100 translate-y-0"
+                             x-transition:leave-end="opacity-0 -translate-y-2"
+                             class="relative w-full mt-1 bg-slate-900/50 rounded-xl overflow-hidden border border-white/5 pl-2">
                             
                             <!-- Notifications -->
                             <a href="{{ route('notifications.index') }}" class="block px-4 py-2.5 text-sm text-gray-300 hover:bg-white/5 hover:text-white transition-colors {{ request()->routeIs('notifications.*') ? 'bg-blue-600/20 text-blue-200' : '' }} group">
@@ -393,6 +392,58 @@
                                 </span>
                             </a>
 
+
+
+                            <!-- Announcements -->
+                            <a href="{{ route('announcements.index') }}" class="block px-4 py-2.5 text-sm text-gray-300 hover:bg-gray-600 hover:text-white transition {{ request()->routeIs('announcements.*') ? 'bg-gray-600 text-white' : '' }}">
+                                <span class="flex items-center gap-2">
+                                    <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M11 5.882V19.24a1.76 1.76 0 01-3.417.592l-2.147-6.15M18 13a3 3 0 100-6M5.436 13.683A4.001 4.001 0 017 6h1.832c4.1 0 7.625-1.234 9.168-3v14c-1.543-1.766-5.067-3-9.168-3H7a3.988 3.988 0 01-1.564-.317z"/>
+                                    </svg>
+                                    Announcements
+                                </span>
+                            </a>
+
+                            <!-- Overtime -->
+                            <a href="{{ route('overtime-requests.index') }}" class="block px-4 py-2.5 text-sm text-gray-300 hover:bg-gray-600 hover:text-white transition {{ request()->routeIs('overtime-requests.*') ? 'bg-gray-600 text-white' : '' }}">
+                                <span class="flex items-center gap-2">
+                                    <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z"/>
+                                    </svg>
+                                    Overtime Request
+                                </span>
+                            </a>
+
+                            <!-- Official Business -->
+                            <a href="{{ route('official-businesses.index') }}" class="block px-4 py-2.5 text-sm text-gray-300 hover:bg-gray-600 hover:text-white transition {{ request()->routeIs('official-businesses.*') ? 'bg-gray-600 text-white' : '' }}">
+                                <span class="flex items-center gap-2">
+                                    <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 21V5a2 2 0 00-2-2H7a2 2 0 00-2 2v16m14 0h2m-2 0h-5m-9 0H3m2 0h5M9 7h1m-1 4h1m4-4h1m-1 4h1m-5 10v-5a1 1 0 011-1h2a1 1 0 011 1v5m-4 0h4"/>
+                                    </svg>
+                                    Official Business
+                                </span>
+                            </a>
+
+                            <!-- My 201 File -->
+                            <a href="{{ route('employee-documents.index') }}" class="block px-4 py-2.5 text-sm text-gray-300 hover:bg-gray-600 hover:text-white transition {{ request()->routeIs('employee-documents.*') ? 'bg-gray-600 text-white' : '' }}">
+                                <span class="flex items-center gap-2">
+                                    <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"/>
+                                    </svg>
+                                    My 201 File
+                                </span>
+                            </a>
+
+                            <!-- Reimbursements -->
+                            <a href="{{ route('expense-claims.index') }}" class="block px-4 py-2.5 text-sm text-gray-300 hover:bg-gray-600 hover:text-white transition {{ request()->routeIs('expense-claims.*') ? 'bg-gray-600 text-white' : '' }}">
+                                <span class="flex items-center gap-2">
+                                    <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 9V7a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2m2 4h10a2 2 0 002-2v-6a2 2 0 00-2-2H9a2 2 0 00-2 2v6a2 2 0 002 2zm7-5a2 2 0 11-4 0 2 2 0 014 0z"/>
+                                    </svg>
+                                    Reimbursements
+                                </span>
+                            </a>
+
                             <div class="border-t border-gray-700/50 my-1 mx-3"></div>
 
                             <a href="{{ route('profile.edit') }}" class="block px-4 py-2.5 text-sm text-gray-300 hover:bg-white/5 hover:text-white transition-colors group">
@@ -420,6 +471,26 @@
 
                 <!-- Navigation Links -->
                 <nav id="sidebar-nav" class="flex-1 px-3 py-4 space-y-1 overflow-y-auto">
+                    
+                    <!-- ========================================================= -->
+                    <!-- GENERAL / EMPLOYEE MENU (Visible to All)                  -->
+                    <!-- ========================================================= -->
+
+                    <!-- Dashboard -->
+                    <div class="relative nav-item mb-1">
+                        <a href="{{ route('dashboard') }}" class="flex items-center gap-3 px-3 py-2.5 mx-2 rounded-xl transition-all duration-200 group {{ request()->routeIs('dashboard') ? 'bg-blue-600 text-white shadow-lg ring-1 ring-white/20' : 'text-gray-400 hover:bg-white/5 hover:text-white' }}">
+                            <div class="w-8 h-8 flex items-center justify-center flex-shrink-0 transition-transform group-hover:scale-110">
+                                <svg class="w-5 h-5 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 6a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2H6a2 2 0 01-2-2V6zM14 6a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2h-2a2 2 0 01-2-2V6zM4 16a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2H6a2 2 0 01-2-2v-2zM14 16a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2h-2a2 2 0 01-2-2v-2z"/>
+                                </svg>
+                            </div>
+                            <span x-show="sidebarOpen" x-cloak class="sidebar-text font-medium text-sm" :class="sidebarOpen ? 'sidebar-text-visible' : 'sidebar-text-hidden'">Dashboard</span>
+                        </a>
+                        <div x-show="!sidebarOpen" class="tooltip">Dashboard</div>
+                    </div>
+
+                    <!-- ========================================================= -->
+
                     @if(auth()->user()->isAdmin() || auth()->user()->isHr())
                         <!-- Payroll Center (Dashboard) -->
                         <div class="relative nav-item mb-1">
@@ -698,9 +769,9 @@
             <div x-show="sidebarOpen && window.innerWidth < 1024" @click="sidebarOpen = false" class="fixed inset-0 bg-black bg-opacity-50 z-20 lg:hidden" x-cloak></div>
 
             <!-- Main Content -->
-            <div :class="sidebarOpen ? 'content-expanded' : 'content-collapsed'" class="flex-1 bg-gray-100 content-transition min-h-screen">
+            <div :class="sidebarOpen ? 'content-expanded' : 'content-collapsed'" class="flex-1 bg-gray-50/50 content-transition min-h-screen w-full flex flex-col relative overflow-hidden">
                 <!-- Mobile Header -->
-                <header class="lg:hidden bg-white shadow-sm h-16 flex items-center px-4 sticky top-0 z-10">
+                <header class="lg:hidden bg-white shadow-sm h-16 flex items-center px-4 sticky top-0 z-20">
                     <button @click="sidebarOpen = !sidebarOpen" class="p-2 rounded-lg hover:bg-gray-100 transition">
                         <svg class="w-6 h-6 text-gray-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                             <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 6h16M4 12h16M4 18h16"/>
@@ -710,19 +781,21 @@
                 </header>
                 <!-- Page Heading -->
                 @isset($header)
-                    <header class="bg-white shadow transition-colors duration-200">
-                        <div class="max-w-full mx-auto py-4 px-4 sm:px-6">
+                    <header class="bg-white/80 backdrop-blur-md shadow-sm border-b border-gray-200/50 sticky top-0 z-10 transition-all duration-200">
+                        <div class="max-w-[1920px] mx-auto py-4 px-4 sm:px-6 lg:px-8">
                             {{ $header }}
                         </div>
                     </header>
                 @endisset
 
                 <!-- Page Content -->
-                <main class="p-3 lg:p-4">
-                    @if(isset($slot))
-                        {{ $slot }}
-                    @endif
-                    @yield('content')
+                <main class="flex-1 w-full overflow-x-hidden overflow-y-auto bg-gray-50/50">
+                    <div class="max-w-[1920px] mx-auto p-4 sm:p-6 lg:p-8">
+                        @if(isset($slot))
+                            {{ $slot }}
+                        @endif
+                        @yield('content')
+                    </div>
                 </main>
             </div>
         </div>

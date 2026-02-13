@@ -310,4 +310,28 @@ class User extends Authenticatable
     {
         return $this->belongsTo(Department::class, 'department_id');
     }
+
+    // ============================================
+    // NEW RELATIONSHIPS
+    // ============================================
+
+    public function overtimeRequests(): HasMany
+    {
+        return $this->hasMany(OvertimeRequest::class);
+    }
+
+    public function officialBusinesses(): HasMany
+    {
+        return $this->hasMany(OfficialBusiness::class);
+    }
+
+    public function employeeDocuments(): HasMany
+    {
+        return $this->hasMany(EmployeeDocument::class);
+    }
+
+    public function expenseClaims(): HasMany
+    {
+        return $this->hasMany(ExpenseClaim::class);
+    }
 }

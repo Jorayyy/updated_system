@@ -30,6 +30,11 @@ use App\Http\Controllers\AccountController;
 use App\Http\Controllers\ScheduleController;
 use App\Http\Controllers\PayrollGroupController;
 use App\Http\Controllers\DepartmentController;
+use App\Http\Controllers\OvertimeRequestController;
+use App\Http\Controllers\OfficialBusinessController;
+use App\Http\Controllers\EmployeeDocumentController;
+use App\Http\Controllers\AnnouncementController;
+use App\Http\Controllers\ExpenseClaimController;
 use Illuminate\Support\Facades\Route;
 
 /*
@@ -314,6 +319,33 @@ Route::middleware('auth')->group(function () {
         Route::get('/analytics/leaves', [AnalyticsController::class, 'leaveData'])->name('analytics.leaves');
         Route::get('/analytics/payroll', [AnalyticsController::class, 'payrollData'])->name('analytics.payroll');
     });
+
+    // ============================================
+    // NEW FEATURES
+    // ============================================
+
+    // Overtime Requests
+    Route::resource('overtime-requests', OvertimeRequestController::class);
+    Route::patch('/overtime-requests/{overtime_request}/approve', [OvertimeRequestController::class, 'approve'])->name('overtime-requests.approve');
+    Route::patch('/overtime-requests/{overtime_request}/reject', [OvertimeRequestController::class, 'reject'])->name('overtime-requests.reject');
+
+    // Official Business
+    Route::resource('official-businesses', OfficialBusinessController::class);
+    Route::patch('/official-businesses/{official_business}/approve', [OfficialBusinessController::class, 'approve'])->name('official-businesses.approve');
+    Route::patch('/official-businesses/{official_business}/reject', [OfficialBusinessController::class, 'reject'])->name('official-businesses.reject');
+
+    // Employee Documents (201 File)
+    Route::resource('employee-documents', EmployeeDocumentController::class);
+    Route::get('/employee-documents/{employee_document}/download', [EmployeeDocumentController::class, 'download'])->name('employee-documents.download');
+
+    // Announcements
+    Route::resource('announcements', AnnouncementController::class);
+    Route::patch('/announcements/{announcement}/pin', [AnnouncementController::class, 'togglePin'])->name('announcements.pin');
+
+    // Expense Claims
+    Route::resource('expense-claims', ExpenseClaimController::class);
+    Route::patch('/expense-claims/{expense_claim}/approve', [ExpenseClaimController::class, 'approve'])->name('expense-claims.approve');
+    Route::patch('/expense-claims/{expense_claim}/reject', [ExpenseClaimController::class, 'reject'])->name('expense-claims.reject');
 
     // ============================================
     // SUPER ADMIN ONLY ROUTES
