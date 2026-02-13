@@ -14,7 +14,7 @@ use App\Services\DtrService;
 use Illuminate\Database\Seeder;
 use Illuminate\Support\Facades\Hash;
 use Carbon\Carbon;
-use Faker\Factory as Faker;
+// use Faker\Factory as Faker; // Commented out to prevent crash in production if dev dependencies are missing
 use Illuminate\Support\Facades\DB;
 
 class DatabaseSeeder extends Seeder
@@ -24,7 +24,7 @@ class DatabaseSeeder extends Seeder
      */
     public function run(): void
     {
-        $faker = Faker::create('en_PH');
+        // $faker = Faker::create('en_PH'); // Moved inside check
         
         $this->command->info('Initializing System Data...');
 
@@ -130,21 +130,30 @@ class DatabaseSeeder extends Seeder
         ]);
 
         // Accounting (Management Account)
-        $users[] = User::create([
-            'employee_id' => 'FIN-001',
-            'name' => 'Juan Reyes',
-            'email' => 'accounting@mebs.com',
-            'password' => $password,
-            'role' => 'admin',
-            'account_id' => $roles['accounting']->id,
-            'department' => 'Finance',
-            'position' => 'Finance Head',
-            'site_id' => $tacloban->id,
-            'monthly_salary' => 50000,
-            'hourly_rate' => 50000 / 22 / 8,
-            'date_hired' => '2023-02-01',
-            'is_active' => true,
-        ]);
+        $users[] = User::firstOrCreate(
+            ['email' => 'accounting@mebs.com'],
+            [
+                'employee_id' => 'FIN-001',
+                'name' => 'Juan Reyes',
+                'password' => $password,
+                'role' => 'admin',
+                'account_id' => $roles['accounting']->id,
+                'department' => 'Finance',
+                'position' => 'Finance Head',
+                'site_id' => $tacloban->id,
+                'monthly_salary' => 50000,
+                'hourly_rate' => 50000 / 22 / 8,
+                'date_hired' => '2023-02-01',
+                'is_active' => true,
+            ]
+        );
+
+        if (!class_exists(\Faker\Factory::class)) {
+            $this->command->warn('Faker not found. Skipping dummy data generation (Employees, Attendance, Payroll).');
+            return;
+        }
+
+        $faker = \Faker\Factory::create('en_PH');
 
         $this->command->info('Creating 97 Employees...');
         
