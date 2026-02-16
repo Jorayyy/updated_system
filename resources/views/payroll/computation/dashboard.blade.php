@@ -7,14 +7,7 @@
                 </h2>
             </div>
             <div class="flex items-center gap-3">
-                <a href="{{ route('payroll-groups.index') }}" class="text-sm font-bold text-slate-500 hover:text-indigo-600 transition flex items-center gap-1 border-r border-slate-200 pr-3">
-                    <i class="fas fa-users-cog"></i>
-                    Employee Groups
-                </a>
-                <a href="{{ route('payroll.periods') }}" class="text-sm font-bold text-indigo-600 hover:text-indigo-800 transition flex items-center gap-1">
-                    <i class="fas fa-history"></i>
-                    All Payroll Periods
-                </a>
+                <span class="text-[10px] font-black uppercase tracking-widest text-slate-400">MEBS HIYAS v2.0</span>
             </div>
         </div>
     </x-slot>
