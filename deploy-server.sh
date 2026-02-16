@@ -72,21 +72,10 @@ else
     exit 1
 fi
 
-# Step 3: Install Node dependencies and build assets
-print_section "Step 3: Building frontend assets"
-if [ -f "package.json" ]; then
-    if command -v npm &> /dev/null; then
-        npm install --legacy-peer-deps --production
-        npm run build
-        print_success "Frontend assets built successfully"
-    else
-        print_error "npm not found. Please install Node.js first."
-        exit 1
-    fi
-else
-    print_error "package.json not found"
-    exit 1
-fi
+# Step 3: Deployment Strategy - Bypass frontend build on server
+print_section "Step 3: Asset Strategy"
+echo "Skipping NPM build on server (Hostinger Limitation). Ensure you have run 'npm run build' locally and pushed the 'public/build' folder."
+print_success "Using pre-built assets from repository"
 
 # Step 4: Verify .env file
 print_section "Step 4: Verifying environment configuration"
