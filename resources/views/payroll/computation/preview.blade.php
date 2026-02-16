@@ -15,12 +15,16 @@
             {{-- Period Info --}}
             <div class="bg-white overflow-hidden shadow-sm rounded-lg mb-6">
                 <div class="p-6">
-                    <div class="grid grid-cols-1 md:grid-cols-4 gap-4">
+                    <div class="grid grid-cols-1 md:grid-cols-5 gap-4">
                         <div>
                             <p class="text-sm text-gray-500">Period</p>
                             <p class="text-lg font-semibold">
                                 {{ $period->start_date->format('M d') }} - {{ $period->end_date->format('M d, Y') }}
                             </p>
+                        </div>
+                        <div>
+                            <p class="text-sm text-gray-500">Payroll Group</p>
+                            <p class="text-lg font-semibold">{{ $period->payrollGroup->name ?? 'Global / Unassigned' }}</p>
                         </div>
                         <div>
                             <p class="text-sm text-gray-500">Type</p>

@@ -153,7 +153,8 @@ class PayrollComputationController extends Controller
         $accountId = $request->get('account_id');
 
         // Get periods ready for computation (all DTRs approved AND has at least one DTR)
-        $readyPeriods = PayrollPeriod::where('status', 'draft')
+        $readyPeriods = PayrollPeriod::with('payrollGroup')
+            ->where('status', 'draft')
             ->whereHas('dailyTimeRecords')
             ->whereDoesntHave('dailyTimeRecords', function ($query) {
                 $query->where('status', '!=', 'approved');
@@ -162,7 +163,8 @@ class PayrollComputationController extends Controller
             ->get();
 
         // Get periods with pending DTRs OR no DTRs (Phase 1)
-        $pendingPeriods = PayrollPeriod::where('status', 'draft')
+        $pendingPeriods = PayrollPeriod::with('payrollGroup')
+           ->where('status', 'draft')
            ->where(function($q) {
                 // Either has pending DTRs
                 $q->whereHas('dailyTimeRecords', function ($query) {
@@ -184,12 +186,14 @@ class PayrollComputationController extends Controller
             ->get();
 
         // Get periods currently processing
-        $processingPeriods = PayrollPeriod::where('status', 'processing')
+        $processingPeriods = PayrollPeriod::with('payrollGroup')
+            ->where('status', 'processing')
             ->orderBy('start_date', 'desc')
             ->get();
 
         // Get recently completed periods
-        $completedPeriods = PayrollPeriod::where('status', 'completed')
+        $completedPeriods = PayrollPeriod::with('payrollGroup')
+            ->where('status', 'completed')
             ->orderBy('payroll_computed_at', 'desc')
             ->limit(10)
             ->get();
@@ -222,6 +226,8 @@ class PayrollComputationController extends Controller
      */
     public function preview(PayrollPeriod $period)
     {
+        $period->load('payrollGroup');
+        
         // Check if all DTRs are approved
         $unapprovedDtrs = DailyTimeRecord::where('payroll_period_id', $period->id)
             ->where('status', '!=', 'approved')
@@ -380,6 +386,8 @@ class PayrollComputationController extends Controller
      */
     public function show(PayrollPeriod $period)
     {
+        $period->load('payrollGroup');
+        
         $payrolls = Payroll::with(['user'])
             ->where('payroll_period_id', $period->id)
             ->orderBy('user_id')

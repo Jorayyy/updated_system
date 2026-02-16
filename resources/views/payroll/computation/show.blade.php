@@ -5,10 +5,12 @@
                 <h2 class="font-semibold text-xl text-gray-800 leading-tight">
                     {{ __('Payroll Management') }}
                 </h2>
-                <div class="text-sm text-gray-500 mt-1">
-                    Period: <span class="font-medium text-gray-700">{{ $period->start_date->format('M d') }} - {{ $period->end_date->format('M d, Y') }}</span>
-                    <span class="mx-2">|</span>
-                    Status: <span class="uppercase font-bold {{ $period->status === 'completed' ? 'text-green-600' : 'text-blue-600' }}">{{ $period->status }}</span>
+                <div class="text-sm text-gray-500 mt-1 space-x-2">
+                    <span>Period: <span class="font-medium text-gray-700">{{ $period->start_date->format('M d') }} - {{ $period->end_date->format('M d, Y') }}</span></span>
+                    <span class="text-gray-300">|</span>
+                    <span>Group: <span class="font-medium text-gray-700">{{ $period->payrollGroup->name ?? 'Global' }}</span></span>
+                    <span class="text-gray-300">|</span>
+                    <span>Status: <span class="uppercase font-bold {{ $period->status === 'completed' ? 'text-green-600' : 'text-blue-600' }}">{{ $period->status }}</span></span>
                 </div>
             </div>
             
