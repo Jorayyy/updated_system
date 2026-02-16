@@ -124,12 +124,9 @@ print_success "Application optimized"
 
 # Step 10: Symlink storage (if needed)
 print_section "Step 10: Setting up storage symlink"
-if [ ! -L "public/storage" ]; then
-    php artisan storage:link
-    print_success "Storage symlink created"
-else
-    print_success "Storage symlink already exists"
-fi
+# Bypassing because Hostinger often disables the 'symlink' function in PHP
+echo "Skipping storage:link (Shared hosting limitation). Link it manually via Hostinger panel if needed."
+print_success "Storage symlink step handled"
 
 # Step 11: Seed database (optional - uncomment if needed)
 # print_section "Step 11: Seeding database"
