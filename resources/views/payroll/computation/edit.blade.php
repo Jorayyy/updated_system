@@ -331,7 +331,7 @@
             const selectors = document.querySelectorAll('.adjustment-selector');
             const plusButtons = document.querySelectorAll('.plus-btn');
             const reasonBox = document.getElementById('adjustment_reason');
-            const adjustmentSettings = @json($adjustmentSettings);
+            const adjustmentSettings = @json($adjustmentTypes);
             const context = @json($formulaContext);
             
             // Handle Rate Synchronization (Daily to Monthly/Hourly)
