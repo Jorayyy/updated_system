@@ -392,6 +392,7 @@ class DatabaseSeeder extends Seeder
         */
 
         $this->call([
+            HolidaySeeder::class,
             PayrollGroupSeeder::class,
             PayrollAdjustmentSettingSeeder::class,
             PayrollAdjustmentTypeSeeder::class,
