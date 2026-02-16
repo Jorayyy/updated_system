@@ -427,7 +427,23 @@ class PayrollComputationController extends Controller
     public function edit(Payroll $payroll)
     {
         $payroll->load(['user', 'payrollPeriod']);
-        return view('payroll.computation.edit', compact('payroll'));
+        $adjustmentTypes = \App\Models\PayrollAdjustmentType::all();
+        
+        // Prepare context for formula evaluation
+        $user = $payroll->user;
+        $formulaContext = [
+            'basic' => (float) $payroll->basic_pay,
+            'days' => (float) $payroll->total_work_days,
+            'daily' => (float) ($user->daily_rate ?? 0),
+            'hourly' => (float) ($user->hourly_rate ?? 0),
+            'late' => (float) $payroll->total_late_minutes,
+            'absent' => (float) $payroll->total_absent_days,
+            'att_inc' => (float) ($user->attendance_incentive ?? 0),
+            'perf_inc' => (float) ($user->perfect_attendance_bonus ?? 0),
+            'site_inc' => (float) ($user->site_incentive ?? 0),
+        ];
+        
+        return view('payroll.computation.edit', compact('payroll', 'adjustmentTypes', 'formulaContext'));
     }
 
     /**
@@ -436,6 +452,7 @@ class PayrollComputationController extends Controller
     public function update(Request $request, Payroll $payroll)
     {
         $validated = $request->validate([
+            // Standard Payroll Adjustment Fields
             'basic_pay' => 'required|numeric|min:0',
             'overtime_pay' => 'required|numeric|min:0',
             'holiday_pay' => 'required|numeric|min:0',
@@ -451,10 +468,46 @@ class PayrollComputationController extends Controller
             'leave_without_pay_deductions' => 'required|numeric|min:0',
             'other_deductions' => 'required|numeric|min:0',
             'adjustment_reason' => 'required|string|max:500',
+
+            // Inherited User Rate/Incentive fields (Moved from Employee Edit)
+            'monthly_salary' => 'nullable|numeric|min:0',
+            'daily_rate' => 'nullable|numeric|min:0',
+            'hourly_rate' => 'nullable|numeric|min:0',
+            'meal_allowance' => 'nullable|numeric|min:0',
+            'transportation_allowance' => 'nullable|numeric|min:0',
+            'communication_allowance' => 'nullable|numeric|min:0',
+            'perfect_attendance_bonus' => 'nullable|numeric|min:0',
+            'site_incentive' => 'nullable|numeric|min:0',
+            'attendance_incentive' => 'nullable|numeric|min:0',
+            'cola' => 'nullable|numeric|min:0',
+            'other_allowance' => 'nullable|numeric|min:0',
         ]);
 
         try {
             DB::beginTransaction();
+
+            // Update Employee profile settings first (Synced from this Adjustment screen)
+            $payroll->user->update([
+                'monthly_salary' => $validated['monthly_salary'] ?? $payroll->user->monthly_salary,
+                'daily_rate' => $validated['daily_rate'] ?? $payroll->user->daily_rate,
+                'hourly_rate' => $validated['hourly_rate'] ?? $payroll->user->hourly_rate,
+                'meal_allowance' => $validated['meal_allowance'] ?? $payroll->user->meal_allowance,
+                'transportation_allowance' => $validated['transportation_allowance'] ?? $payroll->user->transportation_allowance,
+                'communication_allowance' => $validated['communication_allowance'] ?? $payroll->user->communication_allowance,
+                'perfect_attendance_bonus' => $validated['perfect_attendance_bonus'] ?? $payroll->user->perfect_attendance_bonus,
+                'site_incentive' => $validated['site_incentive'] ?? $payroll->user->site_incentive,
+                'attendance_incentive' => $validated['attendance_incentive'] ?? $payroll->user->attendance_incentive,
+                'cola' => $validated['cola'] ?? $payroll->user->cola,
+                'other_allowance' => $validated['other_allowance'] ?? $payroll->user->other_allowance,
+            ]);
+
+            // Filter out non-payroll columns before updating the Payroll record
+            $payrollData = collect($validated)->only([
+                'basic_pay', 'overtime_pay', 'holiday_pay', 'night_diff_pay', 'rest_day_pay',
+                'bonus', 'allowances', 'sss_contribution', 'philhealth_contribution',
+                'pagibig_contribution', 'withholding_tax', 'loan_deductions',
+                'leave_without_pay_deductions', 'other_deductions', 'adjustment_reason'
+            ])->toArray();
 
             $grossPay = $validated['basic_pay'] + 
                        $validated['overtime_pay'] + 
@@ -477,7 +530,7 @@ class PayrollComputationController extends Controller
 
             $netPay = $grossPay - $totalDeductions;
 
-            $payroll->update(array_merge($validated, [
+            $payroll->update(array_merge($payrollData, [
                 'gross_pay' => $grossPay,
                 'total_deductions' => $totalDeductions,
                 'net_pay' => $netPay,
@@ -829,5 +882,50 @@ class PayrollComputationController extends Controller
         $overtimePay = $dtrs->sum('overtime_hours') * $hourlyRate * 1.25;
 
         return round($regularPay + $overtimePay, 2);
+    }
+
+    /**
+     * Delete a single payroll record
+     */
+    public function destroy(Payroll $payroll)
+    {
+        if (!auth()->user()->hasRole('super_admin')) {
+            return redirect()->back()->with('error', 'Only System Administrators can delete payroll records.');
+        }
+
+        $periodId = $payroll->payroll_period_id;
+        $employeeName = $payroll->user->name;
+        $payroll->delete();
+
+        Log::channel('payroll')->warning("Payroll record for {$employeeName} deleted", [
+            'period_id' => $periodId,
+            'user_id' => auth()->id(),
+        ]);
+
+        return redirect()->back()->with('success', "Payroll record for {$employeeName} has been removed.");
+    }
+
+    /**
+     * Bulk delete all payroll records for a period
+     */
+    public function bulkDelete(PayrollPeriod $period)
+    {
+        if (!auth()->user()->hasRole('super_admin')) {
+            return redirect()->back()->with('error', 'Only System Administrators can perform bulk deletion.');
+        }
+
+        $count = Payroll::where('payroll_period_id', $period->id)->count();
+        Payroll::where('payroll_period_id', $period->id)->delete();
+        
+        // Reset period status if needed
+        $period->update(['status' => 'draft', 'payroll_computed_at' => null]);
+
+        Log::channel('payroll')->warning("Bulk delete performed for period {$period->id}. Removed {$count} records.", [
+            'period_id' => $period->id,
+            'user_id' => auth()->id(),
+        ]);
+
+        return redirect()->route('payroll.computation.show', $period)
+            ->with('success', "Successfully deleted {$count} payroll records. The period has been reset to draft.");
     }
 }

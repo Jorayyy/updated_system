@@ -100,7 +100,9 @@ class SettingsController extends Controller
     public function payroll()
     {
         $settings = CompanySetting::getByGroup('payroll');
-        return view('settings.payroll', compact('settings'));
+        $adjustmentTypes = \App\Models\PayrollAdjustmentType::all();
+        
+        return view('settings.payroll', compact('settings', 'adjustmentTypes'));
     }
 
     /**
@@ -108,7 +110,7 @@ class SettingsController extends Controller
      */
     public function updatePayroll(Request $request)
     {
-        $request->validate([
+        $rules = [
             'work_hours_per_day' => 'required|numeric|min:1|max:24',
             'work_days_per_month' => 'required|numeric|min:1|max:31',
             'overtime_rate_multiplier' => 'required|numeric|min:1|max:5',
@@ -120,11 +122,20 @@ class SettingsController extends Controller
             'holiday_rate_regular' => 'required|numeric|min:1|max:5',
             'holiday_rate_special' => 'required|numeric|min:1|max:5',
             'rest_day_rate' => 'required|numeric|min:1|max:5',
-            'sss_enabled' => 'boolean',
-            'philhealth_enabled' => 'boolean',
-            'pagibig_enabled' => 'boolean',
-            'tax_enabled' => 'boolean',
-        ]);
+            'sss_enabled' => 'nullable',
+            'philhealth_enabled' => 'nullable',
+            'pagibig_enabled' => 'nullable',
+            'tax_enabled' => 'nullable',
+        ];
+
+        // Add rules for each dynamic adjustment type
+        $adjustmentTypes = \App\Models\PayrollAdjustmentType::all();
+        foreach ($adjustmentTypes as $adj) {
+            $rules['adj_formula_' . $adj->id] = 'required|string|max:255';
+            $rules['adj_name_' . $adj->id] = 'required|string|max:100';
+        }
+
+        $request->validate($rules);
 
         CompanySetting::setValue('work_hours_per_day', $request->work_hours_per_day, 'decimal', 'payroll');
         CompanySetting::setValue('work_days_per_month', $request->work_days_per_month, 'decimal', 'payroll');
@@ -142,7 +153,52 @@ class SettingsController extends Controller
         CompanySetting::setValue('pagibig_enabled', $request->boolean('pagibig_enabled'), 'boolean', 'payroll');
         CompanySetting::setValue('tax_enabled', $request->boolean('tax_enabled'), 'boolean', 'payroll');
 
+        // Update dynamic adjustment types
+        foreach ($adjustmentTypes as $adj) {
+            $adj->update([
+                'name' => $request->get('adj_name_' . $adj->id),
+                'default_formula' => $request->get('adj_formula_' . $adj->id),
+            ]);
+        }
+        
+        // Clear cache
+        \Illuminate\Support\Facades\Cache::forget('payroll_adjustment_codes');
+
         return back()->with('success', 'Payroll settings updated successfully.');
+    }
+
+    /**
+     * Add a new adjustment type
+     */
+    public function addAdjustmentType(Request $request)
+    {
+        $validated = $request->validate([
+            'name' => 'required|string|max:100',
+            'code' => 'required|string|max:50|unique:payroll_adjustment_types,code',
+            'type' => 'required|in:earning,deduction',
+            'target_field' => 'required|in:bonus,allowances,loan_deductions,other_deductions',
+            'default_formula' => 'required|string|max:255',
+        ]);
+
+        \App\Models\PayrollAdjustmentType::create($validated);
+        \Illuminate\Support\Facades\Cache::forget('payroll_adjustment_codes');
+
+        return back()->with('success', 'Adjustment type added successfully.');
+    }
+
+    /**
+     * Delete an adjustment type
+     */
+    public function deleteAdjustmentType(\App\Models\PayrollAdjustmentType $type)
+    {
+        if ($type->is_system_default) {
+            return back()->with('error', 'Cannot delete system default adjustment types.');
+        }
+
+        $type->delete();
+        \Illuminate\Support\Facades\Cache::forget('payroll_adjustment_codes');
+
+        return back()->with('success', 'Adjustment type deleted successfully.');
     }
 
     /**

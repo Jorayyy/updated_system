@@ -1,9 +1,16 @@
 <x-app-layout>
     <x-slot name="header">
         <div class="flex justify-between items-center">
-            <h2 class="font-semibold text-xl text-gray-800 leading-tight">
-                {{ __('Payroll Groups') }}
-            </h2>
+            <div class="flex items-center gap-4">
+                <a href="{{ route('payroll.computation.dashboard') }}" class="text-gray-500 hover:text-gray-700" title="Back to Command Center">
+                    <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10 19l-7-7m0 0l7-7m-7 7h18"/>
+                    </svg>
+                </a>
+                <h2 class="font-semibold text-xl text-gray-800 leading-tight">
+                    {{ __('Payroll Groups') }}
+                </h2>
+            </div>
             <a href="{{ route('payroll-groups.create') }}" class="bg-indigo-600 text-white px-4 py-2 rounded-md hover:bg-indigo-700 transition-colors duration-200">
                 Add Payroll Group
             </a>

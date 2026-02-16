@@ -274,6 +274,8 @@ Route::middleware('auth')->group(function () {
             Route::post('/period/{period}/bulk-approve', [PayrollComputationController::class, 'bulkApprove'])->name('bulk-approve');
             Route::post('/period/{period}/bulk-release', [PayrollComputationController::class, 'bulkRelease'])->name('bulk-release');
             Route::post('/period/{period}/bulk-post', [PayrollComputationController::class, 'bulkPost'])->name('bulk-post');
+            Route::delete('/period/{period}/bulk-delete', [PayrollComputationController::class, 'bulkDelete'])->name('bulk-delete');
+            Route::delete('/{payroll}', [PayrollComputationController::class, 'destroy'])->name('destroy');
         });
 
         // Payslip Management (Admin/HR)
@@ -401,6 +403,8 @@ Route::middleware('auth')->group(function () {
         Route::put('/settings/company', [SettingsController::class, 'updateCompany'])->name('settings.company.update');
         Route::get('/settings/payroll', [SettingsController::class, 'payroll'])->name('settings.payroll');
         Route::put('/settings/payroll', [SettingsController::class, 'updatePayroll'])->name('settings.payroll.update');
+        Route::post('/settings/payroll/adjustment-types', [SettingsController::class, 'addAdjustmentType'])->name('settings.payroll.adjustment-types.store');
+        Route::delete('/settings/payroll/adjustment-types/{type}', [SettingsController::class, 'deleteAdjustmentType'])->name('settings.payroll.adjustment-types.destroy');
         Route::get('/settings/attendance', [SettingsController::class, 'attendance'])->name('settings.attendance');
         Route::put('/settings/attendance', [SettingsController::class, 'updateAttendance'])->name('settings.attendance.update');
         Route::get('/settings/call-center', [SettingsController::class, 'callCenter'])->name('settings.call-center');

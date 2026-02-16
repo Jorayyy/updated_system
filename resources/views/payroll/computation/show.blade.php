@@ -138,10 +138,20 @@
                             <form action="{{ route('payroll.computation.compute', $period) }}" method="POST">
                                 @csrf
                                 <input type="hidden" name="manual_mode" value="1">
-                                <button type="submit" class="inline-flex items-center px-4 py-2 border border-gray-300 rounded-md font-semibold text-xs text-gray-700 uppercase tracking-widest shadow-sm hover:text-gray-500 hover:bg-gray-50 focus:outline-none focus:border-blue-300 focus:ring ring-blue-300 active:bg-gray-50 active:text-gray-800 transition ease-in-out duration-150" onclick="return confirm('WARNING: This will RESET all amounts to zero.\n\nAre you sure you want to re-initialize?')">
-                                    Reset / Re-Initialize
+                                <button type="submit" class="inline-flex items-center px-4 py-2 border border-blue-300 rounded-md font-semibold text-xs text-blue-700 uppercase tracking-widest shadow-sm hover:text-blue-500 hover:bg-blue-50 focus:outline-none focus:border-blue-300 focus:ring ring-blue-300 active:bg-blue-50 active:text-blue-800 transition ease-in-out duration-150" onclick="return confirm('WARNING: This will RESET all amounts.\n\nAre you sure you want to re-initialize?')">
+                                    Re-Initialize
                                 </button>
                             </form>
+
+                            @if(auth()->user()->hasRole('super_admin'))
+                                <form action="{{ route('payroll.computation.bulk-delete', $period) }}" method="POST">
+                                    @csrf
+                                    @method('DELETE')
+                                    <button type="submit" class="inline-flex items-center px-4 py-2 bg-red-600 border border-transparent rounded-md font-semibold text-xs text-white uppercase tracking-widest hover:bg-red-700 active:bg-red-900 focus:outline-none focus:border-red-900 focus:ring ring-red-300 transition" onclick="return confirm('EXTREME WARNING: This will PERMANENTLY DELETE all payroll records for this period.\n\nThis action cannot be undone. Proceed?')">
+                                        Delete All
+                                    </button>
+                                </form>
+                            @endif
                         </div>
                     </div>
 
@@ -203,6 +213,15 @@
                                                     <svg class="w-4 h-4 mr-1" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z"></path></svg>
                                                     Edit
                                                 </a>
+                                                @if(auth()->user()->hasRole('super_admin'))
+                                                    <form action="{{ route('payroll.computation.destroy', $payroll) }}" method="POST" class="inline">
+                                                        @csrf
+                                                        @method('DELETE')
+                                                        <button type="submit" class="text-red-500 hover:text-red-700 font-bold" onclick="return confirm('Delete this payroll record?')">
+                                                            <i class="fas fa-trash"></i>
+                                                        </button>
+                                                    </form>
+                                                @endif
                                             </div>
                                         </td>
                                     </tr>

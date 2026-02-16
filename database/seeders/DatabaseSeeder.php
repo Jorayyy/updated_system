@@ -389,6 +389,11 @@ class DatabaseSeeder extends Seeder
         }
         */
 
+        $this->call([
+            PayrollGroupSeeder::class,
+            PayrollAdjustmentSettingSeeder::class,
+        ]);
+
         $this->command->info('Seed Complete! Created 100 users. Run payroll:redo-weekly to generate payrolls.');
     }
 }

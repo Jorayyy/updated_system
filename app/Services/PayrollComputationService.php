@@ -79,33 +79,31 @@ class PayrollComputationService
             $rates = $this->getPayRates($user, $period);
 
             if ($manualMode) {
-                 // In manual mode, we init everything to zero
-                 $earnings = [
-                     'basic_pay' => 0,
-                     'overtime_pay' => 0,
-                     'holiday_pay' => 0,
-                     'night_diff_pay' => 0,
-                     'rest_day_pay' => 0,
-                     'allowances' => 0,
-                     'bonuses' => 0,
-                 ];
+                 // Hybrid Manual Mode: Fetch DTR metrics but leave adjustments to user
+                 $earnings = $this->calculateEarnings($user, $metrics, $rates, $period, $transactions);
+                 
+                 // Zero out manual factors
+                 $earnings['bonuses'] = 0;
+                 $earnings['allowances'] = 0;
 
+                 $baseDeductions = $this->calculateDeductions($user, $metrics, $rates, $earnings, $period, $loans, $transactions);
+                 
                  $deductions = [
                      'sss' => 0,
                      'philhealth' => 0,
                      'pagibig' => 0,
                      'tax' => 0,
-                     'late' => 0,
-                     'undertime' => 0,
-                     'absent' => 0,
-                     'leave_without_pay' => 0,
+                     'late' => $baseDeductions['late'],
+                     'undertime' => $baseDeductions['undertime'],
+                     'absent' => $baseDeductions['absent'],
+                     'leave_without_pay' => $baseDeductions['leave_without_pay'],
                      'loans' => 0,
                      'other' => 0,
                  ];
 
-                 $grossPay = 0;
-                 $totalDeductions = 0;
-                 $netPay = 0;
+                 $grossPay = $earnings['basic_pay'] + $earnings['overtime_pay'] + $earnings['holiday_pay'] + $earnings['night_diff_pay'] + $earnings['rest_day_pay'];
+                 $totalDeductions = $deductions['late'] + $deductions['undertime'] + $deductions['absent'] + $deductions['leave_without_pay'];
+                 $netPay = $grossPay - $totalDeductions;
 
             } else {
                 // Calculate earnings

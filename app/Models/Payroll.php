@@ -10,6 +10,16 @@ class Payroll extends Model
 {
     use HasFactory;
 
+    /**
+     * Get all adjustment codes from database
+     */
+    public static function getAdjustmentCodes(): array
+    {
+        return \Illuminate\Support\Facades\Cache::remember('payroll_adjustment_codes', 3600, function() {
+            return \App\Models\PayrollAdjustmentType::all()->pluck('name', 'code')->toArray();
+        });
+    }
+
     protected $fillable = [
         'user_id',
         'payroll_period_id',
