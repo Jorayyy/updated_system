@@ -113,21 +113,23 @@ class DatabaseSeeder extends Seeder
         ]);
 
         // HR (Employee Account)
-        $users[] = User::create([
-            'employee_id' => 'HR-001-EMP',
-            'name' => 'Maria Santos (Employee Mode)',
-            'email' => 'hr.emp@mebs.com',
-            'password' => $password,
-            'role' => 'employee',
-            'account_id' => $roles['employee']->id,
-            'department' => 'Human Resources',
-            'position' => 'HR Manager',
-            'site_id' => $tacloban->id,
-            'monthly_salary' => 45000,
-            'hourly_rate' => 45000 / 22 / 8,
-            'date_hired' => '2023-03-15',
-            'is_active' => true,
-        ]);
+        $users[] = User::firstOrCreate(
+            ['email' => 'hr.emp@mebs.com'],
+            [
+                'employee_id' => 'HR-001-EMP',
+                'name' => 'Maria Santos (Employee Mode)',
+                'password' => $password,
+                'role' => 'employee',
+                'account_id' => $roles['employee']->id,
+                'department' => 'Human Resources',
+                'position' => 'HR Manager',
+                'site_id' => $tacloban->id,
+                'monthly_salary' => 45000,
+                'hourly_rate' => 45000 / 22 / 8,
+                'date_hired' => '2023-03-15',
+                'is_active' => true,
+            ]
+        );
 
         // Accounting (Management Account)
         $users[] = User::firstOrCreate(
