@@ -58,7 +58,7 @@ class PayrollComputationService
     /**
      * Compute payroll for a single employee using DTR data
      */
-    public function computeFromDtr(User $user, PayrollPeriod $period, ?Collection $dtrs = null, ?Collection $loans = null, ?Collection $transactions = null): array
+    public function computeFromDtr(User $user, PayrollPeriod $period, ?Collection $dtrs = null, ?Collection $loans = null, ?Collection $transactions = null, bool $manualMode = false): array
     {
         try {
             DB::beginTransaction();
@@ -78,51 +78,93 @@ class PayrollComputationService
             // Get pay rates
             $rates = $this->getPayRates($user, $period);
 
-            // Calculate earnings
-            $earnings = $this->calculateEarnings($user, $metrics, $rates, $period, $transactions);
+            if ($manualMode) {
+                 // In manual mode, we init everything to zero
+                 $earnings = [
+                     'basic_pay' => 0,
+                     'overtime_pay' => 0,
+                     'holiday_pay' => 0,
+                     'night_diff_pay' => 0,
+                     'rest_day_pay' => 0,
+                     'allowances' => 0,
+                     'bonuses' => 0,
+                 ];
 
-            // Apply "No Work, No Pay" rule
-            if ($metrics['work_days'] <= 0 && $metrics['overtime_minutes'] <= 0 && $metrics['holiday_days'] <= 0) {
-                $earnings['basic_pay'] = 0;
-                $earnings['allowances'] = 0;
-                $earnings['bonuses'] = 0;
-                $earnings['holiday_pay'] = 0;
-                $earnings['night_diff_pay'] = 0;
-                $earnings['rest_day_pay'] = 0;
+                 $deductions = [
+                     'sss' => 0,
+                     'philhealth' => 0,
+                     'pagibig' => 0,
+                     'tax' => 0,
+                     'late' => 0,
+                     'undertime' => 0,
+                     'absent' => 0,
+                     'leave_without_pay' => 0,
+                     'loans' => 0,
+                     'other' => 0,
+                 ];
+
+                 $grossPay = 0;
+                 $totalDeductions = 0;
+                 $netPay = 0;
+
+            } else {
+                // Calculate earnings
+                $earnings = $this->calculateEarnings($user, $metrics, $rates, $period, $transactions);
+                
+                // ... (rest of logic)
+                // Apply "No Work, No Pay" rule
+                if ($metrics['work_days'] <= 0 && $metrics['overtime_minutes'] <= 0 && $metrics['holiday_days'] <= 0) {
+                    $earnings['basic_pay'] = 0;
+                    $earnings['allowances'] = 0;
+                    $earnings['bonuses'] = 0;
+                    $earnings['holiday_pay'] = 0;
+                    $earnings['night_diff_pay'] = 0;
+                    $earnings['rest_day_pay'] = 0;
+                }
+
+                // Calculate deductions
+                $deductions = $this->calculateDeductions($user, $metrics, $rates, $earnings, $period, $loans, $transactions);
+
+                // If earnings are zero, zero out mandatory government deductions for this period
+                if (($earnings['basic_pay'] <= 0 && $earnings['overtime_pay'] <= 0)) {
+                    $deductions['sss'] = 0;
+                    $deductions['philhealth'] = 0;
+                    $deductions['pagibig'] = 0;
+                    $deductions['tax'] = 0;
+                }
+                
+                // RULE: If Weekly, suppress government deductions by default (assume 4th week processing or manual)
+                // Unless explicitly enabled via global setting or flag
+                if ($period->period_type === 'weekly') {
+                     $deductions['sss'] = 0;
+                     $deductions['philhealth'] = 0;
+                     $deductions['pagibig'] = 0;
+                     // Only keep Tax if taxable > 5000/week (approx) but usually 0 for weekly minimum wage
+                     // Let's keep tax logic as is, it has brackets starting at 20k monthly (~5k weekly)
+                }
+
+                // Calculate totals
+                $grossPay = $earnings['basic_pay'] + 
+                           $earnings['overtime_pay'] + 
+                           $earnings['holiday_pay'] + 
+                           $earnings['night_diff_pay'] +
+                           $earnings['rest_day_pay'] +
+                           $earnings['allowances'] +
+                           $earnings['bonuses'];
+
+                $totalDeductions = $deductions['sss'] + 
+                                  $deductions['philhealth'] + 
+                                  $deductions['pagibig'] + 
+                                  $deductions['tax'] + 
+                                  $deductions['late'] + 
+                                  $deductions['undertime'] + 
+                                  $deductions['absent'] + 
+                                  $deductions['leave_without_pay'] +
+                                  $deductions['loans'] +
+                                  $deductions['other'];
+
+                $netPay = $grossPay - $totalDeductions;
             }
-
-            // Calculate deductions
-            $deductions = $this->calculateDeductions($user, $metrics, $rates, $earnings, $period, $loans, $transactions);
-
-            // If earnings are zero, zero out mandatory government deductions for this period
-            if ($earnings['basic_pay'] <= 0 && $earnings['overtime_pay'] <= 0) {
-                $deductions['sss'] = 0;
-                $deductions['philhealth'] = 0;
-                $deductions['pagibig'] = 0;
-                $deductions['tax'] = 0;
-            }
-
-            // Calculate totals
-            $grossPay = $earnings['basic_pay'] + 
-                       $earnings['overtime_pay'] + 
-                       $earnings['holiday_pay'] + 
-                       $earnings['night_diff_pay'] +
-                       $earnings['rest_day_pay'] +
-                       $earnings['allowances'] +
-                       $earnings['bonuses'];
-
-            $totalDeductions = $deductions['sss'] + 
-                              $deductions['philhealth'] + 
-                              $deductions['pagibig'] + 
-                              $deductions['tax'] + 
-                              $deductions['late'] + 
-                              $deductions['undertime'] + 
-                              $deductions['absent'] + 
-                              $deductions['leave_without_pay'] +
-                              $deductions['loans'] +
-                              $deductions['other'];
-
-            $netPay = $grossPay - $totalDeductions;
 
             // Create/Update payroll record
             $payroll = Payroll::updateOrCreate(
@@ -245,7 +287,7 @@ class PayrollComputationService
     /**
      * Bulk compute payroll for period
      */
-    public function computePayrollForPeriod(PayrollPeriod $period, ?array $userIds = null): array
+    public function computePayrollForPeriod(PayrollPeriod $period, ?array $userIds = null, bool $manualMode = false): array
     {
         // Reset progress
         Cache::put("payroll_progress_{$period->id}", [
@@ -266,7 +308,7 @@ class PayrollComputationService
 
         // Get employees
         $query = User::where('is_active', true)
-            ->whereIn('role', ['employee', 'hr']);
+            ->whereIn('role', ['employee', 'hr', 'admin', 'super_admin']);
             
         // Filter by Payroll Group if defined
         if ($period->payroll_group_id) {
@@ -338,7 +380,8 @@ class PayrollComputationService
 
             $pendingCount = $pendingDtrCounts[$employee->id] ?? 0;
 
-            if ($pendingCount > 0) {
+            // In Manual Mode, ignore pending DTR checks
+            if (!$manualMode && $pendingCount > 0) {
                 $results['skipped']++;
                 $results['errors'][$employee->id] = 'Has pending DTRs';
                 continue;
@@ -350,7 +393,8 @@ class PayrollComputationService
                 $period, 
                 $allApprovedDtrs->get($employee->id, new Collection()),
                 $allLoans->get($employee->id, new Collection()),
-                $allTransactions->get($employee->id, new Collection())
+                $allTransactions->get($employee->id, new Collection()),
+                $manualMode
             );
 
             if ($result['success']) {

@@ -25,6 +25,7 @@ class ComputePayrollJob implements ShouldQueue
     public PayrollPeriod $payrollPeriod;
     public ?array $userIds;
     public ?int $triggeredBy;
+    public bool $manualMode;
 
     /**
      * The number of times the job may be attempted.
@@ -39,11 +40,12 @@ class ComputePayrollJob implements ShouldQueue
     /**
      * Create a new job instance.
      */
-    public function __construct(PayrollPeriod $payrollPeriod, ?array $userIds = null, ?int $triggeredBy = null)
+    public function __construct(PayrollPeriod $payrollPeriod, ?array $userIds = null, ?int $triggeredBy = null, bool $manualMode = false)
     {
         $this->payrollPeriod = $payrollPeriod;
         $this->userIds = $userIds;
         $this->triggeredBy = $triggeredBy;
+        $this->manualMode = $manualMode;
         $this->onQueue('payroll');
     }
 
@@ -56,12 +58,14 @@ class ComputePayrollJob implements ShouldQueue
             'period_id' => $this->payrollPeriod->id,
             'user_ids' => $this->userIds,
             'triggered_by' => $this->triggeredBy,
+            'manual_mode' => $this->manualMode,
         ]);
 
         try {
             $results = $payrollService->computePayrollForPeriod(
                 $this->payrollPeriod,
-                $this->userIds
+                $this->userIds,
+                $this->manualMode
             );
 
             Log::channel('payroll')->info('Payroll computation job completed', [

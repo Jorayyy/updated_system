@@ -74,16 +74,13 @@
                                 <x-input-error :messages="$errors->get('cut_off_label')" class="mt-2" />
                             </div>
 
-                            <!-- Period Type -->
-                            <div>
-                                <x-input-label for="period_type" :value="__('Payroll Type')" />
-                                <select name="period_type" id="period_type" required
-                                    class="mt-1 block w-full border-gray-300 rounded-md shadow-sm focus:border-indigo-500 focus:ring-indigo-500">
-                                    <option value="semi_monthly" {{ old('period_type') == 'semi_monthly' ? 'selected' : '' }}>Semi-Monthly (15th & 30th)</option>
-                                    <option value="monthly" {{ old('period_type') == 'monthly' ? 'selected' : '' }}>Monthly</option>
-                                    <option value="weekly" {{ old('period_type') == 'weekly' ? 'selected' : '' }}>Weekly</option>
-                                </select>
-                                <x-input-error :messages="$errors->get('period_type')" class="mt-2" />
+                            <!-- Period Type (Hidden but kept for compatibility) -->
+                            <input type="hidden" name="period_type" id="period_type" value="weekly">
+                            <div class="p-4 bg-blue-50 border-l-4 border-blue-400 text-blue-800 text-sm font-medium rounded-r-lg">
+                                <div class="flex items-center">
+                                    <svg class="w-5 h-5 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"></path></svg>
+                                    Payroll cycle is set to <span class="font-bold ml-1">Working Week</span> (Monday to Friday)
+                                </div>
                             </div>
 
                             <!-- Payroll Group -->
@@ -94,36 +91,13 @@
                                     class="mt-1 block w-full border-gray-300 rounded-md shadow-sm focus:border-indigo-500 focus:ring-indigo-500">
                                     <option value="">-- Global / All Unassigned --</option>
                                     @foreach($groups as $group)
-                                        <option value="{{ $group->id }}" {{ old('payroll_group_id') == $group->id ? 'selected' : '' }} 
-                                            data-type="{{ $group->period_type }}">
-                                            {{ $group->name }} ({{ ucfirst($group->period_type) }})
+                                        <option value="{{ $group->id }}" {{ old('payroll_group_id') == $group->id ? 'selected' : '' }}>
+                                            {{ $group->name }}
                                         </option>
                                     @endforeach
                                 </select>
                                 <x-input-error :messages="$errors->get('payroll_group_id')" class="mt-2" />
                             </div>
-
-                            <script>
-                                document.getElementById('payroll_group_id').addEventListener('change', function() {
-                                    var selectedOption = this.options[this.selectedIndex];
-                                    var type = selectedOption.getAttribute('data-type');
-                                    var typeSelect = document.getElementById('period_type');
-                                    
-                                    if (type) {
-                                        // Standardize type format if needed (e.g. semi-monthly to semi_monthly)
-                                        type = type.replace(/-/g, '_');
-                                        
-                                        // Attempt to match group type to payroll type
-                                        for (var i = 0; i < typeSelect.options.length; i++) {
-                                            if (typeSelect.options[i].value === type) {
-                                                typeSelect.selectedIndex = i;
-                                                typeSelect.dispatchEvent(new Event('change')); // Trigger date update
-                                                break;
-                                            }
-                                        }
-                                    }
-                                });
-                            </script>
 
                             <!-- Date Range -->
                             <div class="grid grid-cols-2 gap-4">
@@ -198,7 +172,6 @@
     @push('scripts')
     <script>
         document.addEventListener('DOMContentLoaded', function() {
-            const typeSelect = document.getElementById('period_type');
             const startDate = document.getElementById('start_date');
             const endDate = document.getElementById('end_date');
             const payDate = document.getElementById('pay_date');
@@ -207,42 +180,25 @@
                 if (!startDate.value) return;
                 
                 const start = new Date(startDate.value);
-                const type = typeSelect.value;
-                let end, pay;
+                
+                // End date is always 4 days after (Monday -> Friday)
+                const end = new Date(start);
+                end.setDate(end.getDate() + 4);
+                
+                // Pay date is exactly 7 days after the start date (Next Monday)
+                // BUT user wants Payday ALWAYS Friday.
+                // If the period ends on Friday, the payday is the NEXT Friday.
+                const pay = new Date(end);
+                pay.setDate(pay.getDate() + 7); // Move to next week Friday
 
-                switch(type) {
-                    case 'semi_monthly':
-                        if (start.getDate() <= 15) {
-                            end = new Date(start.getFullYear(), start.getMonth(), 15);
-                        } else {
-                            end = new Date(start.getFullYear(), start.getMonth() + 1, 0); // Last day
-                        }
-                        pay = new Date(end);
-                        pay.setDate(pay.getDate() + 5);
-                        break;
-                    case 'monthly':
-                        end = new Date(start.getFullYear(), start.getMonth() + 1, 0);
-                        pay = new Date(end);
-                        pay.setDate(pay.getDate() + 5);
-                        break;
-                    case 'weekly':
-                        end = new Date(start);
-                        end.setDate(end.getDate() + 6);
-                        
-                        // Default pay date to the next Friday after the end date
-                        pay = new Date(end);
-                        let dayToFriday = (5 - pay.getDay() + 7) % 7;
-                        if (dayToFriday === 0) dayToFriday = 7; // If end is Friday, next Friday
-                        pay.setDate(pay.getDate() + dayToFriday);
-                        break;
-                }
-
-                if (end) endDate.value = end.toISOString().split('T')[0];
-                if (pay) payDate.value = pay.toISOString().split('T')[0];
+                endDate.value = end.toISOString().split('T')[0];
+                payDate.value = pay.toISOString().split('T')[0];
             }
 
-            typeSelect.addEventListener('change', updateDates);
             startDate.addEventListener('change', updateDates);
+            
+            // Initial call if start date is pre-filled
+            if(startDate.value) updateDates();
         });
     </script>
     @endpush

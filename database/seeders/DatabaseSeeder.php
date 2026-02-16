@@ -172,9 +172,18 @@ class DatabaseSeeder extends Seeder
             $pos = $faker->randomElement($positions[$dept]);
             $site = $faker->randomElement([$tacloban->id, $cebu->id]);
             
-            // Salary logic based on pos
-            $baseSalary = str_contains($pos, 'Manager') ? 40000 : (str_contains($pos, 'Lead') ? 30000 : 20000);
-            $salary = $baseSalary + ($faker->numberBetween(0, 10) * 500);
+            // Salary logic based on PH BPO Market Standards (Monthly PHP)
+            // Agent/CSR/TSR: 18k - 25k (Entry) | 25k - 35k (Experienced/Spec)
+            // Team Lead: 35k - 55k
+            // Ops Manager: 60k - 120k
+            // QA/Support: 20k - 30k
+            
+            $salary = match(true) {
+                str_contains($pos, 'Manager') => $faker->numberBetween(60, 100) * 1000,
+                str_contains($pos, 'Lead') => $faker->numberBetween(35, 55) * 1000, 
+                str_contains($pos, 'Technical') || str_contains($pos, 'QA') => $faker->numberBetween(22, 32) * 1000,
+                default => $faker->numberBetween(18, 25) * 1000
+            };
 
             $users[] = User::create([
                 'employee_id' => 'EMP-' . str_pad($i, 5, '0', STR_PAD_LEFT),
@@ -202,6 +211,7 @@ class DatabaseSeeder extends Seeder
         }
 
         // 5. Generate Attendance & Payroll
+        /* Commented out for faster seeding, will use payroll:redo-weekly instead
         $startSimulation = Carbon::create(2025, 12, 1);
         $endSimulation = Carbon::create(2026, 2, 11); // Until yesterday
         
@@ -377,7 +387,8 @@ class DatabaseSeeder extends Seeder
                 }
             }
         }
+        */
 
-        $this->command->info('Seed Complete! Created 100 users and attendance.');
+        $this->command->info('Seed Complete! Created 100 users. Run payroll:redo-weekly to generate payrolls.');
     }
 }

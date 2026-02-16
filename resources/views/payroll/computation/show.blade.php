@@ -1,266 +1,219 @@
 <x-app-layout>
     <x-slot name="header">
         <div class="flex justify-between items-center">
-            <h2 class="font-semibold text-xl text-gray-800 leading-tight">
-                {{ __('Computed Payrolls') }}
-            </h2>
-            <a href="javascript:void(0)" onclick="window.history.back()" class="text-indigo-600 hover:text-indigo-900 flex items-center">
-                <i class="fas fa-arrow-left mr-1"></i> Back
-            </a>
+            <div>
+                <h2 class="font-semibold text-xl text-gray-800 leading-tight">
+                    {{ __('Payroll Management') }}
+                </h2>
+                <div class="text-sm text-gray-500 mt-1">
+                    Period: <span class="font-medium text-gray-700">{{ $period->start_date->format('M d') }} - {{ $period->end_date->format('M d, Y') }}</span>
+                    <span class="mx-2">|</span>
+                    Status: <span class="uppercase font-bold {{ $period->status === 'completed' ? 'text-green-600' : 'text-blue-600' }}">{{ $period->status }}</span>
+                </div>
+            </div>
+            
+            <div class="flex space-x-2">
+                <a href="{{ route('payroll.computation.dashboard') }}" class="px-4 py-2 bg-gray-200 text-gray-700 rounded-md hover:bg-gray-300 text-sm font-medium">
+                    ← Back to Dashboard
+                </a>
+                
+                @if($payrolls->isNotEmpty())
+                    <a href="{{ route('payroll.computation.export', ['period' => $period, 'format' => 'excel']) }}" class="px-4 py-2 bg-green-600 text-white rounded-md hover:bg-green-700 text-sm font-medium shadow-sm transition">
+                        <i class="fas fa-file-excel mr-1"></i> Export Excel
+                    </a>
+                @endif
+            </div>
         </div>
     </x-slot>
 
-    <div class="py-12">
+    <div class="py-8">
         <div class="max-w-7xl mx-auto sm:px-6 lg:px-8">
+            
             {{-- Flash Messages --}}
             @if (session('success'))
-                <div class="mb-4 bg-green-100 border border-green-400 text-green-700 px-4 py-3 rounded">
-                    {{ session('success') }}
+                <div class="mb-6 bg-green-50 border-l-4 border-green-500 text-green-700 p-4 shadow-sm">
+                    <div class="flex">
+                        <div class="flex-shrink-0">
+                            <i class="fas fa-check-circle"></i>
+                        </div>
+                        <div class="ml-3">
+                            <p class="text-sm font-medium">{{ session('success') }}</p>
+                        </div>
+                    </div>
                 </div>
             @endif
 
             @if (session('error'))
-                <div class="mb-4 bg-red-100 border border-red-400 text-red-700 px-4 py-3 rounded">
-                    {{ session('error') }}
-                </div>
-            @endif
-
-            {{-- Period Info --}}
-            <div class="bg-white overflow-hidden shadow-sm rounded-lg mb-6">
-                <div class="p-6">
-                    <div class="flex justify-between items-center">
-                        <div class="grid grid-cols-1 md:grid-cols-5 gap-4">
-                            <div>
-                                <p class="text-sm text-gray-500">Period</p>
-                                <p class="text-lg font-semibold">
-                                    {{ $period->start_date->format('M d') }} - {{ $period->end_date->format('M d, Y') }}
-                                </p>
-                            </div>
-                            <div>
-                                <p class="text-sm text-gray-500">Status</p>
-                                <span class="px-2 py-1 text-sm font-semibold rounded-full 
-                                    @if($period->status === 'completed') bg-green-100 text-green-800
-                                    @elseif($period->status === 'processing') bg-blue-100 text-blue-800
-                                    @else bg-gray-100 text-gray-800 @endif">
-                                    {{ ucfirst($period->status) }}
-                                </span>
-                            </div>
-                            <div>
-                                <p class="text-sm text-gray-500">Total Gross</p>
-                                <p class="text-lg font-semibold text-green-600">₱{{ number_format($summary['total_gross'] ?? 0, 2) }}</p>
-                            </div>
-                            <div>
-                                <p class="text-sm text-gray-500">Total Deductions</p>
-                                <p class="text-lg font-semibold text-red-600">₱{{ number_format($summary['total_deductions'] ?? 0, 2) }}</p>
-                            </div>
-                            <div>
-                                <p class="text-sm text-gray-500">Total Net Pay</p>
-                                <p class="text-lg font-semibold text-blue-600">₱{{ number_format($summary['total_net'] ?? 0, 2) }}</p>
-                            </div>
+                <div class="mb-6 bg-red-50 border-l-4 border-red-500 text-red-700 p-4 shadow-sm">
+                    <div class="flex">
+                        <div class="flex-shrink-0">
+                            <i class="fas fa-exclamation-circle"></i>
                         </div>
-                        <div class="flex space-x-2">
-                            <a href="{{ route('payroll.computation.export', ['period' => $period, 'format' => 'csv']) }}" 
-                               class="px-4 py-2 bg-gray-600 text-white rounded-md hover:bg-gray-700 text-sm">
-                                Export CSV
-                            </a>
-                        </div>
-                    </div>
-                </div>
-            </div>
-
-            {{-- Status Counts --}}
-            <div class="grid grid-cols-1 md:grid-cols-4 gap-4 mb-6">
-                <div class="bg-white overflow-hidden shadow-sm rounded-lg p-4 border-l-4 border-gray-400">
-                    <p class="text-sm text-gray-500">Computed</p>
-                    <p class="text-2xl font-semibold">{{ $statusCounts['computed'] ?? 0 }}</p>
-                </div>
-                <div class="bg-white overflow-hidden shadow-sm rounded-lg p-4 border-l-4 border-yellow-400">
-                    <p class="text-sm text-gray-500">Approved</p>
-                    <p class="text-2xl font-semibold">{{ $statusCounts['approved'] ?? 0 }}</p>
-                </div>
-                <div class="bg-white overflow-hidden shadow-sm rounded-lg p-4 border-l-4 border-green-400">
-                    <p class="text-sm text-gray-500">Released</p>
-                    <p class="text-2xl font-semibold">{{ $statusCounts['released'] ?? 0 }}</p>
-                </div>
-                <div class="bg-white overflow-hidden shadow-sm rounded-lg p-4 border-l-4 border-red-400">
-                    <p class="text-sm text-gray-500">Rejected</p>
-                    <p class="text-2xl font-semibold">{{ $statusCounts['rejected'] ?? 0 }}</p>
-                </div>
-            </div>
-
-            {{-- Bulk Actions --}}
-            @php
-                $unpostedCount = \App\Models\Payroll::where('payroll_period_id', $period->id)
-                    ->whereIn('status', ['approved', 'completed', 'released'])
-                    ->where('is_posted', false)
-                    ->count();
-                $postedCount = \App\Models\Payroll::where('payroll_period_id', $period->id)
-                    ->where('is_posted', true)
-                    ->count();
-            @endphp
-            @if(($statusCounts['computed'] ?? 0) > 0 || ($statusCounts['approved'] ?? 0) > 0 || $unpostedCount > 0)
-                <div class="bg-white overflow-hidden shadow-sm rounded-lg mb-6 p-4">
-                    <div class="flex items-center justify-between">
-                        <p class="text-sm text-gray-600 font-medium">Bulk Actions & Status:</p>
-                        <div class="flex space-x-2">
-                            @if(($statusCounts['computed'] ?? 0) > 0)
-                                <form action="{{ route('payroll.computation.bulk-approve', $period) }}" method="POST" class="inline">
-                                    @csrf
-                                    <button type="submit" class="px-3 py-1 bg-yellow-500 text-white rounded hover:bg-yellow-600 text-xs font-semibold" 
-                                            onclick="return confirm('Approve all computed payrolls?')">
-                                        Approve All ({{ $statusCounts['computed'] ?? 0 }})
-                                    </button>
-                                </form>
-                            @endif
-                            @if(($statusCounts['approved'] ?? 0) > 0)
-                                <form action="{{ route('payroll.computation.bulk-release', $period) }}" method="POST" class="inline">
-                                    @csrf
-                                    <button type="submit" class="px-3 py-1 bg-green-500 text-white rounded hover:bg-green-600 text-xs font-semibold" 
-                                            onclick="return confirm('Release all approved payrolls?')">
-                                        Release All ({{ $statusCounts['approved'] ?? 0 }})
-                                    </button>
-                                </form>
-                            @endif
-                            @if($unpostedCount > 0)
-                                <form action="{{ route('payroll.computation.bulk-post', $period) }}" method="POST" class="inline">
-                                    @csrf
-                                    <button type="submit" class="px-3 py-1 bg-indigo-600 text-white rounded hover:bg-indigo-700 text-xs font-semibold" 
-                                            onclick="return confirm('Post all approved/completed payrolls for employee viewing?')">
-                                        Post to Employees ({{ $unpostedCount }})
-                                    </button>
-                                </form>
-                            @endif
-                            <div class="px-3 py-1 bg-gray-100 text-gray-700 rounded text-xs font-semibold border">
-                                Posted: {{ $postedCount }}
-                            </div>
+                        <div class="ml-3">
+                            <p class="text-sm font-medium">{{ session('error') }}</p>
                         </div>
                     </div>
                 </div>
             @endif
 
-            {{-- Payrolls Table --}}
-            <div class="bg-white overflow-hidden shadow-sm rounded-lg">
-                <div class="overflow-x-auto">
-                    <table class="min-w-full divide-y divide-gray-200">
-                        <thead class="bg-gray-50">
-                            <tr>
-                                <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Employee</th>
-                                <th class="px-6 py-3 text-center text-xs font-medium text-gray-500 uppercase tracking-wider">Days</th>
-                                <th class="px-6 py-3 text-right text-xs font-medium text-gray-500 uppercase tracking-wider">Basic Pay</th>
-                                <th class="px-6 py-3 text-right text-xs font-medium text-gray-500 uppercase tracking-wider">Overtime</th>
-                                <th class="px-6 py-3 text-right text-xs font-medium text-gray-500 uppercase tracking-wider">Gross Pay</th>
-                                <th class="px-6 py-3 text-right text-xs font-medium text-gray-500 uppercase tracking-wider">Deductions</th>
-                                <th class="px-6 py-3 text-right text-xs font-medium text-gray-500 uppercase tracking-wider">Net Pay</th>
-                                <th class="px-6 py-3 text-center text-xs font-medium text-gray-500 uppercase tracking-wider">Status</th>
-                                <th class="px-6 py-3 text-right text-xs font-medium text-gray-500 uppercase tracking-wider">Actions</th>
-                            </tr>
-                        </thead>
-                        <tbody class="bg-white divide-y divide-gray-200">
-                            @forelse($payrolls as $payroll)
-                                <tr class="hover:bg-gray-50">
-                                    <td class="px-6 py-4 whitespace-nowrap">
-                                        <div class="flex items-center">
-                                            <div>
-                                                <div class="text-sm font-medium text-gray-900">{{ $payroll->user->name }}</div>
-                                                <div class="text-sm text-gray-500">{{ $payroll->user->employee_id }}</div>
+            {{-- Summary Cards (Only show if initialized) --}}
+            @if($payrolls->isNotEmpty())
+                <div class="grid grid-cols-1 md:grid-cols-4 gap-6 mb-8">
+                    <div class="bg-white rounded-xl shadow-sm border border-gray-100 p-6 flex flex-col justify-between">
+                        <dt class="text-sm font-medium text-gray-500 truncate">Total Employees</dt>
+                        <dd class="mt-1 text-3xl font-semibold text-gray-900">{{ $payrolls->total() }}</dd>
+                    </div>
+                    
+                    <div class="bg-white rounded-xl shadow-sm border border-gray-100 p-6 flex flex-col justify-between">
+                        <dt class="text-sm font-medium text-gray-500 truncate">Total Gross Pay</dt>
+                        <dd class="mt-1 text-3xl font-semibold text-indigo-600">₱{{ number_format($summary['total_gross'] ?? 0, 2) }}</dd>
+                    </div>
+
+                    <div class="bg-white rounded-xl shadow-sm border border-gray-100 p-6 flex flex-col justify-between">
+                        <dt class="text-sm font-medium text-gray-500 truncate">Total Deductions</dt>
+                        <dd class="mt-1 text-3xl font-semibold text-red-600">₱{{ number_format($summary['total_deductions'] ?? 0, 2) }}</dd>
+                    </div>
+
+                    <div class="bg-white rounded-xl shadow-sm border border-gray-100 p-6 flex flex-col justify-between">
+                        <dt class="text-sm font-medium text-gray-500 truncate">Total Net Pay</dt>
+                        <dd class="mt-1 text-3xl font-semibold text-green-600">₱{{ number_format($summary['total_net'] ?? 0, 2) }}</dd>
+                    </div>
+                </div>
+            @endif
+
+            {{-- Main Content Area --}}
+            <div class="bg-white shadow-sm rounded-xl border border-gray-100 overflow-hidden">
+                
+                @if($payrolls->isEmpty())
+                    {{-- EMPTY STATE: Initialization Options --}}
+                    <div class="p-12 text-center">
+                        <div class="mx-auto h-24 w-24 text-gray-300 mb-6">
+                            <svg class="w-24 h-24" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"></path>
+                            </svg>
+                        </div>
+                        
+                        <h3 class="text-2xl font-bold text-gray-900 mb-2">Payroll Not Yet Initialized</h3>
+                        <p class="text-gray-500 mb-8 max-w-md mx-auto">This payroll period is currently empty. Initialize it to start manual entry.</p>
+                        
+                        <div class="max-w-md mx-auto">
+                            
+                            {{-- Option 1: Manual Mode (Only) --}}
+                            <div class="border-2 border-indigo-200 rounded-xl p-8 hover:border-indigo-400 hover:shadow-lg transition cursor-pointer group bg-indigo-50 relative overflow-hidden">
+                                <h4 class="font-bold text-xl text-indigo-900 mb-4 text-center">Start Manual Payroll Entry</h4>
+                                <p class="text-sm text-indigo-700 mb-8 text-center">This will create empty payroll records for all employees. You can then manually type in the salary, deductions, and net pay for each person.</p>
+                                
+                                <form action="{{ route('payroll.computation.compute', $period) }}" method="POST">
+                                    @csrf
+                                    <input type="hidden" name="manual_mode" value="1">
+                                    <button type="submit" class="w-full py-4 bg-indigo-600 hover:bg-indigo-700 text-white font-bold rounded-lg shadow-lg transition transform hover:scale-105" onclick="return confirm('Start Manual Payroll?\n\nThis will create blank records for you to fill in.')">
+                                        Initialize Manual Entry Now
+                                    </button>
+                                </form>
+                            </div>
+
+                        </div>
+                    </div>
+                
+                @else
+                    {{-- DATA STATE: Table & Bulk Actions --}}
+                    <div class="px-6 py-4 border-b border-gray-100 bg-gray-50 flex items-center justify-between flex-wrap gap-4">
+                        <div class="flex items-center space-x-2">
+                             <h3 class="text-lg font-bold text-gray-800">Payroll Records</h3>
+                             <span class="px-2.5 py-0.5 rounded-full text-xs font-medium bg-gray-200 text-gray-800">{{ $payrolls->total() }}</span>
+                        </div>
+                        
+                        <div class="flex space-x-2">
+                             @if(($statusCounts['computed'] ?? 0) > 0)
+                                <form action="{{ route('payroll.computation.bulk-approve', $period) }}" method="POST">
+                                    @csrf
+                                    <button type="submit" class="inline-flex items-center px-4 py-2 bg-indigo-600 border border-transparent rounded-md font-semibold text-xs text-white uppercase tracking-widest hover:bg-indigo-700 active:bg-indigo-900 focus:outline-none focus:border-indigo-900 focus:ring ring-indigo-300 disabled:opacity-25 transition ease-in-out duration-150" onclick="return confirm('Approve all computed payrolls?')">
+                                        Approve All
+                                    </button>
+                                </form>
+                            @endif
+
+                            <form action="{{ route('payroll.computation.compute', $period) }}" method="POST">
+                                @csrf
+                                <input type="hidden" name="manual_mode" value="1">
+                                <button type="submit" class="inline-flex items-center px-4 py-2 border border-gray-300 rounded-md font-semibold text-xs text-gray-700 uppercase tracking-widest shadow-sm hover:text-gray-500 hover:bg-gray-50 focus:outline-none focus:border-blue-300 focus:ring ring-blue-300 active:bg-gray-50 active:text-gray-800 transition ease-in-out duration-150" onclick="return confirm('WARNING: This will RESET all amounts to zero.\n\nAre you sure you want to re-initialize?')">
+                                    Reset / Re-Initialize
+                                </button>
+                            </form>
+                        </div>
+                    </div>
+
+                    <div class="overflow-x-auto">
+                        <table class="min-w-full divide-y divide-gray-200">
+                            <thead class="bg-gray-50">
+                                <tr>
+                                    <th scope="col" class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Employee</th>
+                                    <th scope="col" class="px-6 py-3 text-center text-xs font-medium text-gray-500 uppercase tracking-wider">Work Days</th>
+                                    <th scope="col" class="px-6 py-3 text-right text-xs font-medium text-gray-500 uppercase tracking-wider">Gross Pay</th>
+                                    <th scope="col" class="px-6 py-3 text-right text-xs font-medium text-gray-500 uppercase tracking-wider">Deductions</th>
+                                    <th scope="col" class="px-6 py-3 text-right text-xs font-medium text-gray-500 uppercase tracking-wider">Net Pay</th>
+                                    <th scope="col" class="px-6 py-3 text-center text-xs font-medium text-gray-500 uppercase tracking-wider">Status</th>
+                                    <th scope="col" class="px-6 py-3 text-right text-xs font-medium text-gray-500 uppercase tracking-wider">Actions</th>
+                                </tr>
+                            </thead>
+                            <tbody class="bg-white divide-y divide-gray-200">
+                                @foreach($payrolls as $payroll)
+                                    <tr class="hover:bg-gray-50 transition-colors">
+                                        <td class="px-6 py-4 whitespace-nowrap">
+                                            <div class="flex items-center">
+                                                <div class="h-10 w-10 rounded-full bg-gray-200 flex items-center justify-center text-gray-500 font-bold text-xs ring-2 ring-white">
+                                                    {{ substr($payroll->user->name, 0, 2) }}
+                                                </div>
+                                                <div class="ml-4">
+                                                    <div class="text-sm font-bold text-gray-900">{{ $payroll->user->name }}</div>
+                                                    <div class="text-xs text-gray-500">{{ $payroll->user->employee_id }}</div>
+                                                </div>
                                             </div>
-                                        </div>
-                                    </td>
-                                    <td class="px-6 py-4 whitespace-nowrap text-center text-sm text-gray-900">
-                                        {{ $payroll->days_worked ?? 0 }}
-                                    </td>
-                                    <td class="px-6 py-4 whitespace-nowrap text-right text-sm text-gray-900">
-                                        ₱{{ number_format($payroll->basic_pay ?? 0, 2) }}
-                                    </td>
-                                    <td class="px-6 py-4 whitespace-nowrap text-right text-sm">
-                                        @if(($payroll->overtime_pay ?? 0) > 0)
-                                            <span class="text-blue-600">₱{{ number_format($payroll->overtime_pay, 2) }}</span>
-                                        @else
-                                            <span class="text-gray-400">-</span>
-                                        @endif
-                                    </td>
-                                    <td class="px-6 py-4 whitespace-nowrap text-right text-sm font-medium text-gray-900">
-                                        ₱{{ number_format($payroll->gross_pay ?? 0, 2) }}
-                                    </td>
-                                    <td class="px-6 py-4 whitespace-nowrap text-right text-sm text-red-600">
-                                        ₱{{ number_format($payroll->total_deductions ?? 0, 2) }}
-                                    </td>
-                                    <td class="px-6 py-4 whitespace-nowrap text-right text-sm font-semibold text-green-600">
-                                        ₱{{ number_format($payroll->net_pay ?? 0, 2) }}
-                                    </td>
-                                    <td class="px-6 py-4 whitespace-nowrap text-center">
-                                        <div class="flex flex-col items-center">
-                                            <span class="px-2 py-1 text-xs font-semibold rounded-full 
-                                                @if($payroll->status === 'released') bg-green-100 text-green-800
-                                                @elseif($payroll->status === 'approved') bg-yellow-100 text-yellow-800
-                                                @elseif($payroll->status === 'computed') bg-gray-100 text-gray-800
-                                                @elseif($payroll->status === 'rejected') bg-red-100 text-red-800
+                                        </td>
+                                        <td class="px-6 py-4 whitespace-nowrap text-center text-sm text-gray-600">
+                                            <span class="font-medium">{{ $payroll->total_work_days }}</span> days
+                                            @if($payroll->total_overtime_minutes > 0)
+                                                <div class="text-xs text-blue-600">+{{ number_format($payroll->total_overtime_minutes/60, 1) }}h OT</div>
+                                            @endif
+                                        </td>
+                                        <td class="px-6 py-4 whitespace-nowrap text-right text-sm">
+                                            <div class="font-medium text-gray-900">₱{{ number_format($payroll->gross_pay, 2) }}</div>
+                                        </td>
+                                        <td class="px-6 py-4 whitespace-nowrap text-right text-sm text-red-600">
+                                            - ₱{{ number_format($payroll->total_deductions, 2) }}
+                                        </td>
+                                        <td class="px-6 py-4 whitespace-nowrap text-right">
+                                            <span class="px-3 py-1 inline-flex text-sm leading-5 font-bold rounded-full bg-green-50 text-green-700">
+                                                ₱{{ number_format($payroll->net_pay, 2) }}
+                                            </span>
+                                        </td>
+                                        <td class="px-6 py-4 whitespace-nowrap text-center">
+                                            <span class="px-2 inline-flex text-xs leading-5 font-semibold rounded-full 
+                                                @if($payroll->status == 'approved') bg-green-100 text-green-800 
+                                                @elseif($payroll->status == 'computed') bg-yellow-100 text-yellow-800 
                                                 @else bg-gray-100 text-gray-800 @endif">
                                                 {{ ucfirst($payroll->status) }}
                                             </span>
-                                            @if($payroll->is_posted)
-                                                <span class="mt-1 flex items-center text-[10px] text-indigo-600 font-bold uppercase">
-                                                    <i class="fas fa-check-circle mr-1"></i> Posted
-                                                </span>
-                                            @endif
-                                        </div>
-                                    </td>
-                                    <td class="px-6 py-4 whitespace-nowrap text-right text-sm font-medium">
-                                        <div class="flex justify-end space-x-2">
-                                            <a href="{{ route('payroll.computation.details', $payroll) }}" class="text-indigo-600 hover:text-indigo-900" title="View Details">
-                                                <i class="fas fa-eye"></i>
-                                            </a>
-                                            
-                                            @if(!$payroll->is_posted && in_array($payroll->status, ['approved', 'completed', 'released']))
-                                                <form action="{{ route('payroll.computation.post', $payroll) }}" method="POST" class="inline">
-                                                    @csrf
-                                                    <button type="submit" class="text-indigo-600 hover:text-indigo-900" title="Post to Employee">
-                                                        <i class="fas fa-upload"></i>
-                                                    </button>
-                                                </form>
-                                            @endif
-
-                                            @if($payroll->status === 'computed')
-                                                <form action="{{ route('payroll.computation.approve', $payroll) }}" method="POST" class="inline">
-                                                    @csrf
-                                                    <button type="submit" class="text-yellow-600 hover:text-yellow-900" title="Approve">
-                                                        <i class="fas fa-check"></i>
-                                                    </button>
-                                                </form>
-                                            @elseif($payroll->status === 'approved')
-                                                <form action="{{ route('payroll.computation.release', $payroll) }}" method="POST" class="inline">
-                                                    @csrf
-                                                    <button type="submit" class="text-green-600 hover:text-green-900" title="Release">
-                                                        <i class="fas fa-parachute-box"></i>
-                                                    </button>
-                                                </form>
-                                            @endif
-                                            @if(in_array($payroll->status, ['computed', 'approved']) && !$payroll->is_posted)
-                                                <form action="{{ route('payroll.computation.recompute', $payroll) }}" method="POST" class="inline">
-                                                    @csrf
-                                                    <button type="submit" class="text-blue-600 hover:text-blue-900" title="Recompute">
-                                                        <i class="fas fa-sync"></i>
-                                                    </button>
-                                                </form>
-                                            @endif
-                                        </div>
-                                    </td>
-                                </tr>
-                            @empty
-                                <tr>
-                                    <td colspan="9" class="px-6 py-4 text-center text-gray-500">
-                                        No payrolls computed for this period yet
-                                    </td>
-                                </tr>
-                            @endforelse
-                        </tbody>
-                    </table>
-                </div>
-
-                @if($payrolls->hasPages())
-                    <div class="px-6 py-4 border-t">
-                        {{ $payrolls->links() }}
+                                        </td>
+                                        <td class="px-6 py-4 whitespace-nowrap text-right text-sm font-medium">
+                                            <div class="flex justify-end space-x-3">
+                                                <a href="{{ route('payroll.computation.edit', $payroll) }}" class="text-indigo-600 hover:text-indigo-900 font-semibold flex items-center">
+                                                    <svg class="w-4 h-4 mr-1" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z"></path></svg>
+                                                    Edit
+                                                </a>
+                                            </div>
+                                        </td>
+                                    </tr>
+                                @endforeach
+                            </tbody>
+                        </table>
                     </div>
+
+                    @if($payrolls->hasPages())
+                        <div class="bg-gray-50 px-6 py-4 border-t border-gray-200">
+                            {{ $payrolls->links() }}
+                        </div>
+                    @endif
                 @endif
             </div>
         </div>

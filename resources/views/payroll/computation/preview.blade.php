@@ -179,6 +179,16 @@
                 <a href="{{ route('payroll.computation.dashboard') }}" class="px-4 py-2 bg-gray-300 text-gray-700 rounded-md hover:bg-gray-400 transition">
                     Cancel
                 </a>
+                
+                {{-- Manual Mode Button --}}
+                <form action="{{ route('payroll.computation.compute', $period) }}" method="POST" class="inline">
+                    @csrf
+                    <input type="hidden" name="manual_mode" value="1">
+                    <button type="submit" class="px-6 py-2 bg-yellow-600 text-white rounded-md hover:bg-yellow-700 transition font-semibold" onclick="return confirm('This will generate payroll records with zero amounts so you can manually enter them. Are you sure?')">
+                        Initialize Manual Entry
+                    </button>
+                </form>
+
                 <form action="{{ route('payroll.computation.compute', $period) }}" method="POST" class="inline">
                     @csrf
                     <button type="submit" class="px-6 py-2 bg-green-600 text-white rounded-md hover:bg-green-700 transition font-semibold" onclick="return confirm('Proceed with payroll computation?')">

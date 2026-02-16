@@ -29,13 +29,13 @@
                         </select>
                     </div>
 
-                    {{-- Account Filter --}}
+                    {{-- Group Filter --}}
                     <div class="w-48">
                         <select onchange="window.location.href = this.value" class="w-full border-gray-200 rounded-lg text-sm focus:ring-blue-500 focus:border-blue-500">
-                            <option value="{{ route('payroll.computation.dashboard') }}">All Accounts</option>
-                            @foreach($accounts as $account)
-                                <option value="{{ route('payroll.computation.dashboard', ['account_id' => $account->id]) }}" {{ request('account_id') == $account->id ? 'selected' : '' }}>
-                                    {{ $account->name }}
+                            <option value="{{ route('payroll.computation.dashboard') }}">All Groups</option>
+                            @foreach($groups as $group)
+                                <option value="{{ route('payroll.computation.dashboard', ['group_id' => $group->id]) }}" {{ request('group_id') == $group->id ? 'selected' : '' }}>
+                                    {{ $group->name }}
                                 </option>
                             @endforeach
                         </select>
@@ -180,8 +180,8 @@
                                             {{ $period->pay_date->format('M d, Y') }}
                                         </td>
                                         <td class="px-6 py-4 whitespace-nowrap text-right text-sm font-medium space-x-2">
-                                            <a href="{{ route('payroll.computation.wizard', $period) }}" class="inline-flex items-center px-4 py-2 bg-blue-600 border border-transparent rounded-md font-semibold text-xs text-white uppercase tracking-widest hover:bg-blue-700 active:bg-blue-900 focus:outline-none focus:border-blue-900 focus:ring ring-blue-300 disabled:opacity-25 transition ease-in-out duration-150">
-                                                Open Wizard
+                                            <a href="{{ route('payroll.computation.show', $period) }}" class="inline-flex items-center px-4 py-2 bg-blue-600 border border-transparent rounded-md font-semibold text-xs text-white uppercase tracking-widest hover:bg-blue-700 active:bg-blue-900 focus:outline-none focus:border-blue-900 focus:ring ring-blue-300 disabled:opacity-25 transition ease-in-out duration-150">
+                                                Manage Payroll
                                             </a>
                                         </td>
                                     </tr>
@@ -256,8 +256,8 @@
                                             @endif
                                         </td>
                                         <td class="px-6 py-4 whitespace-nowrap text-right text-sm font-medium space-x-3">
-                                            <a href="{{ route('payroll.computation.wizard', $period) }}" class="inline-flex items-center px-4 py-2 bg-yellow-600 border border-transparent rounded-md font-semibold text-xs text-white uppercase tracking-widest hover:bg-yellow-700 active:bg-yellow-900 focus:outline-none focus:border-yellow-900 focus:ring ring-yellow-300 disabled:opacity-25 transition ease-in-out duration-150">
-                                                {{ $period->total_dtrs > 0 ? 'Review DTRs' : 'Start Process' }}
+                                            <a href="{{ route('payroll.computation.show', $period) }}" class="inline-flex items-center px-4 py-2 bg-yellow-600 border border-transparent rounded-md font-semibold text-xs text-white uppercase tracking-widest hover:bg-yellow-700 active:bg-yellow-900 focus:outline-none focus:border-yellow-900 focus:ring ring-yellow-300 disabled:opacity-25 transition ease-in-out duration-150">
+                                                Manage Payroll
                                             </a>
                                         </td>
                                     </tr>
@@ -286,6 +286,7 @@
                                 <tr>
                                     <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Period</th>
                                     <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Started</th>
+                                    <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider w-1/3">Progress</th>
                                     <th class="px-6 py-3 text-right text-xs font-medium text-gray-500 uppercase tracking-wider">Actions</th>
                                 </tr>
                             </thead>
@@ -300,10 +301,36 @@
                                         <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
                                             {{ $period->updated_at->diffForHumans() }}
                                         </td>
-                                        <td class="px-6 py-4 whitespace-nowrap text-right text-sm font-medium">
-                                            <a href="{{ route('payroll.computation.wizard', $period) }}" class="inline-flex items-center px-4 py-2 bg-blue-600 border border-transparent rounded-md font-semibold text-xs text-white uppercase tracking-widest hover:bg-blue-700 active:bg-blue-900 focus:outline-none focus:border-blue-900 focus:ring ring-blue-300 disabled:opacity-25 transition ease-in-out duration-150">
-                                                Open Wizard
+                                        <td class="px-6 py-4 whitespace-nowrap w-1/3">
+                                            <!-- Progress Bar -->
+                                            <div class="relative pt-1 w-full" id="progress-container-{{ $period->id }}">
+                                                <div class="flex mb-2 items-center justify-between">
+                                                    <div>
+                                                        <span class="text-xs font-semibold inline-block py-1 px-2 uppercase rounded-full text-blue-600 bg-blue-200" id="progress-badge-{{ $period->id }}">
+                                                            Running
+                                                        </span>
+                                                    </div>
+                                                    <div class="text-right">
+                                                        <span class="text-xs font-semibold inline-block text-blue-600" id="progress-msg-{{ $period->id }}">
+                                                            Initializing...
+                                                        </span>
+                                                    </div>
+                                                </div>
+                                                <div class="overflow-hidden h-2 mb-4 text-xs flex rounded bg-blue-200">
+                                                    <div style="width:0%" id="progress-bar-{{ $period->id }}" class="shadow-none flex flex-col text-center whitespace-nowrap text-white justify-center bg-blue-500 transition-all duration-500"></div>
+                                                </div>
+                                            </div>
+                                        </td>
+                                        <td class="px-6 py-4 whitespace-nowrap text-right text-sm font-medium space-x-2">
+                                            <a href="{{ route('payroll.computation.show', $period) }}" class="inline-flex items-center px-4 py-2 bg-blue-600 border border-transparent rounded-md font-semibold text-xs text-white uppercase tracking-widest hover:bg-blue-700 active:bg-blue-900 focus:outline-none focus:border-blue-900 focus:ring ring-blue-300 disabled:opacity-25 transition ease-in-out duration-150">
+                                                Manage
                                             </a>
+                                            <form action="{{ route('payroll.computation.reset', $period) }}" method="POST" class="inline">
+                                                @csrf
+                                                <button type="submit" class="text-red-500 hover:text-red-700 text-xs font-bold underline" onclick="return confirm('Are you sure you want to stop processing and reset this period?')">
+                                                    Reset
+                                                </button>
+                                            </form>
                                         </td>
                                     </tr>
                                 @endforeach
@@ -311,6 +338,58 @@
                         </table>
                     </div>
                 </div>
+
+                <script>
+                    document.addEventListener('DOMContentLoaded', function() {
+                        const periods = @json($processingPeriods->pluck('id'));
+                        
+                        periods.forEach(periodId => {
+                            const progressBar = document.getElementById(`progress-bar-${periodId}`);
+                            const progressMsg = document.getElementById(`progress-msg-${periodId}`);
+                            const progressBadge = document.getElementById(`progress-badge-${periodId}`);
+                            let pollInterval;
+
+                            function checkProgress() {
+                                fetch(`/payroll/computation/period/${periodId}/progress`)
+                                    .then(response => response.json())
+                                    .then(data => {
+                                        // Update width
+                                        const percentage = data.percentage || 0;
+                                        progressBar.style.width = `${percentage}%`;
+                                        
+                                        // Update message
+                                        progressMsg.innerText = data.message || `${percentage}%`;
+                                        
+                                        // Update badge
+                                        if (data.status === 'completed' || percentage >= 100) {
+                                            progressBadge.className = "text-xs font-semibold inline-block py-1 px-2 uppercase rounded-full text-green-600 bg-green-200";
+                                            progressBadge.innerText = "Completed";
+                                            progressBar.classList.remove('bg-blue-500');
+                                            progressBar.classList.add('bg-green-500');
+                                            
+                                            // Stop polling and reload shortly after
+                                            clearInterval(pollInterval);
+                                            setTimeout(() => {
+                                                window.location.reload();
+                                            }, 2000);
+                                        } else if (data.status === 'failed') {
+                                            progressBadge.className = "text-xs font-semibold inline-block py-1 px-2 uppercase rounded-full text-red-600 bg-red-200";
+                                            progressBadge.innerText = "Error";
+                                            progressBar.classList.remove('bg-blue-500');
+                                            progressBar.classList.add('bg-red-500');
+                                            clearInterval(pollInterval);
+                                        }
+                                    })
+                                    .catch(err => console.error('Error fetching progress:', err));
+                            }
+
+                            // Initial check
+                            checkProgress();
+                            // Poll every 2 seconds
+                            pollInterval = setInterval(checkProgress, 2000);
+                        });
+                    });
+                </script>
             @endif
 
             {{-- Recently Completed --}}
@@ -350,10 +429,7 @@
                                             {{ $period->payroll_computed_at ? $period->payroll_computed_at->format('M d, Y g:i A') : '-' }}
                                         </td>
                                         <td class="px-6 py-4 whitespace-nowrap text-right text-sm font-medium space-x-2">
-                                            <a href="{{ route('payroll.computation.wizard', $period) }}" class="text-blue-600 hover:text-blue-900 font-bold">
-                                                Wizard
-                                            </a>
-                                            <a href="{{ route('payroll.computation.show', $period) }}" class="text-indigo-600 hover:text-indigo-900">
+                                            <a href="{{ route('payroll.computation.show', $period) }}" class="text-indigo-600 hover:text-indigo-900 font-bold">
                                                 View
                                             </a>
                                             <a href="{{ route('payroll.computation.export', $period) }}" class="text-green-600 hover:text-green-900">

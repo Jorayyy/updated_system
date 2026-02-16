@@ -153,7 +153,7 @@
                                     <h4 class="text-slate-900 font-bold text-base group-hover:text-indigo-600 transition-colors">
                                         {{ $payslip->payrollPeriod->start_date->format('M d') }} - {{ $payslip->payrollPeriod->end_date->format('M d, Y') }}
                                     </h4>
-                                    <p class="text-xs text-slate-400 font-medium mb-4 capitalize">{{ $payslip->payrollPeriod->type }} cycle • Paid {{ $payslip->payrollPeriod->payout_date->format('M d, Y') }}</p>
+                                    <p class="text-xs text-slate-400 font-medium mb-4 capitalize">{{ $payslip->payrollPeriod->period_type ?? 'Payroll' }} cycle • Paid {{ $payslip->payrollPeriod->pay_date ? $payslip->payrollPeriod->pay_date->format('M d, Y') : 'N/A' }}</p>
                                     
                                     <div class="space-y-3 pt-4 border-t border-slate-50">
                                         <div class="flex justify-between items-center text-sm">

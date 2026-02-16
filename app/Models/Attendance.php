@@ -29,6 +29,7 @@ class Attendance extends Model
         'total_break_minutes',
         'overtime_minutes',
         'undertime_minutes',
+        'late_minutes',
         'remarks',
     ];
 

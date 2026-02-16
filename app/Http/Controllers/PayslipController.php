@@ -40,10 +40,13 @@ class PayslipController extends Controller
         $years = Payroll::where('user_id', $user->id)
             ->where('is_posted', true)
             ->whereIn('status', ['released', 'paid'])
-            ->selectRaw('YEAR(created_at) as year')
+            ->select('created_at')
             ->distinct()
-            ->orderBy('year', 'desc')
-            ->pluck('year');
+            ->orderBy('created_at', 'desc')
+            ->get()
+            ->map(fn($p) => $p->created_at->year)
+            ->unique()
+            ->values();
 
         return view('payslip.index', compact('payslips', 'ytdSummary', 'year', 'years'));
     }

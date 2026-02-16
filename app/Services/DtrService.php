@@ -121,7 +121,7 @@ class DtrService
 
         // Get employees based on scope
         $query = User::where('is_active', true)
-            ->where('role', 'employee');
+            ->whereIn('role', ['employee', 'hr', 'admin', 'super_admin']);
 
         // If generating for a specific period, respect the group
         if ($payrollPeriodId) {
@@ -507,6 +507,12 @@ class DtrService
             $currentDate = $period->start_date->copy();
             
             while ($currentDate->lte($period->end_date)) {
+                // RULE: If period is Weekly, strict weekdays only (Mon-Fri)
+                if ($period->period_type === 'weekly' && $currentDate->isWeekend()) {
+                    $currentDate->addDay();
+                    continue;
+                }
+
                 // Process incomplete attendance first
                 $this->processIncompleteAttendance($currentDate);
                 

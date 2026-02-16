@@ -283,7 +283,21 @@
                                         </a>
                                     @endif
                                 @else
-                                    <div class="text-sm text-gray-500 italic text-center">Complete Phase 1 to unlock.</div>
+                                    <div class="text-sm text-gray-500 italic text-center mb-4">
+                                        <span class="text-red-500 font-semibold">Option A:</span> Approve DTRs first (Recommended)
+                                    </div>
+                                    
+                                    <div class="border-t border-gray-200 mt-4 pt-4">
+                                        <p class="text-xs text-gray-600 mb-2 font-semibold">Option B: Manual Mode</p>
+                                        <form action="{{ route('payroll.computation.compute', $period) }}" method="POST">
+                                            @csrf
+                                            <input type="hidden" name="manual_mode" value="1">
+                                            <button type="submit" class="w-full justify-center inline-flex items-center px-4 py-2 bg-yellow-600 border border-transparent rounded-md font-semibold text-xs text-white uppercase tracking-widest hover:bg-yellow-700 active:bg-yellow-900 focus:outline-none focus:border-yellow-900 focus:ring ring-yellow-300 disabled:opacity-25 transition ease-in-out duration-150" onclick="return confirm('WARNING: You are skipping the automated computation!\n\nThis will generate blank payroll records (₱0.00 amount) which you must fill in MANUALLY.\n\nAre you absolutely sure?')">
+                                                Initialize Manual Entry
+                                            </button>
+                                        </form>
+                                        <p class="text-xs text-gray-400 mt-1 text-center">Use this if you compute salary in Excel/Paper</p>
+                                    </div>
                                 @endif
                             </div>
                         </div>

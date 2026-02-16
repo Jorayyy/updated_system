@@ -547,6 +547,7 @@
                             <div x-show="!sidebarOpen" class="tooltip">Payroll Center</div>
                         </div>
 
+                        @if(!auth()->user()->hasRole('accounting'))
                         <div class="pt-4 mt-4 border-t border-gray-700/50">
                             <p x-show="sidebarOpen" x-cloak class="px-3 text-[10px] font-bold text-gray-400 uppercase tracking-[0.2em] mb-3 sidebar-text text-shadow-sm select-none" :class="sidebarOpen ? 'sidebar-text-visible' : 'sidebar-text-hidden'">HR Management</p>
                         </div>
@@ -665,6 +666,7 @@
                             </a>
                             <div x-show="!sidebarOpen" class="tooltip">Leave Types</div>
                         </div>
+                        @endif
 
                         <!-- Leave Credits -->
                         @if(Auth::user()->role === 'super_admin')
