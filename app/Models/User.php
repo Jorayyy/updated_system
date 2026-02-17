@@ -177,7 +177,7 @@ class User extends Authenticatable
      */
     public function isHr(): bool
     {
-        return in_array($this->role, ['hr', 'accounting', 'super_admin']);
+        return in_array($this->role, ['hr', 'super_admin']);
     }
 
     /**
@@ -185,7 +185,7 @@ class User extends Authenticatable
      */
     public function isAccounting(): bool
     {
-        return $this->role === 'accounting' || $this->role === 'super_admin';
+        return in_array($this->role, ['accounting', 'super_admin']);
     }
 
     /**
