@@ -27,49 +27,50 @@ class JanuaryTestDataSeeder extends Seeder
         $bpoGroup = PayrollGroup::where('name', 'BPO')->first();
         $mgmtGroup = PayrollGroup::where('name', 'Management')->first();
 
-        // Create Payroll Periods for January 2026
-        // Semi-monthly typical: Jan 1-15 and Jan 16-31
-        $periods = [
-            [
-                'start' => '2026-01-01',
-                'end' => '2026-01-15',
-                'pay_date' => '2026-01-20',
-                'label' => 'January 1-15, 2026',
-            ],
-            [
-                'start' => '2026-01-16',
-                'end' => '2026-01-31',
-                'pay_date' => '2026-02-05',
-                'label' => 'January 16-31, 2026',
-            ]
+        // Create Weekly Payroll Periods for January 2026
+        $bpoGroup = PayrollGroup::where('name', 'BPO')->first();
+        $mgmtGroup = PayrollGroup::where('name', 'Management')->first();
+
+        // Weekly schedule: Jan 1-4, 5-11, 12-18, 19-25, 26-31
+        $periodDates = [
+            ['2026-01-01', '2026-01-04'],
+            ['2026-01-05', '2026-01-11'],
+            ['2026-01-12', '2026-01-18'],
+            ['2026-01-19', '2026-01-25'],
+            ['2026-01-26', '2026-01-31'],
         ];
 
         $createdPeriods = [];
-        foreach ($periods as $p) {
+        foreach ($periodDates as $dates) {
+            $start = $dates[0];
+            $end = $dates[1];
+            $payDate = Carbon::parse($end)->addDays(5)->format('Y-m-d');
+            $label = Carbon::parse($start)->format('M d') . ' - ' . Carbon::parse($end)->format('M d, Y');
+
             // Create for BPO
             $createdPeriods[] = PayrollPeriod::firstOrCreate(
-                ['start_date' => $p['start'], 'payroll_group_id' => $bpoGroup->id],
+                ['start_date' => $start, 'payroll_group_id' => $bpoGroup->id],
                 [
-                    'end_date' => $p['end'],
+                    'end_date' => $end,
                     'status' => 'draft',
-                    'pay_date' => $p['pay_date'],
-                    'period_type' => 'semi_monthly',
+                    'pay_date' => $payDate,
+                    'period_type' => 'weekly',
                     'cover_month' => 'January',
                     'cover_year' => 2026,
-                    'cut_off_label' => $p['label'],
+                    'cut_off_label' => $label,
                 ]
             );
             // Create for Management
             $createdPeriods[] = PayrollPeriod::firstOrCreate(
-                ['start_date' => $p['start'], 'payroll_group_id' => $mgmtGroup->id],
+                ['start_date' => $start, 'payroll_group_id' => $mgmtGroup->id],
                 [
-                    'end_date' => $p['end'],
+                    'end_date' => $end,
                     'status' => 'draft',
-                    'pay_date' => $p['pay_date'],
-                    'period_type' => 'semi_monthly',
+                    'pay_date' => $payDate,
+                    'period_type' => 'weekly',
                     'cover_month' => 'January',
                     'cover_year' => 2026,
-                    'cut_off_label' => $p['label'],
+                    'cut_off_label' => $label,
                 ]
             );
         }
@@ -168,7 +169,7 @@ class JanuaryTestDataSeeder extends Seeder
                     'late_minutes' => 0,
                     'undertime_minutes' => 0,
                     'overtime_minutes' => $ot,
-                    'status' => 'approved', 
+                    'status' => 'pending', 
                     'attendance_status' => 'present',
                     'day_type' => 'regular',
                 ]);
