@@ -22,11 +22,19 @@ class AnnouncementController extends Controller
 
     public function create()
     {
+        if (!auth()->user()->isSuperAdmin() && !auth()->user()->isHr()) {
+            abort(403, 'Unauthorized. Only HR and Super Admin can create announcements.');
+        }
+
         return view('announcements.create');
     }
 
     public function store(Request $request)
     {
+        if (!auth()->user()->isSuperAdmin() && !auth()->user()->isHr()) {
+            abort(403, 'Unauthorized. Only HR and Super Admin can post announcements.');
+        }
+
         $validated = $request->validate([
             'title' => 'required|string|max:255',
             'content' => 'required|string',

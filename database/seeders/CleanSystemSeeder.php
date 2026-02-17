@@ -79,8 +79,8 @@ class CleanSystemSeeder extends Seeder
             [
                 'email' => 'accounting@mebs.com',
                 'name' => 'Juan Reyes',
-                'role' => 'admin',
-                'account_id' => $roles['admin']->id,
+                'role' => 'accounting',
+                'account_id' => $roles['accounting']->id,
                 'monthly_salary' => 32000.00,
                 'hourly_rate' => 183.91,
                 'employee_id' => 'ADM-003',

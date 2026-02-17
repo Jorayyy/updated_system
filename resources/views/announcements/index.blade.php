@@ -4,7 +4,7 @@
             <h2 class="font-semibold text-xl text-gray-800 leading-tight">
                 {{ __('Announcements') }}
             </h2>
-            @if(auth()->user()->role === 'super_admin' || auth()->user()->role === 'admin' || auth()->user()->role === 'hr')
+            @if(auth()->user()->isSuperAdmin() || auth()->user()->isHr())
             <a href="{{ route('announcements.create') }}" class="bg-indigo-600 text-white px-4 py-2 rounded-md hover:bg-indigo-700 transition-colors duration-200">
                 Post Announcement
             </a>
