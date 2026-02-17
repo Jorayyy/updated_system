@@ -9,6 +9,18 @@
     rejectId: null,
     rejectReason: '',
     selectedDtrs: [],
+    selectableDtrIds: [
+        @foreach($dtrs->whereIn('status', ['draft', 'pending']) as $dtr)
+            '{{ $dtr->id }}',
+        @endforeach
+    ],
+    toggleAll() {
+        if (this.selectedDtrs.length > 0 && this.selectedDtrs.length === this.selectableDtrIds.length) {
+            this.selectedDtrs = [];
+        } else {
+            this.selectedDtrs = [...this.selectableDtrIds];
+        }
+    },
     bulkApprove() {
         if (this.selectedDtrs.length === 0) return;
         if (confirm(`Approve ${this.selectedDtrs.length} selected DTR record(s)?`)) {
@@ -244,7 +256,15 @@
             <table class="w-full text-left border-collapse" id="dtrTable">
                 <thead>
                     <tr class="bg-gray-50 text-gray-600 uppercase text-xs font-bold">
-                        <th class="px-6 py-4">Select</th>
+                        <th class="px-6 py-4">
+                            <div class="flex items-center gap-2">
+                                <input type="checkbox" 
+                                       class="rounded border-gray-300 text-blue-600 focus:ring-blue-500"
+                                       @click="toggleAll()"
+                                       :checked="selectableDtrIds.length > 0 && selectedDtrs.length === selectableDtrIds.length">
+                                <span>Select All</span>
+                            </div>
+                        </th>
                         <th class="px-6 py-4">Employee</th>
                         <th class="px-6 py-4">Date</th>
                         <th class="px-6 py-4 text-center">Type</th>
