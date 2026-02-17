@@ -48,7 +48,7 @@ class CleanSystemSeeder extends Seeder
         ];
 
         $payrollGroups = [
-            'Regular' => PayrollGroup::firstOrCreate(['name' => 'Regular'], ['description' => 'Standard monthly group']),
+            'Administrative Team' => PayrollGroup::firstOrCreate(['name' => 'Administrative Team']),
             'BPO' => PayrollGroup::firstOrCreate(['name' => 'BPO'], ['description' => 'Graveyard shift group']),
         ];
 
@@ -64,6 +64,7 @@ class CleanSystemSeeder extends Seeder
                 'monthly_salary' => 55000.00,
                 'hourly_rate' => 316.09,
                 'employee_id' => 'ADM-001',
+                'payroll_group_id' => $payrollGroups['Administrative Team']->id,
             ],
             [
                 'email' => 'hr@mebs.com',
@@ -73,6 +74,7 @@ class CleanSystemSeeder extends Seeder
                 'monthly_salary' => 45000.00,
                 'hourly_rate' => 258.62,
                 'employee_id' => 'ADM-002',
+                'payroll_group_id' => $payrollGroups['Administrative Team']->id,
             ],
             [
                 'email' => 'accounting@mebs.com',
@@ -82,6 +84,7 @@ class CleanSystemSeeder extends Seeder
                 'monthly_salary' => 32000.00,
                 'hourly_rate' => 183.91,
                 'employee_id' => 'ADM-003',
+                'payroll_group_id' => $payrollGroups['Administrative Team']->id,
             ],
             [
                 'email' => 'accounting@mebshiyas.com',
@@ -91,6 +94,7 @@ class CleanSystemSeeder extends Seeder
                 'monthly_salary' => 28000.00,
                 'hourly_rate' => 160.92,
                 'employee_id' => 'ACC-001',
+                'payroll_group_id' => $payrollGroups['Administrative Team']->id,
             ],
             [
                 'email' => 'hercules.bpo@test.mebs',

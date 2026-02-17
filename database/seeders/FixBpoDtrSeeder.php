@@ -7,6 +7,7 @@ use App\Models\User;
 use App\Models\DailyTimeRecord;
 use App\Models\Attendance;
 use App\Models\PayrollPeriod;
+use App\Models\PayrollGroup;
 use Carbon\Carbon;
 
 class FixBpoDtrSeeder extends Seeder
@@ -25,11 +26,11 @@ class FixBpoDtrSeeder extends Seeder
 
         // Step 2: Create/Update Payroll Period for CURRENT WEEK (Feb 16 - Feb 22)
         // This is necessary for counts to appear in "Ready to Compute"
+        $bpoGroup = PayrollGroup::firstOrCreate(['name' => 'BPO'], ['description' => 'Graveyard shift group']);
         $period = PayrollPeriod::updateOrCreate(
-            ['start_date' => '2026-02-16'],
+            ['start_date' => '2026-02-16', 'payroll_group_id' => $bpoGroup->id],
             [
                 'end_date' => '2026-02-22',
-                'payroll_group_id' => 1, // Regular
                 'status' => 'draft',
                 'pay_date' => '2026-02-28',
                 'period_type' => 'weekly',
