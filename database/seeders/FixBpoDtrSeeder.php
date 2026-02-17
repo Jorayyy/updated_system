@@ -51,18 +51,35 @@ class FixBpoDtrSeeder extends Seeder
                 
                 // Graveyard shift: 9PM to 7AM next day
                 $timeIn = $date->copy()->setTime(21, 0, 0);
+                
+                // Adding specific break times for the seeder (Total 1 Hour Break)
+                $firstBreakOut = $date->copy()->setTime(23, 0, 0);
+                $firstBreakIn = $date->copy()->setTime(23, 15, 0);
+                
+                $lunchOut = $date->copy()->addDay()->setTime(1, 0, 0);
+                $lunchIn = $date->copy()->addDay()->setTime(1, 30, 0);
+                
+                $secondBreakOut = $date->copy()->addDay()->setTime(4, 0, 0);
+                $secondBreakIn = $date->copy()->addDay()->setTime(4, 15, 0);
+                
                 $timeOut = $date->copy()->addDay()->setTime(7, 0, 0);
 
-                // Create Attendance record
+                // Create Attendance record with break timestamps
                 $attendance = Attendance::create([
                     'user_id' => $user->id,
                     'date' => $date->format('Y-m-d'),
                     'time_in' => $timeIn,
+                    'first_break_out' => $firstBreakOut,
+                    'first_break_in' => $firstBreakIn,
+                    'lunch_break_out' => $lunchOut,
+                    'lunch_break_in' => $lunchIn,
+                    'second_break_out' => $secondBreakOut,
+                    'second_break_in' => $secondBreakIn,
                     'time_out' => $timeOut,
                     'status' => 'present',
                     'current_step' => 'completed',
-                    'total_work_minutes' => 540, // 9 hours
-                    'total_break_minutes' => 60,
+                    'total_work_minutes' => 540, // 9.0 hours net work
+                    'total_break_minutes' => 60,  // 1.0 hour total breaks
                 ]);
 
                 // Create DTR and link to the period
@@ -80,7 +97,7 @@ class FixBpoDtrSeeder extends Seeder
                     'late_minutes' => 0,
                     'undertime_minutes' => 0,
                     'overtime_minutes' => 60,
-                    'status' => 'approved', // Must be 'approved' to show in "Ready to Compute"
+                    'status' => 'approved', 
                     'attendance_status' => 'present',
                     'day_type' => 'regular',
                 ]);
