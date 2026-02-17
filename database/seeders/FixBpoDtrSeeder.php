@@ -13,67 +13,58 @@ class FixBpoDtrSeeder extends Seeder
 {
     public function run()
     {
-        // Target all employees to resolve the issue for everyone
+        // Target all employees
         $users = User::where('role', 'employee')->get();
         if ($users->isEmpty()) {
             return;
         }
 
-        // Use period for the current week (Feb 09 - Feb 15)
-        $period = PayrollPeriod::find(1); 
-        if (!$period) {
-            $period = PayrollPeriod::create([
-                'id' => 1,
-                'start_date' => '2026-02-09',
-                'end_date' => '2026-02-15',
-                'status' => 'completed', 
-                'pay_date' => '2026-02-20',
-            ]);
-        }
-
-        // Step 1: Clear old wrong records to ensure clean state
+        // Step 1: Clear old records
         DailyTimeRecord::whereIn('user_id', $users->pluck('id'))->delete();
         Attendance::whereIn('user_id', $users->pluck('id'))->delete();
 
-        // Step 2: Seed Weeks (Feb 02-06 and Feb 09-13)
+        // Step 2: Create/Update Payroll Period for CURRENT WEEK (Feb 16 - Feb 22)
+        // This is necessary for counts to appear in "Ready to Compute"
+        $period = PayrollPeriod::updateOrCreate(
+            ['start_date' => '2026-02-16'],
+            [
+                'end_date' => '2026-02-22',
+                'payroll_group_id' => 1, // Regular
+                'status' => 'draft',
+                'pay_date' => '2026-02-28',
+                'period_type' => 'weekly',
+                'cover_month' => 'February',
+                'cover_year' => 2026,
+            ]
+        );
+
+        // Step 3: Seed Feb 16 to Feb 22
+        // Today is Feb 18, so these will show up in "Today's Attendance" and "Ready to Compute"
         $dates = [
-            '2026-02-02', '2026-02-03', '2026-02-04', '2026-02-05', '2026-02-06',
-            '2026-02-09', '2026-02-10', '2026-02-11', '2026-02-12', '2026-02-13'
+            '2026-02-16', '2026-02-17', '2026-02-18', '2026-02-19', '2026-02-20', '2026-02-21', '2026-02-22'
         ];
 
         foreach ($users as $user) {
             foreach ($dates as $dateStr) {
                 $date = Carbon::parse($dateStr);
                 
-                // Graveyard shift: 9PM to 7AM next day (10 hours span)
+                // Graveyard shift: 9PM to 7AM next day
                 $timeIn = $date->copy()->setTime(21, 0, 0);
-                $firstBreakOut = $date->copy()->setTime(23, 30, 0);
-                $firstBreakIn = $date->copy()->setTime(23, 45, 0);
-                $lunchOut = $date->copy()->addDay()->setTime(1, 30, 0);
-                $lunchIn = $date->copy()->addDay()->setTime(2, 30, 0);
-                $secondBreakOut = $date->copy()->addDay()->setTime(4, 30, 0);
-                $secondBreakIn = $date->copy()->addDay()->setTime(4, 45, 0);
                 $timeOut = $date->copy()->addDay()->setTime(7, 0, 0);
 
-                // Create Attendance record with breaks
+                // Create Attendance record
                 $attendance = Attendance::create([
                     'user_id' => $user->id,
                     'date' => $date->format('Y-m-d'),
                     'time_in' => $timeIn,
-                    'first_break_out' => $firstBreakOut,
-                    'first_break_in' => $firstBreakIn,
-                    'lunch_break_out' => $lunchOut,
-                    'lunch_break_in' => $lunchIn,
-                    'second_break_out' => $secondBreakOut,
-                    'second_break_in' => $secondBreakIn,
                     'time_out' => $timeOut,
                     'status' => 'present',
                     'current_step' => 'completed',
-                    'total_work_minutes' => 540, // 9 hours (10 hours span - 1 hour lunch)
-                    'total_break_minutes' => 90,  // 15 + 60 + 15
+                    'total_work_minutes' => 540, // 9 hours
+                    'total_break_minutes' => 60,
                 ]);
 
-                // Create DailyTimeRecord (DTR)
+                // Create DTR and link to the period
                 DailyTimeRecord::create([
                     'user_id' => $user->id,
                     'payroll_period_id' => $period->id,
@@ -81,14 +72,14 @@ class FixBpoDtrSeeder extends Seeder
                     'time_in' => $timeIn,
                     'time_out' => $timeOut,
                     'attendance_id' => $attendance->id,
-                    'scheduled_minutes' => 540,
-                    'actual_work_minutes' => 600, // Total span
-                    'total_break_minutes' => 90,
+                    'scheduled_minutes' => 480,
+                    'actual_work_minutes' => 600,
+                    'total_break_minutes' => 60,
                     'net_work_minutes' => 540,
                     'late_minutes' => 0,
                     'undertime_minutes' => 0,
-                    'overtime_minutes' => 0,
-                    'status' => 'approved',
+                    'overtime_minutes' => 60,
+                    'status' => 'approved', // Must be 'approved' to show in "Ready to Compute"
                     'attendance_status' => 'present',
                     'day_type' => 'regular',
                 ]);
