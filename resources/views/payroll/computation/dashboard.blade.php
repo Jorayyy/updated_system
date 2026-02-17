@@ -45,6 +45,12 @@
                 </div>
 
                 <div class="flex gap-2">
+                    <a href="{{ route('dtr-approval.index') }}" class="inline-flex items-center px-4 py-2 bg-green-600 text-white rounded-lg text-sm font-bold hover:bg-green-700 transition shadow-sm">
+                        <svg class="w-4 h-4 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z" />
+                        </svg>
+                        DTR Center
+                    </a>
                     <a href="{{ route('payroll-groups.index') }}" class="inline-flex items-center px-4 py-2 bg-slate-800 text-white rounded-lg text-sm font-bold hover:bg-slate-900 transition shadow-sm">
                         <svg class="w-4 h-4 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                             <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 20h5v-2a3 3 0 00-5.356-1.857M17 20H7m10 0v-2c0-.656-.126-1.283-.356-1.857M7 20H2v-2a3 3 0 015.356-1.857M7 20v-2c0-.656.126-1.283.356-1.857m0 0a5.002 5.002 0 019.288 0M15 7a3 3 0 11-6 0 3 3 0 016 0zm6 3a2 2 0 11-4 0 2 2 0 014 0zM7 10a2 2 0 11-4 0 2 2 0 014 0z" />
@@ -278,6 +284,9 @@
                                             @endif
                                         </td>
                                         <td class="px-6 py-4 whitespace-nowrap text-right text-sm font-medium space-x-3">
+                                            <a href="{{ route('dtr-approval.index', ['payroll_period_id' => $period->id]) }}" class="inline-flex items-center px-4 py-2 bg-indigo-50 text-indigo-700 border border-indigo-200 rounded-md font-semibold text-xs uppercase tracking-widest hover:bg-indigo-100 transition ease-in-out duration-150">
+                                                Review DTRs
+                                            </a>
                                             <a href="{{ route('payroll.computation.show', $period) }}" class="inline-flex items-center px-4 py-2 bg-yellow-600 border border-transparent rounded-md font-semibold text-xs text-white uppercase tracking-widest hover:bg-yellow-700 active:bg-yellow-900 focus:outline-none focus:border-yellow-900 focus:ring ring-yellow-300 disabled:opacity-25 transition ease-in-out duration-150">
                                                 Manage Payroll
                                             </a>
@@ -387,23 +396,27 @@
                                         progressMsg.innerText = data.message || `${percentage}%`;
                                         
                                         // Update badge
-                                        if (data.status === 'completed' || percentage >= 100) {
+                                        if ((data.status === 'completed' || percentage >= 100) && data.db_status !== 'processing') {
                                             progressBadge.className = "text-xs font-semibold inline-block py-1 px-2 uppercase rounded-full text-green-600 bg-green-200";
                                             progressBadge.innerText = "Completed";
                                             progressBar.classList.remove('bg-blue-500');
                                             progressBar.classList.add('bg-green-500');
                                             
-                                            // Stop polling and reload shortly after
+                                            // Stop polling and reload shortly after (Only if status shifted in DB)
                                             clearInterval(pollInterval);
                                             setTimeout(() => {
                                                 window.location.reload();
                                             }, 2000);
-                                        } else if (data.status === 'failed') {
+                                        } else if (data.status === 'failed' || data.db_status === 'draft') {
                                             progressBadge.className = "text-xs font-semibold inline-block py-1 px-2 uppercase rounded-full text-red-600 bg-red-200";
-                                            progressBadge.innerText = "Error";
+                                            progressBadge.innerText = data.db_status === 'draft' ? "Reset/Draft" : "Error";
                                             progressBar.classList.remove('bg-blue-500');
                                             progressBar.classList.add('bg-red-500');
                                             clearInterval(pollInterval);
+                                            // Optional reload after fail to move to draft section
+                                            if(data.db_status === 'draft') {
+                                                setTimeout(() => window.location.reload(), 2000);
+                                            }
                                         }
                                     })
                                     .catch(err => console.error('Error fetching progress:', err));

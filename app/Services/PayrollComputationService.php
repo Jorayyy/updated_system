@@ -305,14 +305,14 @@ class PayrollComputationService
         ];
 
         // Get employees
-        $query = User::where('is_active', true)
-            ->whereIn('role', ['employee', 'hr', 'admin', 'super_admin']);
+        $query = User::where('is_active', true);
             
         // Filter by Payroll Group if defined
         if ($period->payroll_group_id) {
             $query->where('payroll_group_id', $period->payroll_group_id);
         } else {
-            $query->whereNull('payroll_group_id');
+             // For global periods, usually we include those with roles that qualify for payroll
+             $query->whereIn('role', ['employee', 'hr', 'admin', 'super_admin', 'accounting']);
         }
 
         if ($userIds) {
@@ -419,9 +419,14 @@ class PayrollComputationService
                 'status' => 'completed',
                 'payroll_computed_at' => now(),
             ]);
+            
+            // Clear progress cache after a short delay or just forget it
+            // We keep it for a few seconds so the UI can see "Completed!"
+            // then it should be gone.
         } else {
              // If nothing computed, reset to draft
              $period->update(['status' => 'draft']);
+             Cache::forget("payroll_progress_{$period->id}");
         }
 
         return $results;
@@ -442,8 +447,8 @@ class PayrollComputationService
             'special_holiday_days' => $dtrs->where('day_type', 'special_holiday')->count(),
             'rest_day_worked' => $dtrs->where('day_type', 'rest_day')
                 ->where('attendance_status', 'present')->count(),
-            'total_work_minutes' => $dtrs->sum('total_work_minutes'),
-            'total_hours_worked' => $dtrs->sum('total_hours_worked'),
+            'total_work_minutes' => $dtrs->sum('net_work_minutes'),
+            'total_hours_worked' => round($dtrs->sum('net_work_minutes') / 60, 2),
             'late_minutes' => $dtrs->sum('late_minutes'),
             'undertime_minutes' => $dtrs->sum('undertime_minutes'),
             'overtime_minutes' => $dtrs->sum('overtime_minutes'),
@@ -885,8 +890,8 @@ class PayrollComputationService
 
         return [
             'total_employees' => $payrolls->count(),
-            'total_gross_pay' => $payrolls->sum('gross_pay'),
-            'total_net_pay' => $payrolls->sum('net_pay'),
+            'total_gross' => $payrolls->sum('gross_pay'),
+            'total_net' => $payrolls->sum('net_pay'),
             'total_deductions' => $payrolls->sum('total_deductions'),
             'total_sss' => $payrolls->sum('sss_contribution'),
             'total_philhealth' => $payrolls->sum('philhealth_contribution'),

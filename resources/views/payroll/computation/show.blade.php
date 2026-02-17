@@ -126,6 +126,15 @@
                         </div>
                         
                         <div class="flex space-x-2">
+                             @if(($statusCounts['approved'] ?? 0) > 0)
+                                <form action="{{ route('payroll.computation.bulk-post', $period) }}" method="POST">
+                                    @csrf
+                                    <button type="submit" class="inline-flex items-center px-4 py-2 bg-green-600 border border-transparent rounded-md font-semibold text-xs text-white uppercase tracking-widest hover:bg-green-700 active:bg-green-900 focus:outline-none focus:border-green-900 focus:ring ring-green-300 transition" onclick="return confirm('Post (Release) {{ $statusCounts['approved'] }} approved payroll(s)?\n\nThis will make the payslips visible to employees.')">
+                                        Post & Release All
+                                    </button>
+                                </form>
+                            @endif
+
                              @if(($statusCounts['computed'] ?? 0) > 0)
                                 <form action="{{ route('payroll.computation.bulk-approve', $period) }}" method="POST">
                                     @csrf
@@ -201,18 +210,38 @@
                                         </td>
                                         <td class="px-6 py-4 whitespace-nowrap text-center">
                                             <span class="px-2 inline-flex text-xs leading-5 font-semibold rounded-full 
-                                                @if($payroll->status == 'approved') bg-green-100 text-green-800 
+                                                @if($payroll->status == 'released') bg-indigo-100 text-indigo-800 
+                                                @elseif($payroll->status == 'approved') bg-green-100 text-green-800 
                                                 @elseif($payroll->status == 'computed') bg-yellow-100 text-yellow-800 
                                                 @else bg-gray-100 text-gray-800 @endif">
                                                 {{ ucfirst($payroll->status) }}
                                             </span>
+                                            @if($payroll->is_posted)
+                                                <div class="text-[10px] text-green-600 font-bold mt-1 uppercase tracking-tighter">Posted</div>
+                                            @endif
                                         </td>
                                         <td class="px-6 py-4 whitespace-nowrap text-right text-sm font-medium">
                                             <div class="flex justify-end space-x-3">
-                                                <a href="{{ route('payroll.computation.edit', $payroll) }}" class="text-indigo-600 hover:text-indigo-900 font-semibold flex items-center">
-                                                    <svg class="w-4 h-4 mr-1" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z"></path></svg>
-                                                    Edit
+                                                @if($payroll->status == 'approved' && !$payroll->is_posted)
+                                                    <form action="{{ route('payroll.computation.post', $payroll) }}" method="POST" class="inline">
+                                                        @csrf
+                                                        <button type="submit" class="text-green-600 hover:text-green-900 font-bold text-xs uppercase" onclick="return confirm('Post this payslip?')">
+                                                            Post
+                                                        </button>
+                                                    </form>
+                                                @endif
+
+                                                <a href="{{ route('payroll.computation.details', $payroll) }}" class="text-blue-600 hover:text-blue-900 font-semibold flex items-center">
+                                                    <svg class="w-4 h-4 mr-1" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z"></path><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z"></path></svg>
+                                                    View
                                                 </a>
+                                                
+                                                @if(!$payroll->is_posted)
+                                                    <a href="{{ route('payroll.computation.edit', $payroll) }}" class="text-indigo-600 hover:text-indigo-900 font-semibold flex items-center">
+                                                        <svg class="w-4 h-4 mr-1" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z"></path></svg>
+                                                        Edit
+                                                    </a>
+                                                @endif
                                                 @if(auth()->user()->hasRole('super_admin'))
                                                     <form action="{{ route('payroll.computation.destroy', $payroll) }}" method="POST" class="inline">
                                                         @csrf

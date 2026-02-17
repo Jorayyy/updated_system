@@ -48,6 +48,42 @@ class User extends Authenticatable
         'philhealth_number',
         'pagibig_number',
         'department_id',
+        // Personal Information
+        'title',
+        'first_name',
+        'middle_name',
+        'last_name',
+        'name_extension',
+        'gender',
+        'civil_status',
+        'place_of_birth',
+        'blood_type',
+        'citizenship',
+        'religion',
+        // Employment Information
+        'employment_type',
+        'classification',
+        'tax_code',
+        'pay_type',
+        'report_to',
+        // Account Information
+        'bank',
+        'account_no',
+        'tin',
+        // Contact Details
+        'mobile_no_1',
+        'mobile_no_2',
+        'tel_no_1',
+        'tel_no_2',
+        'facebook',
+        'twitter',
+        'instagram',
+        // Address
+        'permanent_address',
+        'permanent_province',
+        'present_address',
+        'present_province',
+        'other_info',
     ];
 
     /**

@@ -21,14 +21,16 @@ class Kernel extends ConsoleKernel
     {
         // End-of-day attendance processing
         // Runs at 11:59 PM daily to:
-        // 1. Auto-timeout employees who forgot to clock out
-        // 2. Generate DTR records for payroll
+        // 1. Auto-timeout employees who forgot to clock out - DISABLED PER USER REQUEST
+        // 2. Generate DTR records for payroll - DISABLED PER USER REQUEST
+        /*
         $schedule->command('attendance:process-eod')
             ->dailyAt('23:59')
             ->withoutOverlapping()
             ->onOneServer()
             ->appendOutputTo(storage_path('logs/attendance-eod.log'))
             ->emailOutputOnFailure(config('mail.admin_email'));
+        */
 
         // Yearly leave credits allocation
         // Runs at 12:01 AM on January 1st to allocate leave credits for the new year
@@ -39,13 +41,15 @@ class Kernel extends ConsoleKernel
             ->appendOutputTo(storage_path('logs/leave-allocation.log'))
             ->emailOutputOnFailure(config('mail.admin_email'));
 
-        // Automated weekly DTR generation
+        // Automated weekly DTR generation - DISABLED PER USER REQUEST
         // Runs mid-morning to ensure all night shifts are completed
+        /*
         $schedule->command('dtr:generate-weekly')
             ->dailyAt('10:00')
             ->withoutOverlapping()
             ->onOneServer()
             ->appendOutputTo(storage_path('logs/dtr-automation.log'));
+        */
 
         // Old records cleanup (3-year retention policy)
         $schedule->command('app:cleanup-old-records')

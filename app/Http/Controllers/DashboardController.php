@@ -15,11 +15,20 @@ use Illuminate\Http\Request;
 
 class DashboardController extends Controller
 {
-    public function index()
+    public function index(Request $request)
     {
         $user = auth()->user();
 
-        if ($user->isAdmin() || $user->isHr()) {
+        // Handle Portal View Switcher (Management vs Personal)
+        if ($request->has('view')) {
+            session(['portalView' => $request->query('view')]);
+        }
+
+        if ($user->isAdmin() || $user->isHr() || $user->isAccounting()) {
+            // Respect the switcher if set to personal
+            if (session('portalView') === 'personal') {
+                return $this->employeeDashboard();
+            }
             return $this->adminDashboard();
         }
 

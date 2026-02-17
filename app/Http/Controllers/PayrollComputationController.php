@@ -61,7 +61,12 @@ class PayrollComputationController extends Controller
              ]);
         }
 
-        return response()->json($progress);
+        return response()->json(array_merge($progress ?? [
+            'status' => 'idle',
+            'percentage' => 0
+        ], [
+            'db_status' => $period->status
+        ]));
     }
 
     /**
@@ -152,28 +157,26 @@ class PayrollComputationController extends Controller
         $siteId = $request->get('site_id');
         $accountId = $request->get('account_id');
 
-        // Get periods ready for computation (all DTRs approved AND has at least one DTR)
+        // Get periods ready for computation
+        // Mutually exclusive logic: ONLY show if DTRs exist and are ALL approved
         $readyPeriods = PayrollPeriod::with('payrollGroup')
             ->where('status', 'draft')
-            ->whereHas('dailyTimeRecords')
-            ->whereDoesntHave('dailyTimeRecords', function ($query) {
-                $query->where('status', '!=', 'approved');
-            })
-            ->orderBy('start_date', 'desc')
-            ->get();
+            ->whereHas('dailyTimeRecords') // Must have DTRs
+            ->withCount([
+                'dailyTimeRecords as total_dtrs',
+                'dailyTimeRecords as approved_dtrs' => function ($query) {
+                    $query->where('status', 'approved');
+                }
+            ])
+            ->get()
+            ->filter(function($period) {
+                return $period->total_dtrs > 0 && $period->total_dtrs === $period->approved_dtrs;
+            });
 
-        // Get periods with pending DTRs OR no DTRs (Phase 1)
+        // Get periods with pending DTRs OR no DTRs (Preparation Phase)
         $pendingPeriods = PayrollPeriod::with('payrollGroup')
            ->where('status', 'draft')
-           ->where(function($q) {
-                // Either has pending DTRs
-                $q->whereHas('dailyTimeRecords', function ($query) {
-                    $query->where('status', '!=', 'approved');
-                })
-                // OR has NO DTRs (Fresh period)
-                ->orWhereDoesntHave('dailyTimeRecords');
-           })
-            ->withCount([
+           ->withCount([
                 'dailyTimeRecords as total_dtrs',
                 'dailyTimeRecords as approved_dtrs' => function ($query) {
                     $query->where('status', 'approved');
@@ -182,8 +185,11 @@ class PayrollComputationController extends Controller
                     $query->where('status', 'pending');
                 },
             ])
-            ->orderBy('start_date', 'desc')
-            ->get();
+            ->get()
+            ->filter(function($period) {
+                // Show if it has NO DTRs yet OR has unapproved ones
+                return $period->total_dtrs === 0 || $period->total_dtrs > $period->approved_dtrs;
+            });
 
         // Get periods currently processing
         $processingPeriods = PayrollPeriod::with('payrollGroup')
@@ -239,16 +245,20 @@ class PayrollComputationController extends Controller
         }
 
         // Get employees with approved DTRs for this period
-        $employees = User::whereHas('dailyTimeRecords', function ($query) use ($period) {
-            $query->where('payroll_period_id', $period->id)
-                ->where('status', 'approved');
-        })
-        ->with(['dailyTimeRecords' => function ($query) use ($period) {
+        // MODIFICATION: Include all employees in the group to fix "handful of employees" issue
+        $query = User::where('is_active', true);
+        if ($period->payroll_group_id) {
+            $query->where('payroll_group_id', $period->payroll_group_id);
+        } else {
+            // If global period, only those not in any group
+            $query->whereNull('payroll_group_id');
+        }
+
+        $employees = $query->with(['dailyTimeRecords' => function ($query) use ($period) {
             $query->where('payroll_period_id', $period->id)
                 ->where('status', 'approved')
                 ->orderBy('date');
-        }])
-        ->get();
+        }])->get();
 
         // Generate preview data for each employee
         $previews = [];
@@ -316,10 +326,13 @@ class PayrollComputationController extends Controller
         }
 
         // Choose sync or async based on employee count
-        $employeeCount = User::whereHas('dailyTimeRecords', function ($query) use ($period) {
-            $query->where('payroll_period_id', $period->id)
-                ->where('status', 'approved');
-        })->count();
+        $cntQuery = User::where('is_active', true);
+        if ($period->payroll_group_id) {
+            $cntQuery->where('payroll_group_id', $period->payroll_group_id);
+        } else {
+            $cntQuery->whereNull('payroll_group_id');
+        }
+        $employeeCount = $cntQuery->count();
 
         // Manual mode is super fast (zeros), never queue it.
         // Automated is also relatively fast, but keep queue if $> 50 employees and NOT manual.

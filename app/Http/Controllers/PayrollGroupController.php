@@ -32,7 +32,7 @@ class PayrollGroupController extends Controller
     {
         $validated = $request->validate([
             'name' => 'required|string|max:255|unique:payroll_groups',
-            'period_type' => 'required|in:weekly,semimonthly,monthly',
+            'period_type' => 'required|in:weekly,semi_monthly,monthly',
             'is_active' => 'boolean',
         ]);
 
@@ -75,7 +75,7 @@ class PayrollGroupController extends Controller
     {
         $validated = $request->validate([
             'name' => 'required|string|max:255|unique:payroll_groups,name,' . $payrollGroup->id,
-            'period_type' => 'required|in:weekly,semimonthly,monthly',
+            'period_type' => 'required|in:weekly,semi_monthly,monthly',
             'is_active' => 'boolean',
         ]);
 

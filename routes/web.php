@@ -237,6 +237,7 @@ Route::middleware('auth')->group(function () {
             Route::post('/payroll/periods/{period}/recompute/{user}', [PayrollController::class, 'recompute'])->name('payroll.recompute');
             Route::post('/payroll/periods/{period}/bulk-release', [PayrollController::class, 'bulkRelease'])->name('payroll.bulk-release');
             Route::post('/payroll/{payroll}/release', [PayrollController::class, 'release'])->name('payroll.release');
+            Route::delete('/payroll/periods/{period}', [PayrollController::class, 'destroyPeriod'])->name('payroll.destroy-period');
         });
 
         Route::get('/payroll/periods/{period}', [PayrollController::class, 'showPeriod'])->name('payroll.show-period');

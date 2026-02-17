@@ -21,9 +21,9 @@ class HrMiddleware
 
         $user = auth()->user();
 
-        // Allow both admin and hr roles
-        if (!$user->isAdmin() && !$user->isHr()) {
-            abort(403, 'Unauthorized. HR or Admin access required.');
+        // Allow admin, hr and accounting roles
+        if (!$user->isAdmin() && !$user->isHr() && !$user->isAccounting()) {
+            abort(403, 'Unauthorized. Access restricted to authorized personnel.');
         }
 
         return $next($request);

@@ -12,7 +12,7 @@ class AnnouncementController extends Controller
      */
     public function index()
     {
-        $announcements = Announcement::query()
+        $announcements = Announcement::with('author')
             ->orderBy('is_pinned', 'desc')
             ->latest()
             ->paginate(10);
@@ -22,7 +22,6 @@ class AnnouncementController extends Controller
 
     public function create()
     {
-        // Add middleware check or assume route is protected
         return view('announcements.create');
     }
 
@@ -51,7 +50,7 @@ class AnnouncementController extends Controller
      */
     public function show(Announcement $announcement)
     {
-        //
+        return view('announcements.show', compact('announcement'));
     }
 
     /**
@@ -59,7 +58,7 @@ class AnnouncementController extends Controller
      */
     public function edit(Announcement $announcement)
     {
-        //
+        return view('announcements.edit', compact('announcement'));
     }
 
     /**
@@ -67,7 +66,21 @@ class AnnouncementController extends Controller
      */
     public function update(Request $request, Announcement $announcement)
     {
-        //
+        $validated = $request->validate([
+            'title' => 'required|string|max:255',
+            'content' => 'required|string',
+            'is_pinned' => 'nullable|boolean',
+            'expires_at' => 'nullable|date',
+        ]);
+
+        $announcement->update([
+            'title' => $validated['title'],
+            'content' => $validated['content'],
+            'is_pinned' => $request->boolean('is_pinned'),
+            'expires_at' => $validated['expires_at'],
+        ]);
+
+        return redirect()->route('announcements.index')->with('success', 'Announcement updated successfully.');
     }
 
     /**
@@ -75,7 +88,8 @@ class AnnouncementController extends Controller
      */
     public function destroy(Announcement $announcement)
     {
-        //
+        $announcement->delete();
+        return redirect()->route('announcements.index')->with('success', 'Announcement deleted successfully.');
     }
 
     public function togglePin(Announcement $announcement)

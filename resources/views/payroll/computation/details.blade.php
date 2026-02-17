@@ -38,14 +38,36 @@
                                     <p class="text-sm text-gray-500">{{ $payroll->user->position ?? 'Position N/A' }}</p>
                                 </div>
                                 <div class="flex flex-col items-end space-y-2">
+                                    <div class="flex gap-2">
+                                        @if($payroll->status == 'computed')
+                                            <form action="{{ route('payroll.computation.approve', $payroll) }}" method="POST">
+                                                @csrf
+                                                <button type="submit" class="inline-flex items-center px-3 py-1 bg-indigo-600 border border-transparent rounded-md font-semibold text-[10px] text-white uppercase tracking-widest hover:bg-indigo-700 active:bg-indigo-900 focus:outline-none transition ease-in-out duration-150">
+                                                    Approve
+                                                </button>
+                                            </form>
+                                        @endif
+
+                                        @if($payroll->status == 'approved' && !$payroll->is_posted)
+                                            <form action="{{ route('payroll.computation.post', $payroll) }}" method="POST">
+                                                @csrf
+                                                <button type="submit" class="inline-flex items-center px-3 py-1 bg-green-600 border border-transparent rounded-md font-semibold text-[10px] text-white uppercase tracking-widest hover:bg-green-700 active:bg-green-900 focus:outline-none transition ease-in-out duration-150" onclick="return confirm('Post this payslip and make it visible to employee?')">
+                                                    Post & Release
+                                                </button>
+                                            </form>
+                                        @endif
+                                    </div>
                                     <span class="px-3 py-1 text-sm font-semibold rounded-full 
-                                        @if($payroll->status === 'released') bg-green-100 text-green-800
-                                        @elseif($payroll->status === 'approved') bg-yellow-100 text-yellow-800
-                                        @elseif($payroll->status === 'computed') bg-gray-100 text-gray-800
+                                        @if($payroll->status === 'released') bg-indigo-100 text-indigo-800
+                                        @elseif($payroll->status === 'approved') bg-green-100 text-green-800
+                                        @elseif($payroll->status === 'computed') bg-yellow-100 text-yellow-800
                                         @elseif($payroll->status === 'rejected') bg-red-100 text-red-800
                                         @else bg-gray-100 text-gray-800 @endif">
                                         {{ ucfirst($payroll->status) }}
                                     </span>
+                                    @if($payroll->is_posted)
+                                        <span class="text-[10px] text-green-600 font-bold uppercase tracking-tighter">Posted / Released</span>
+                                    @endif
                                     @if($payroll->is_manually_adjusted)
                                         <span class="px-2.5 py-0.5 rounded-full text-xs font-medium bg-amber-100 text-amber-800">
                                             <i class="fas fa-edit mr-1"></i> Manually Adjusted

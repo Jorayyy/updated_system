@@ -34,7 +34,7 @@
                             <label for="period_type" class="block font-medium text-sm text-gray-700">Period Type</label>
                             <select id="period_type" name="period_type" class="block mt-1 w-full rounded-md shadow-sm border-gray-300 focus:border-indigo-300 focus:ring focus:ring-indigo-200 focus:ring-opacity-50">
                                 <option value="weekly" {{ old('period_type') == 'weekly' ? 'selected' : '' }}>Weekly</option>
-                                <option value="semimonthly" {{ old('period_type') == 'semimonthly' ? 'selected' : '' }}>Semi-Monthly</option>
+                                <option value="semi_monthly" {{ old('period_type') == 'semi_monthly' ? 'selected' : '' }}>Semi-Monthly</option>
                                 <option value="monthly" {{ old('period_type') == 'monthly' ? 'selected' : '' }}>Monthly</option>
                             </select>
                             @error('period_type')

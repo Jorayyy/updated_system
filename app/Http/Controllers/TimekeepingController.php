@@ -72,10 +72,50 @@ class TimekeepingController extends Controller
 
         $user = Auth::user();
         
-        // Get today's attendance
+        // Get today's attendance (using logical shift if needed)
+        // Ensure we find the same logical attendance as AttendanceService would
+        $now = now();
+        $logicalDate = today();
+        // Shifts starting late night often belong to "yesterday's" work date
+        // Simple logic for night shift support (can be refined)
+        if ($now->hour < 10) { 
+            // Check if user has an existing attendance for yesterday that hasn't timed out
+            $existingYesterday = Attendance::where('user_id', $user->id)
+                ->whereDate('date', today()->subDay())
+                ->whereNull('time_out')
+                ->first();
+            if ($existingYesterday) {
+                $logicalDate = today()->subDay();
+            }
+        }
+
         $attendance = Attendance::where('user_id', $user->id)
-            ->whereDate('date', today())
+            ->whereDate('date', $logicalDate)
             ->first();
+
+        // INTEGRATION: If user is timing in/out, sync with main Attendance logic
+        if ($validated['transaction_type'] === 'time_in') {
+            $attendanceService = app(\App\Services\AttendanceService::class);
+            $attendanceResult = $attendanceService->clockIn($user);
+            if (!$attendanceResult['success']) {
+                return redirect()->back()->with('error', $attendanceResult['message']);
+            }
+            // Fetch the newly created/updated attendance
+            $attendance = Attendance::where('user_id', $user->id)
+                ->orderBy('created_at', 'desc')
+                ->first();
+        } elseif ($validated['transaction_type'] === 'time_out') {
+             $attendanceService = app(\App\Services\AttendanceService::class);
+             $attendanceResult = $attendanceService->clockOut($user);
+             if (!$attendanceResult['success']) {
+                return redirect()->back()->with('error', $attendanceResult['message']);
+             }
+             // Fetch the updated attendance
+              $attendance = Attendance::where('user_id', $user->id)
+                ->whereNotNull('time_out')
+                ->orderBy('time_out', 'desc')
+                ->first();
+        }
 
         DB::beginTransaction();
         try {
@@ -89,6 +129,12 @@ class TimekeepingController extends Controller
                 'notes' => $validated['notes'],
                 'status' => 'active',
             ]);
+
+            // Sync break status if break-related
+            if ($attendance && strpos($validated['transaction_type'], 'break') !== false || strpos($validated['transaction_type'], 'lunch') !== false) {
+                 // Trigger break start/end logic if available in AttendanceService
+                 // (Omitted here but could be added for better sync)
+            }
 
             DB::commit();
 

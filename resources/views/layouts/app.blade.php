@@ -1,6 +1,7 @@
 <!DOCTYPE html>
 <html lang="{{ str_replace('_', '-', app()->getLocale()) }}" x-data="{ 
     sidebarOpen: localStorage.getItem('sidebarOpen') !== 'false',
+    portalView: ({{ (auth()->user()->isAdmin() || auth()->user()->isHr() || auth()->user()->isAccounting()) ? '1' : '0' }}) === 1 ? (localStorage.getItem('portalView') || 'management') : 'personal',
     appLoading: false,
     notifications: [],
     unreadCount: 0,
@@ -273,11 +274,18 @@
                             @if($logoUrl)
                                 <img src="{{ $logoUrl }}" alt="Logo" class="w-12 h-12 object-contain rounded-xl flex-shrink-0 bg-white p-1 shadow-sm border border-gray-700/50">
                             @else
-                                <div class="w-12 h-12 bg-gradient-to-br from-blue-500 to-purple-600 rounded-xl flex items-center justify-center font-bold text-xl flex-shrink-0 shadow-lg">
+                                <div class="w-12 h-12 transition-all duration-500 rounded-xl flex items-center justify-center font-bold text-xl flex-shrink-0 shadow-lg"
+                                     :class="portalView === 'management' ? 'bg-gradient-to-br from-blue-500 to-purple-600' : 'bg-gradient-to-br from-emerald-500 to-teal-600'">
                                     {{ substr($companyName, 0, 1) }}
                                 </div>
                             @endif
-                            <span class="font-bold text-lg sidebar-text sidebar-text-visible truncate">{{ $companyName }}</span>
+                            <div class="flex flex-col sidebar-text sidebar-text-visible truncate">
+                                <span class="font-bold text-lg text-white leading-tight truncate">{{ $companyName }}</span>
+                                <span class="text-[10px] font-bold uppercase tracking-[0.2em] transition-colors duration-300"
+                                      :class="portalView === 'management' ? 'text-blue-400' : 'text-emerald-400'"
+                                      x-text="portalView === 'management' ? 'Management' : 'Employee View'">
+                                </span>
+                            </div>
                         </a>
                     </div>
                     <div class="flex items-center gap-2">
@@ -294,7 +302,7 @@
                 <!-- User Section (Moved to Top) -->
                 <div class="border-b border-gray-700/50 p-2 bg-gradient-to-b from-slate-800/50 to-transparent">
                     <!-- User Info -->
-                    <div x-data="{ userMenuOpen: {{ request()->routeIs('notifications.*', 'attendance.*', 'dtr.index', 'payroll.my-payslip*', 'transactions.*', 'concerns.*', 'announcements.*', 'overtime-requests.*', 'official-businesses.*', 'employee-documents.*', 'expense-claims.*', 'profile.*', 'shift-change-requests.*', 'performance-reviews.*', 'company-assets.*', 'hr-policies.*') ? 'true' : 'false' }} }" class="relative">
+                    <div x-data="{ userMenuOpen: false }" class="relative">
                         <button @click="userMenuOpen = !userMenuOpen" class="w-full flex items-center gap-3 px-3 py-2.5 rounded-xl text-gray-300 hover:bg-white/10 hover:text-white transition-all duration-200 group border border-transparent hover:border-gray-600/50">
                             @php $photoUrl = auth()->user()->getProfilePhotoUrl(); @endphp
                             @if($photoUrl)
@@ -324,170 +332,20 @@
                              x-transition:leave-end="opacity-0 -translate-y-2"
                              class="relative w-full mt-1 bg-slate-900/50 rounded-xl overflow-hidden border border-white/5 pl-2">
                             
-                            @if(!auth()->user()->isAdmin() && !auth()->user()->isHr())
-                            <!-- Notifications -->
-                            <a href="{{ route('notifications.index') }}" class="block px-4 py-2.5 text-sm text-gray-300 hover:bg-white/5 hover:text-white transition-colors {{ request()->routeIs('notifications.*') ? 'bg-blue-600/20 text-blue-200' : '' }} group">
-                                <span class="flex items-center justify-between">
-                                    <span class="flex items-center gap-2 group-hover:translate-x-1 transition-transform duration-200">
-                                        <svg class="w-4 h-4 text-gray-400 group-hover:text-white transition-colors" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 17h5l-1.405-1.405A2.032 2.032 0 0118 14.158V11a6.002 6.002 0 00-4-5.659V5a2 2 0 10-4 0v.341C7.67 6.165 6 8.388 6 11v3.159c0 .538-.214 1.055-.595 1.436L4 17h5m6 0v1a3 3 0 11-6 0v-1m6 0H9"/>
-                                        </svg>
-                                        Notifications
-                                    </span>
-                                    @php $unreadCount = auth()->user()->unreadNotifications->count(); @endphp
-                                    @if($unreadCount > 0)
-                                        <span class="bg-red-500 text-white text-[10px] font-bold px-1.5 py-0.5 rounded-full shadow-lg ring-2 ring-red-500/30">
-                                            {{ $unreadCount > 99 ? '99+' : $unreadCount }}
-                                        </span>
-                                    @endif
-                                </span>
-                            </a>
-
-                            <!-- Attendance -->
-                            <a href="{{ route('attendance.index') }}" class="block px-4 py-2.5 text-sm text-gray-300 hover:bg-gray-600 hover:text-white transition {{ request()->routeIs('attendance.index', 'attendance.history') ? 'bg-gray-600 text-white' : '' }}">
-                                <span class="flex items-center gap-2">
-                                    <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z"/>
+                            <!-- Switch Mode Button (For Admins/HR/Accounting) -->
+                            @if(auth()->user()->isAdmin() || auth()->user()->isHr() || auth()->user()->isAccounting())
+                            <div class="px-2 py-2 border-b border-white/5 mb-1 mr-2 mt-1">
+                                <button @click="portalView = (portalView === 'management' ? 'personal' : 'management'); localStorage.setItem('portalView', portalView); window.location.href='/dashboard?view=' + portalView" 
+                                        class="w-full flex items-center justify-center gap-2 px-3 py-2.5 rounded-lg text-xs font-bold uppercase tracking-widest transition-all duration-300 shadow-xl border border-white/5 group/switch"
+                                        :class="portalView === 'management' ? 'bg-emerald-600/20 text-emerald-400 hover:bg-emerald-600/30' : 'bg-blue-600/20 text-blue-400 hover:bg-blue-600/30'">
+                                    <svg class="w-4 h-4 transition-transform duration-500 group-hover/switch:rotate-180" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 7h12m0 0l-4-4m4 4l-4 4m0 6H4m0 0l4 4m-4-4l4-4" />
                                     </svg>
-                                    Attendance
-                                </span>
-                            </a>
-
-                            <!-- My DTR -->
-                            <a href="{{ route('dtr.index') }}" class="block px-4 py-2.5 text-sm text-gray-300 hover:bg-gray-600 hover:text-white transition {{ request()->routeIs('dtr.index') ? 'bg-gray-600 text-white' : '' }}">
-                                <span class="flex items-center gap-2">
-                                    <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2m-3 7h3m-3 4h3m-6-4h.01M9 16h.01"/>
-                                    </svg>
-                                    My DTR
-                                </span>
-                            </a>
-
-                            <!-- Payslips -->
-                            <a href="{{ route('payroll.my-payslips') }}" class="block px-4 py-2.5 text-sm text-gray-300 hover:bg-gray-600 hover:text-white transition {{ request()->routeIs('payroll.my-payslips', 'payroll.my-payslip') ? 'bg-gray-600 text-white' : '' }}">
-                                <span class="flex items-center gap-2">
-                                    <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 9V7a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2m2 4h10a2 2 0 002-2v-6a2 2 0 00-2-2H9a2 2 0 00-2 2v6a2 2 0 002 2zm7-5a2 2 0 11-4 0 2 2 0 014 0z"/>
-                                    </svg>
-                                    Payslips
-                                </span>
-                            </a>
-
-                            <!-- Transactions -->
-                            <a href="{{ route('transactions.index') }}" class="block px-4 py-2.5 text-sm text-gray-300 hover:bg-gray-600 hover:text-white transition {{ request()->routeIs('transactions.index', 'transactions.history') ? 'bg-gray-600 text-white' : '' }}">
-                                <span class="flex items-center gap-2">
-                                    <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2m-6 9l2 2 4-4"/>
-                                    </svg>
-                                    Transactions
-                                </span>
-                            </a>
-
-                            <!-- My Concerns -->
-                            <a href="{{ route('concerns.my') }}" class="block px-4 py-2.5 text-sm text-gray-300 hover:bg-gray-600 hover:text-white transition {{ request()->routeIs('concerns.my', 'concerns.user-create', 'concerns.user-show') ? 'bg-gray-600 text-white' : '' }}">
-                                <span class="flex items-center gap-2">
-                                    <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M18.364 5.636l-3.536 3.536m0 5.656l3.536 3.536M9.172 9.172L5.636 5.636m3.536 9.192l-3.536 3.536M21 12a9 9 0 11-18 0 9 9 0 0118 0zm-5 0a4 4 0 11-8 0 4 4 0 018 0z"/>
-                                    </svg>
-                                    My Concerns
-                                </span>
-                            </a>
-
-
-
-                            <!-- Announcements -->
-                            <a href="{{ route('announcements.index') }}" class="block px-4 py-2.5 text-sm text-gray-300 hover:bg-gray-600 hover:text-white transition {{ request()->routeIs('announcements.*') ? 'bg-gray-600 text-white' : '' }}">
-                                <span class="flex items-center gap-2">
-                                    <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M11 5.882V19.24a1.76 1.76 0 01-3.417.592l-2.147-6.15M18 13a3 3 0 100-6M5.436 13.683A4.001 4.001 0 017 6h1.832c4.1 0 7.625-1.234 9.168-3v14c-1.543-1.766-5.067-3-9.168-3H7a3.988 3.988 0 01-1.564-.317z"/>
-                                    </svg>
-                                    Announcements
-                                </span>
-                            </a>
-
-                            <!-- Overtime -->
-                            <a href="{{ route('overtime-requests.index') }}" class="block px-4 py-2.5 text-sm text-gray-300 hover:bg-gray-600 hover:text-white transition {{ request()->routeIs('overtime-requests.*') ? 'bg-gray-600 text-white' : '' }}">
-                                <span class="flex items-center gap-2">
-                                    <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z"/>
-                                    </svg>
-                                    Overtime Request
-                                </span>
-                            </a>
-
-                            <!-- Official Business -->
-                            <a href="{{ route('official-businesses.index') }}" class="block px-4 py-2.5 text-sm text-gray-300 hover:bg-gray-600 hover:text-white transition {{ request()->routeIs('official-businesses.*') ? 'bg-gray-600 text-white' : '' }}">
-                                <span class="flex items-center gap-2">
-                                    <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 21V5a2 2 0 00-2-2H7a2 2 0 00-2 2v16m14 0h2m-2 0h-5m-9 0H3m2 0h5M9 7h1m-1 4h1m4-4h1m-1 4h1m-5 10v-5a1 1 0 011-1h2a1 1 0 011 1v5m-4 0h4"/>
-                                    </svg>
-                                    Official Business
-                                </span>
-                            </a>
-
-                            <!-- My 201 File -->
-                            <a href="{{ route('employee-documents.index') }}" class="block px-4 py-2.5 text-sm text-gray-300 hover:bg-gray-600 hover:text-white transition {{ request()->routeIs('employee-documents.*') ? 'bg-gray-600 text-white' : '' }}">
-                                <span class="flex items-center gap-2">
-                                    <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"/>
-                                    </svg>
-                                    My 201 File
-                                </span>
-                            </a>
-
-                            <!-- Shift Change Requests -->
-                            <a href="{{ route('shift-change-requests.index') }}" class="block px-4 py-2.5 text-sm text-gray-300 hover:bg-gray-600 hover:text-white transition {{ request()->routeIs('shift-change-requests.*') ? 'bg-gray-600 text-white' : '' }}">
-                                <span class="flex items-center gap-2">
-                                    <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z"/>
-                                    </svg>
-                                    Shift Requests
-                                </span>
-                            </a>
-
-                            <!-- Performance Reviews -->
-                            <a href="{{ route('performance-reviews.index') }}" class="block px-4 py-2.5 text-sm text-gray-300 hover:bg-gray-600 hover:text-white transition {{ request()->routeIs('performance-reviews.*') ? 'bg-gray-600 text-white' : '' }}">
-                                <span class="flex items-center gap-2">
-                                    <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M11.049 2.927c.3-.921 1.603-.921 1.902 0l1.519 4.674a1 1 0 00.95.69h4.915c.969 0 1.371 1.24.588 1.81l-3.976 2.888a1 1 0 00-.363 1.118l1.518 4.674c.3.922-.755 1.688-1.538 1.118l-3.976-2.888a1 1 0 00-1.176 0l-3.976 2.888c-.783.57-1.838-.197-1.538-1.118l1.518-4.674a1 1 0 00-.363-1.118l-3.976-2.888c-.784-.57-.38-1.81.588-1.81h4.914a1 1 0 00.951-.69l1.519-4.674z"/>
-                                    </svg>
-                                    Performance Reviews
-                                </span>
-                            </a>
-
-                            <!-- My Assets -->
-                            <a href="{{ route('company-assets.index') }}" class="block px-4 py-2.5 text-sm text-gray-300 hover:bg-gray-600 hover:text-white transition {{ request()->routeIs('company-assets.*') ? 'bg-gray-600 text-white' : '' }}">
-                                <span class="flex items-center gap-2">
-                                    <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9.75 17L9 20l-1 1h8l-1-1-.75-3M3 13h18M5 17h14a2 2 0 002-2V5a2 2 0 00-2-2H5a2 2 0 00-2 2v10a2 2 0 002 2z"/>
-                                    </svg>
-                                    My Assets
-                                </span>
-                            </a>
-
-                            <!-- HR Policies -->
-                            <a href="{{ route('hr-policies.index') }}" class="block px-4 py-2.5 text-sm text-gray-300 hover:bg-gray-600 hover:text-white transition {{ request()->routeIs('hr-policies.*') ? 'bg-gray-600 text-white' : '' }}">
-                                <span class="flex items-center gap-2">
-                                    <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 6.253v13m0-13C10.832 5.477 9.246 5 7.5 5S4.168 5.477 3 6.253v13C4.168 18.477 5.754 18 7.5 18s3.332.477 4.5 1.253m0-13C13.168 5.477 14.754 5 16.5 5c1.747 0 3.332.477 4.5 1.253v13C19.832 18.477 18.247 18 16.5 18c-1.746 0-3.332.477-4.5 1.253"/>
-                                    </svg>
-                                    HR Policies
-                                </span>
-                            </a>
-
-                            <!-- Reimbursements -->
-                            <a href="{{ route('expense-claims.index') }}" class="block px-4 py-2.5 text-sm text-gray-300 hover:bg-gray-600 hover:text-white transition {{ request()->routeIs('expense-claims.*') ? 'bg-gray-600 text-white' : '' }}">
-                                <span class="flex items-center gap-2">
-                                    <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 9V7a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2m2 4h10a2 2 0 002-2v-6a2 2 0 00-2-2H9a2 2 0 00-2 2v6a2 2 0 002 2zm7-5a2 2 0 11-4 0 2 2 0 014 0z"/>
-                                    </svg>
-                                    Reimbursements
-                                </span>
-                            </a>
-
-                            <div class="border-t border-gray-700/50 my-1 mx-3"></div>
+                                    <span x-text="portalView === 'management' ? 'Switch Account' : 'Management Portal'"></span>
+                                </button>
+                            </div>
                             @endif
-
+                            
                             <a href="{{ route('profile.edit') }}" class="block px-4 py-2.5 text-sm text-gray-300 hover:bg-white/5 hover:text-white transition-colors group">
                                 <span class="flex items-center gap-2 group-hover:translate-x-1 transition-transform duration-200">
                                     <svg class="w-4 h-4 text-gray-400 group-hover:text-white transition-colors" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -520,7 +378,9 @@
 
                     <!-- Dashboard -->
                     <div class="relative nav-item mb-1">
-                        <a href="{{ route('dashboard') }}" class="flex items-center gap-3 px-3 py-2.5 mx-2 rounded-xl transition-all duration-200 group {{ request()->routeIs('dashboard') ? 'bg-blue-600 text-white shadow-lg ring-1 ring-white/20' : 'text-gray-400 hover:bg-white/5 hover:text-white' }}">
+                        <a href="{{ route('dashboard') }}" 
+                           class="flex items-center gap-3 px-3 py-2.5 mx-2 rounded-xl transition-all duration-200 group {{ request()->routeIs('dashboard') ? 'text-white shadow-lg ring-1 ring-white/20' : 'text-gray-400 hover:bg-white/5 hover:text-white' }}"
+                           :class="portalView === 'management' ? '{{ request()->routeIs('dashboard') ? 'bg-blue-600' : '' }}' : '{{ request()->routeIs('dashboard') ? 'bg-emerald-600' : '' }}'">
                             <div class="w-8 h-8 flex items-center justify-center flex-shrink-0 transition-transform group-hover:scale-110">
                                 <svg class="w-5 h-5 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                                     <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 6a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2H6a2 2 0 01-2-2V6zM14 6a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2h-2a2 2 0 01-2-2V6zM4 16a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2H6a2 2 0 01-2-2v-2zM14 16a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2h-2a2 2 0 01-2-2v-2z"/>
@@ -531,9 +391,142 @@
                         <div x-show="!sidebarOpen" class="tooltip">Dashboard</div>
                     </div>
 
-                    <!-- ========================================================= -->
+                    <!-- Personal Portal Section -->
+                    <div x-show="portalView === 'personal'" x-cloak>
+                        <div class="pt-4 mt-4 border-t border-gray-700/50">
+                            <p x-show="sidebarOpen" x-cloak class="px-3 text-[10px] font-bold text-emerald-400 uppercase tracking-[0.2em] mb-3 sidebar-text text-shadow-sm select-none" :class="sidebarOpen ? 'sidebar-text-visible' : 'sidebar-text-hidden'">EMPLOYEE SERVICES</p>
+                        </div>
 
-                    @if(auth()->user()->isAdmin() || auth()->user()->isHr())
+                        <!-- Notifications -->
+                        <div class="relative nav-item mb-1">
+                            <a href="{{ route('notifications.index') }}" class="flex items-center gap-3 px-3 py-2.5 mx-2 rounded-xl transition-all duration-200 group {{ request()->routeIs('notifications.*') ? 'bg-emerald-600 text-white shadow-lg ring-1 ring-white/20' : 'text-gray-400 hover:bg-white/5 hover:text-white' }}">
+                                <div class="w-8 h-8 flex items-center justify-center flex-shrink-0 transition-transform group-hover:scale-110">
+                                    <div class="relative">
+                                        <svg class="w-5 h-5 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 17h5l-1.405-1.405A2.032 2.032 0 0118 14.158V11a6.002 6.002 0 00-4-5.659V5a2 2 0 10-4 0v.341C7.67 6.165 6 8.388 6 11v3.159c0 .538-.214 1.055-.595 1.436L4 17h5m6 0v1a3 3 0 11-6 0v-1m6 0H9"/>
+                                        </svg>
+                                        @php $unreadCount = auth()->user()->unreadNotifications->count(); @endphp
+                                        @if($unreadCount > 0)
+                                            <span class="absolute -top-1 -right-1 flex h-3 w-3">
+                                                <span class="animate-ping absolute inline-flex h-full w-full rounded-full bg-red-400 opacity-75"></span>
+                                                <span class="relative inline-flex rounded-full h-3 w-3 bg-red-500"></span>
+                                            </span>
+                                        @endif
+                                    </div>
+                                </div>
+                                <span x-show="sidebarOpen" x-cloak class="sidebar-text font-medium text-sm" :class="sidebarOpen ? 'sidebar-text-visible' : 'sidebar-text-hidden'">Notifications</span>
+                            </a>
+                            <div x-show="!sidebarOpen" class="tooltip">Notifications</div>
+                        </div>
+
+                        <!-- Attendance / Time Clock -->
+                        <div class="relative nav-item mb-1">
+                            <a href="{{ route('attendance.index') }}" class="flex items-center gap-3 px-3 py-2.5 mx-2 rounded-xl transition-all duration-200 group {{ request()->routeIs('attendance.*') ? 'bg-emerald-600 text-white shadow-lg ring-1 ring-white/20' : 'text-gray-400 hover:bg-white/5 hover:text-white' }}">
+                                <div class="w-8 h-8 flex items-center justify-center flex-shrink-0 transition-transform group-hover:scale-110">
+                                    <svg class="w-5 h-5 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z"/>
+                                    </svg>
+                                </div>
+                                <span x-show="sidebarOpen" x-cloak class="sidebar-text font-medium text-sm" :class="sidebarOpen ? 'sidebar-text-visible' : 'sidebar-text-hidden'">Time Clock</span>
+                            </a>
+                            <div x-show="!sidebarOpen" class="tooltip">Time Clock</div>
+                        </div>
+
+                        <!-- My DTR -->
+                        <div class="relative nav-item mb-1">
+                            <a href="{{ route('dtr-records.index') }}" class="flex items-center gap-3 px-3 py-2.5 mx-2 rounded-xl transition-all duration-200 group {{ request()->routeIs('dtr-records.*') ? 'bg-emerald-600 text-white shadow-lg ring-1 ring-white/20' : 'text-gray-400 hover:bg-white/5 hover:text-white' }}">
+                                <div class="w-8 h-8 flex items-center justify-center flex-shrink-0 transition-transform group-hover:scale-110">
+                                    <svg class="w-5 h-5 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z"/>
+                                    </svg>
+                                </div>
+                                <span x-show="sidebarOpen" x-cloak class="sidebar-text font-medium text-sm" :class="sidebarOpen ? 'sidebar-text-visible' : 'sidebar-text-hidden'">My DTR</span>
+                            </a>
+                            <div x-show="!sidebarOpen" class="tooltip">My DTR</div>
+                        </div>
+
+                        <!-- My Payslips -->
+                        <div class="relative nav-item mb-1">
+                            <a href="{{ route('payslip.index') }}" class="flex items-center gap-3 px-3 py-2.5 mx-2 rounded-xl transition-all duration-200 group {{ request()->routeIs('payslip.*') ? 'bg-emerald-600 text-white shadow-lg ring-1 ring-white/20' : 'text-gray-400 hover:bg-white/5 hover:text-white' }}">
+                                <div class="w-8 h-8 flex items-center justify-center flex-shrink-0 transition-transform group-hover:scale-110">
+                                    <svg class="w-5 h-5 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 9V7a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2m2 4h10a2 2 0 002-2v-6a2 2 0 00-2-2H9a2 2 0 00-2 2v6a2 2 0 002 2zm7-5a2 2 0 11-4 0 2 2 0 014 0z"/>
+                                    </svg>
+                                </div>
+                                <span x-show="sidebarOpen" x-cloak class="sidebar-text font-medium text-sm" :class="sidebarOpen ? 'sidebar-text-visible' : 'sidebar-text-hidden'">My Payslips</span>
+                            </a>
+                            <div x-show="!sidebarOpen" class="tooltip">My Payslips</div>
+                        </div>
+
+                        <!-- My Transactions -->
+                        <div class="relative nav-item mb-1">
+                            <a href="{{ route('transactions.index') }}" class="flex items-center gap-3 px-3 py-2.5 mx-2 rounded-xl transition-all duration-200 group {{ request()->routeIs('transactions.*') ? 'bg-emerald-600 text-white shadow-lg ring-1 ring-white/20' : 'text-gray-400 hover:bg-white/5 hover:text-white' }}">
+                                <div class="w-8 h-8 flex items-center justify-center flex-shrink-0 transition-transform group-hover:scale-110">
+                                    <svg class="w-5 h-5 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2m-6 9l2 2 4-4"/>
+                                    </svg>
+                                </div>
+                                <span x-show="sidebarOpen" x-cloak class="sidebar-text font-medium text-sm" :class="sidebarOpen ? 'sidebar-text-visible' : 'sidebar-text-hidden'">My Transactions</span>
+                            </a>
+                            <div x-show="!sidebarOpen" class="tooltip">My Transactions</div>
+                        </div>
+
+                        <!-- My Concerns -->
+                        <div class="relative nav-item mb-1">
+                            <a href="{{ route('concerns.my') }}" class="flex items-center gap-3 px-3 py-2.5 mx-2 rounded-xl transition-all duration-200 group {{ request()->routeIs('concerns.*') ? 'bg-emerald-600 text-white shadow-lg ring-1 ring-white/20' : 'text-gray-400 hover:bg-white/5 hover:text-white' }}">
+                                <div class="w-8 h-8 flex items-center justify-center flex-shrink-0 transition-transform group-hover:scale-110">
+                                    <svg class="w-5 h-5 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M18.364 5.636l-3.536 3.536m0 5.656l3.536 3.536M9.172 9.172L5.636 5.636m3.536 9.192l-3.536 3.536M21 12a9 9 0 11-18 0 9 9 0 0118 0zm-5 0a4 4 0 11-8 0 4 4 0 018 0z"/>
+                                    </svg>
+                                </div>
+                                <span x-show="sidebarOpen" x-cloak class="sidebar-text font-medium text-sm" :class="sidebarOpen ? 'sidebar-text-visible' : 'sidebar-text-hidden'">My Concerns</span>
+                            </a>
+                            <div x-show="!sidebarOpen" class="tooltip">My Concerns</div>
+                        </div>
+
+                        <!-- Announcements -->
+                        <div class="relative nav-item mb-1">
+                            <a href="{{ route('announcements.index') }}" class="flex items-center gap-3 px-3 py-2.5 mx-2 rounded-xl transition-all duration-200 group {{ request()->routeIs('announcements.*') ? 'bg-emerald-600 text-white shadow-lg ring-1 ring-white/20' : 'text-gray-400 hover:bg-white/5 hover:text-white' }}">
+                                <div class="w-8 h-8 flex items-center justify-center flex-shrink-0 transition-transform group-hover:scale-110">
+                                    <svg class="w-5 h-5 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M11 5.882V19.24a1.76 1.76 0 01-3.417.592l-2.147-6.15M18 13a3 3 0 100-6M5.436 13.683A4.001 4.001 0 017 6h1.832c4.1 0 7.625-1.234 9.168-3v14c-1.543-1.766-5.067-3-9.168-3H7a3.988 3.988 0 01-1.564-.317z"/>
+                                    </svg>
+                                </div>
+                                <span x-show="sidebarOpen" x-cloak class="sidebar-text font-medium text-sm" :class="sidebarOpen ? 'sidebar-text-visible' : 'sidebar-text-hidden'">Announcements</span>
+                            </a>
+                            <div x-show="!sidebarOpen" class="tooltip">Announcements</div>
+                        </div>
+
+                        <!-- Overtime Request -->
+                        <div class="relative nav-item mb-1">
+                            <a href="{{ route('overtime-requests.index') }}" class="flex items-center gap-3 px-3 py-2.5 mx-2 rounded-xl transition-all duration-200 group {{ request()->routeIs('overtime-requests.*') ? 'bg-emerald-600 text-white shadow-lg ring-1 ring-white/20' : 'text-gray-400 hover:bg-white/5 hover:text-white' }}">
+                                <div class="w-8 h-8 flex items-center justify-center flex-shrink-0 transition-transform group-hover:scale-110">
+                                    <svg class="w-5 h-5 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z"/>
+                                    </svg>
+                                </div>
+                                <span x-show="sidebarOpen" x-cloak class="sidebar-text font-medium text-sm" :class="sidebarOpen ? 'sidebar-text-visible' : 'sidebar-text-hidden'">Overtime Request</span>
+                            </a>
+                            <div x-show="!sidebarOpen" class="tooltip">Overtime Request</div>
+                        </div>
+
+                        <!-- My Leaves -->
+                        <div class="relative nav-item mb-1">
+                            <a href="{{ route('leaves.index') }}" class="flex items-center gap-3 px-3 py-2.5 mx-2 rounded-xl transition-all duration-200 group {{ request()->routeIs('leaves.index') ? 'bg-emerald-600 text-white shadow-lg ring-1 ring-white/20' : 'text-gray-400 hover:bg-white/5 hover:text-white' }}">
+                                <div class="w-8 h-8 flex items-center justify-center flex-shrink-0 transition-transform group-hover:scale-110">
+                                    <svg class="w-5 h-5 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"/>
+                                    </svg>
+                                </div>
+                                <span x-show="sidebarOpen" x-cloak class="sidebar-text font-medium text-sm" :class="sidebarOpen ? 'sidebar-text-visible' : 'sidebar-text-hidden'">My Leaves</span>
+                            </a>
+                            <div x-show="!sidebarOpen" class="tooltip">My Leaves</div>
+                        </div>
+                    </div>
+
+                    <!-- Management Sections -->
+                    <div x-show="portalView === 'management'" x-cloak>
+                    @if(auth()->user()->isAdmin() || auth()->user()->isHr() || auth()->user()->isAccounting())
                         <!-- Payroll Center (Dashboard) -->
                         <div class="relative nav-item mb-1">
                             <a href="{{ route('payroll.computation.dashboard') }}" class="flex items-center gap-3 px-3 py-2.5 mx-2 rounded-xl transition-all duration-200 group {{ request()->routeIs('payroll.computation.*') ? 'bg-blue-600 text-white shadow-lg ring-1 ring-white/20' : 'text-gray-400 hover:bg-white/5 hover:text-white' }}">
@@ -547,7 +540,6 @@
                             <div x-show="!sidebarOpen" class="tooltip">Payroll Center</div>
                         </div>
 
-                        @if(!auth()->user()->hasRole('accounting'))
                         <div class="pt-4 mt-4 border-t border-gray-700/50">
                             <p x-show="sidebarOpen" x-cloak class="px-3 text-[10px] font-bold text-gray-400 uppercase tracking-[0.2em] mb-3 sidebar-text text-shadow-sm select-none" :class="sidebarOpen ? 'sidebar-text-visible' : 'sidebar-text-hidden'">HR Management</p>
                         </div>
@@ -605,23 +597,7 @@
                             <div x-show="!sidebarOpen" class="tooltip">Attendance Records</div>
                         </div>
 
-                        <!-- DTR Management (Hidden - merged into Payroll Center) -->
-                        <!-- 
-                        <div class="relative nav-item mb-1">
-                            <a href="{{ route('dtr.admin-index') }}" class="flex items-center gap-3 px-3 py-2.5 mx-2 rounded-xl transition-all duration-200 group {{ request()->routeIs('dtr.admin-index', 'dtr.admin-show') ? 'bg-blue-600 text-white shadow-lg ring-1 ring-white/20' : 'text-gray-400 hover:bg-white/5 hover:text-white' }}">
-                                <div class="w-8 h-8 flex items-center justify-center flex-shrink-0 transition-transform group-hover:scale-110">
-                                    <svg class="w-5 h-5 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 17v-2m3 2v-4m3 4v-6m2 10H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"/>
-                                    </svg>
-                                </div>
-                                <span x-show="sidebarOpen" x-cloak class="sidebar-text font-medium text-sm" :class="sidebarOpen ? 'sidebar-text-visible' : 'sidebar-text-hidden'">DTR Management</span>
-                            </a>
-                            <div x-show="!sidebarOpen" class="tooltip">DTR Management</div>
-                        </div>
-                        -->
-
-                        <!-- DTR Approval (Hidden - merged into Payroll Center) -->
-                        <!--
+                        <!-- DTR Center -->
                         <div class="relative nav-item mb-1">
                             <a href="{{ route('dtr-approval.index') }}" class="flex items-center gap-3 px-3 py-2.5 mx-2 rounded-xl transition-all duration-200 group {{ request()->routeIs('dtr-approval.*') ? 'bg-blue-600 text-white shadow-lg ring-1 ring-white/20' : 'text-gray-400 hover:bg-white/5 hover:text-white' }}">
                                 <div class="w-8 h-8 flex items-center justify-center flex-shrink-0 transition-transform group-hover:scale-110">
@@ -629,11 +605,10 @@
                                         <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z"/>
                                     </svg>
                                 </div>
-                                <span x-show="sidebarOpen" x-cloak class="sidebar-text font-medium text-sm" :class="sidebarOpen ? 'sidebar-text-visible' : 'sidebar-text-hidden'">DTR Approval</span>
+                                <span x-show="sidebarOpen" x-cloak class="sidebar-text font-medium text-sm" :class="sidebarOpen ? 'sidebar-text-visible' : 'sidebar-text-hidden'">DTR Center</span>
                             </a>
-                            <div x-show="!sidebarOpen" class="tooltip">DTR Approval</div>
+                            <div x-show="!sidebarOpen" class="tooltip">DTR Center</div>
                         </div>
-                        -->
 
 
                         <!-- Leave Requests -->
@@ -666,10 +641,9 @@
                             </a>
                             <div x-show="!sidebarOpen" class="tooltip">Leave Types</div>
                         </div>
-                        @endif
 
                         <!-- Leave Credits -->
-                        @if(Auth::user()->role === 'super_admin')
+                        @if(auth()->user()->isSuperAdmin())
                         <div class="relative nav-item mb-1">
                             <a href="{{ route('leave-credits.index') }}" class="flex items-center gap-3 px-3 py-2.5 mx-2 rounded-xl transition-all duration-200 group {{ request()->routeIs('leave-credits.*') ? 'bg-blue-600 text-white shadow-lg ring-1 ring-white/20' : 'text-gray-400 hover:bg-white/5 hover:text-white' }}">
                                 <div class="w-8 h-8 flex items-center justify-center flex-shrink-0 transition-transform group-hover:scale-110">
@@ -682,8 +656,6 @@
                             <div x-show="!sidebarOpen" class="tooltip">Leave Credits</div>
                         </div>
                         @endif
-
-
 
                         @if(auth()->user()->isSuperAdmin())
                         <!-- Tools & Reports Section -->
@@ -749,7 +721,6 @@
                             </div>
 
                             <!-- User Roles -->
-                            @if(auth()->user()->isSuperAdmin())
                             <div class="relative nav-item mb-1">
                                 <a href="{{ route('accounts.index') }}" class="flex items-center gap-3 px-3 py-2.5 mx-2 rounded-xl transition-all duration-200 group {{ request()->routeIs('accounts.*') ? 'bg-blue-600 text-white shadow-lg ring-1 ring-white/20' : 'text-gray-400 hover:bg-white/5 hover:text-white' }}">
                                     <div class="w-8 h-8 flex items-center justify-center flex-shrink-0 transition-transform group-hover:scale-110">
@@ -761,7 +732,6 @@
                                 </a>
                                 <div x-show="!sidebarOpen" class="tooltip">User Roles</div>
                             </div>
-                            @endif
 
                             <!-- Settings -->
                             <div class="relative nav-item mb-1">
@@ -804,6 +774,7 @@
                             </div>
                         @endif
                     @endif
+                    </div>
                 </nav>
 
 

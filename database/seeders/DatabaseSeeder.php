@@ -157,6 +157,8 @@ class DatabaseSeeder extends Seeder
 
         $faker = \Faker\Factory::create('en_PH');
 
+        // COMMENTED OUT FOR PRODUCTION READINESS - No dummy employees by default
+        /* 
         $this->command->info('Creating 97 Employees...');
         
         $departments = ['Operations', 'Customer Support', 'Technical Support', 'Sales', 'Data Entry'];
@@ -211,6 +213,7 @@ class DatabaseSeeder extends Seeder
                 'pagibig_number' => $faker->numerify('####-####-####'),
             ]);
         }
+        */
 
         // 5. Generate Attendance & Payroll
         /* Commented out for faster seeding, will use payroll:redo-weekly instead

@@ -489,4 +489,22 @@ class PayrollController extends Controller
                 ->with('error', 'Failed to release payrolls: ' . $e->getMessage());
         }
     }
+
+    /**
+     * Delete a payroll period (Superadmin only)
+     */
+    public function destroyPeriod(PayrollPeriod $period)
+    {
+        // Check if there are released or paid payrolls
+        if ($period->payrolls()->whereIn('status', ['released', 'paid'])->exists()) {
+            return back()->with('error', 'Cannot delete period with released/paid payrolls.');
+        }
+
+        // Delete associated payrolls and DTRs first if any exist
+        $period->payrolls()->delete();
+        $period->dailyTimeRecords()->delete();
+        $period->delete();
+
+        return redirect()->route('payroll.periods')->with('success', 'Payroll period deleted successfully.');
+    }
 }

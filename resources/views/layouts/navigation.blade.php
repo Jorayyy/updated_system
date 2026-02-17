@@ -16,7 +16,7 @@
                         {{ __('Dashboard') }}
                     </x-nav-link>
 
-                    @if(!auth()->user()->hasRole('super_admin') && !auth()->user()->hasRole('hr'))
+                    @if(auth()->user()->isEmployee())
                         <!-- Employee Menu -->
                         <x-nav-link :href="route('announcements.index')" :active="request()->routeIs('announcements.index')">
                             {{ __('Announcements') }}
@@ -94,8 +94,8 @@
                             {{ __('Attendance') }}
                         </x-nav-link>
 
-                        <x-nav-link :href="route('dtr.admin-index')" :active="request()->routeIs('dtr.admin-index')">
-                            {{ __('DTR') }}
+                        <x-nav-link :href="route('dtr-approval.index')" :active="request()->routeIs('dtr-approval.*')">
+                            {{ __('DTR Center') }}
                         </x-nav-link>
                         
                         <x-nav-link :href="route('payroll.index')" :active="request()->routeIs('payroll.index')">
@@ -103,7 +103,7 @@
                         </x-nav-link>
                     @endif
                     
-                    @if(auth()->user()->isAdmin() || auth()->user()->isHr())
+                    @if(auth()->user()->isAdmin() || auth()->user()->isHr() || auth()->user()->isAccounting())
                         <!-- HR/Admin More Dropdown -->
                         <div class="hidden sm:flex sm:items-center">
                             <x-dropdown align="left" width="48">
@@ -144,6 +144,9 @@
                                     </div>
                                     <x-dropdown-link :href="route('departments.index')">
                                         {{ __('Departments') }}
+                                    </x-dropdown-link>
+                                    <x-dropdown-link :href="route('dtr.admin-index')">
+                                        {{ __('DTR Archive') }}
                                     </x-dropdown-link>
                                     <x-dropdown-link :href="route('transactions.admin-index')">
                                         {{ __('Transactions Logs') }}
@@ -246,7 +249,7 @@
                 {{ __('Dashboard') }}
             </x-responsive-nav-link>
 
-            @if(!auth()->user()->hasRole('super_admin') && !auth()->user()->hasRole('hr'))
+            @if(auth()->user()->isEmployee())
                 <x-responsive-nav-link :href="route('announcements.index')" :active="request()->routeIs('announcements.*')">
                     {{ __('Announcements') }}
                 </x-responsive-nav-link>
@@ -304,8 +307,8 @@
                 <x-responsive-nav-link :href="route('attendance.manage')">
                     {{ __('Attendance Records') }}
                 </x-responsive-nav-link>
-                <x-responsive-nav-link :href="route('dtr.admin-index')">
-                    {{ __('DTR Management') }}
+                <x-responsive-nav-link :href="route('dtr-approval.index')">
+                    {{ __('DTR Center') }}
                 </x-responsive-nav-link>
                 <x-responsive-nav-link :href="route('payroll.index')">
                     {{ __('Payroll') }}
@@ -344,6 +347,9 @@
                 </x-responsive-nav-link>
                 
                 @if(auth()->user()->isAccounting())
+                    <x-responsive-nav-link :href="route('dtr-approval.index')" :active="request()->routeIs('dtr-approval.*')">
+                        {{ __('DTR Center') }}
+                    </x-responsive-nav-link>
                     <x-responsive-nav-link :href="route('payroll.computation.dashboard')" :active="request()->routeIs('payroll.computation.*')">
                         {{ __('Payroll Computation') }}
                     </x-responsive-nav-link>
