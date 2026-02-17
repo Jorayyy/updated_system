@@ -24,8 +24,8 @@ class JanuaryTestDataSeeder extends Seeder
         }
 
         // Setup Payroll Groups if they don't exist
-        $bpoGroup = PayrollGroup::where('name', 'BPO')->first();
-        $mgmtGroup = PayrollGroup::where('name', 'Management')->first();
+        $bpoGroup = PayrollGroup::firstOrCreate(['name' => 'BPO'], ['description' => 'BPO Employees']);
+        $mgmtGroup = PayrollGroup::firstOrCreate(['name' => 'Management'], ['description' => 'Management Personnel']);
 
         // Create Weekly Payroll Periods for January 2026
         $bpoGroup = PayrollGroup::where('name', 'BPO')->first();
