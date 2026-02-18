@@ -16,12 +16,23 @@ class JanuaryTestDataSeeder extends Seeder
     {
         // 1. Truncate for a clean slate
         $this->command->info('Truncating attendance, DTR, and payroll tables...');
-        \Illuminate\Support\Facades\DB::statement('PRAGMA foreign_keys = OFF;');
+        
+        if (\Illuminate\Support\Facades\DB::getDriverName() === 'sqlite') {
+            \Illuminate\Support\Facades\DB::statement('PRAGMA foreign_keys = OFF;');
+        } else {
+            \Illuminate\Support\Facades\DB::statement('SET FOREIGN_KEY_CHECKS=0;');
+        }
+
         Attendance::query()->delete();
         DailyTimeRecord::query()->delete();
         \App\Models\Payroll::query()->delete();
         PayrollPeriod::query()->delete();
-        \Illuminate\Support\Facades\DB::statement('PRAGMA foreign_keys = ON;');
+
+        if (\Illuminate\Support\Facades\DB::getDriverName() === 'sqlite') {
+            \Illuminate\Support\Facades\DB::statement('PRAGMA foreign_keys = ON;');
+        } else {
+            \Illuminate\Support\Facades\DB::statement('SET FOREIGN_KEY_CHECKS=1;');
+        }
 
         // 2. Setup Payroll Groups (Match CleanSystemSeeder or create if missing)
         $bpoGroup = PayrollGroup::firstOrCreate(['name' => 'BPO'], ['description' => 'BPO Employees']);
