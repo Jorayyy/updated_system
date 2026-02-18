@@ -39,6 +39,7 @@ use App\Http\Controllers\PerformanceReviewController;
 use App\Http\Controllers\CompanyAssetController;
 use App\Http\Controllers\ShiftChangeRequestController;
 use App\Http\Controllers\HrPolicyController;
+use App\Http\Controllers\EmployeeImportController;
 use Illuminate\Support\Facades\Route;
 
 /*
@@ -160,6 +161,10 @@ Route::middleware('auth')->group(function () {
         Route::resource('payroll-groups', PayrollGroupController::class);
 
         // Employees Management
+        // Bulk Upload Routes
+        Route::get('employees-import/template', [EmployeeImportController::class, 'downloadTemplate'])->name('employees.import.template');
+        Route::post('employees-import', [EmployeeImportController::class, 'upload'])->name('employees.import');
+
         Route::resource('employees', EmployeeController::class);
         Route::post('/employees/{employee}/toggle-status', [EmployeeController::class, 'toggleStatus'])->name('employees.toggle-status');
         Route::post('/employees/{employee}/force-delete', [EmployeeController::class, 'forceDelete'])->name('employees.force-delete');

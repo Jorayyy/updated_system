@@ -4,9 +4,17 @@
             <h2 class="font-semibold text-xl text-gray-800 leading-tight">
                 {{ __('Employees') }}
             </h2>
-            <a href="{{ route('employees.create') }}" class="bg-indigo-600 text-white px-4 py-2 rounded-md hover:bg-indigo-700 transition-colors duration-200">
-                Add Employee
-            </a>
+            <div class="flex items-center space-x-2">
+                <button type="button" onclick="document.getElementById('importModal').classList.remove('hidden')" class="bg-gray-100 text-gray-700 px-4 py-2 rounded-md hover:bg-gray-200 transition-colors duration-200 flex items-center">
+                    <svg class="h-4 w-4 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-8l-4-4m0 0L8 8m4-4v12"/>
+                    </svg>
+                    Bulk Import
+                </button>
+                <a href="{{ route('employees.create') }}" class="bg-indigo-600 text-white px-4 py-2 rounded-md hover:bg-indigo-700 transition-colors duration-200">
+                    Add Employee
+                </a>
+            </div>
         </div>
     </x-slot>
 
@@ -79,6 +87,29 @@
             <!-- Filters -->
             <div class="bg-white overflow-hidden shadow-sm sm:rounded-lg mb-6 transition-colors duration-200">
                 <div class="p-6">
+                    @if (session('success'))
+                        <div class="mb-4 p-4 bg-green-50 border-l-4 border-green-400 text-green-700">
+                            {{ session('success') }}
+                        </div>
+                    @endif
+
+                    @if (session('error'))
+                        <div class="mb-4 p-4 bg-red-50 border-l-4 border-red-400 text-red-700">
+                            {{ session('error') }}
+                        </div>
+                    @endif
+
+                    @if (session('import_errors'))
+                        <div class="mb-4 p-4 bg-orange-50 border-l-4 border-orange-400 text-orange-700">
+                            <p class="font-bold mb-2">Import Errors:</p>
+                            <ul class="list-disc list-inside text-sm">
+                                @foreach (session('import_errors') as $error)
+                                    <li>{{ $error }}</li>
+                                @endforeach
+                            </ul>
+                        </div>
+                    @endif
+
                     <form method="GET" class="flex flex-wrap items-center gap-4">
                         <input type="text" name="search" value="{{ request('search') }}" 
                             placeholder="Search by name, email, ID..."
@@ -235,6 +266,66 @@
                                 @endforelse
                             </tbody>
                         </table>
+                    </div>
+
+                    <!-- Import Modal -->
+                    <div id="importModal" class="fixed inset-0 z-50 overflow-y-auto hidden" aria-labelledby="modal-title" role="dialog" aria-modal="true">
+                        <div class="flex items-center justify-center min-h-screen pt-4 px-4 pb-20 text-center sm:block sm:p-0">
+                            <div class="fixed inset-0 bg-gray-500 bg-opacity-75 transition-opacity" aria-hidden="true" onclick="document.getElementById('importModal').classList.add('hidden')"></div>
+                            <span class="hidden sm:inline-block sm:align-middle sm:h-screen" aria-hidden="true">&#8203;</span>
+                            <div class="inline-block align-bottom bg-white rounded-lg text-left overflow-hidden shadow-xl transform transition-all sm:my-8 sm:align-middle sm:max-w-lg sm:w-full"
+                                x-data="{ importing: false, downloaded: false }">
+                                <form action="{{ route('employees.import') }}" method="POST" enctype="multipart/form-data" @submit="importing = true">
+                                    @csrf
+                                    <div class="bg-white px-4 pt-5 pb-4 sm:p-6 sm:pb-4">
+                                        <div class="sm:flex sm:items-start">
+                                            <div class="mt-3 text-center sm:mt-0 sm:ml-4 sm:text-left w-full">
+                                                <h3 class="text-lg leading-6 font-medium text-gray-900" id="modal-title">Bulk Employee Import</h3>
+                                                <div class="mt-4 space-y-4">
+                                                    <p class="text-sm text-gray-500">
+                                                        Upload a CSV file to import multiple employees at once. Please use our template to ensure correct formatting.
+                                                    </p>
+                                                    <a href="{{ route('employees.import.template') }}" 
+                                                        @click="downloaded = true; setTimeout(() => downloaded = false, 3000)"
+                                                        class="inline-flex items-center text-sm font-medium transition-colors"
+                                                        :class="downloaded ? 'text-green-600' : 'text-indigo-600 hover:text-indigo-500'">
+                                                        <svg class="mr-1.5 h-4 w-4" fill="none" stroke="currentColor" viewBox="0 0 24 24" x-show="!downloaded">
+                                                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4"/>
+                                                        </svg>
+                                                        <svg class="mr-1.5 h-4 w-4" fill="none" stroke="currentColor" viewBox="0 0 24 24" x-show="downloaded" x-cloak>
+                                                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7" />
+                                                        </svg>
+                                                        <span x-text="downloaded ? 'Template Downloaded!' : 'Download Template (.csv)'"></span>
+                                                    </a>
+                                                    <div class="mt-4">
+                                                        <label class="block text-sm font-medium text-gray-700">Select File</label>
+                                                        <input type="file" name="csv_file" accept=".csv" required 
+                                                            class="mt-1 block w-full text-sm text-gray-500 file:mr-4 file:py-2 file:px-4 file:rounded-md file:border-0 file:text-sm file:font-semibold file:bg-indigo-50 file:text-indigo-700 hover:file:bg-indigo-100">
+                                                    </div>
+                                                </div>
+                                            </div>
+                                        </div>
+                                    </div>
+                                    <div class="bg-gray-50 px-4 py-3 sm:px-6 sm:flex sm:flex-row-reverse">
+                                        <button type="submit" 
+                                            :disabled="importing"
+                                            class="w-full inline-flex justify-center rounded-md border border-transparent shadow-sm px-4 py-2 bg-indigo-600 text-base font-medium text-white hover:bg-indigo-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500 sm:ml-3 sm:w-auto sm:text-sm disabled:opacity-50 disabled:cursor-not-allowed">
+                                            <svg class="animate-spin -ml-1 mr-2 h-4 w-4 text-white" x-show="importing" x-cloak xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
+                                                <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle>
+                                                <path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
+                                            </svg>
+                                            <span x-text="importing ? 'Processing...' : 'Start Import'"></span>
+                                        </button>
+                                        <button type="button" 
+                                            @click="document.getElementById('importModal').classList.add('hidden')"
+                                            :disabled="importing"
+                                            class="mt-3 w-full inline-flex justify-center rounded-md border border-gray-300 shadow-sm px-4 py-2 bg-white text-base font-medium text-gray-700 hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500 sm:mt-0 sm:ml-3 sm:w-auto sm:text-sm">
+                                            Cancel
+                                        </button>
+                                    </div>
+                                </form>
+                            </div>
+                        </div>
                     </div>
 
                     <div class="mt-4">
