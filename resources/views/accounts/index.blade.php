@@ -2,13 +2,15 @@
     <div class="p-6 bg-[#e0f2fe] min-h-screen">
         <div class="max-w-7xl mx-auto">
             <h1 class="text-2xl font-bold text-gray-700 mb-6 flex items-center gap-2">
-                Administrator <span class="text-sm font-normal text-gray-400">User Roles</span>
+                Administrator <span class="text-sm font-normal text-gray-400">{{ $type == 'role' ? 'User Roles' : 'Campaign Accounts' }}</span>
             </h1>
 
             <div class="bg-white rounded-lg shadow-sm border border-gray-200 overflow-hidden">
                 <div class="bg-red-50 px-6 py-3 flex justify-between items-center border-b border-gray-200">
-                    <h2 class="text-red-800 font-bold uppercase tracking-wider text-sm">User Roles</h2>
-                    <a href="{{ route('accounts.create') }}" class="bg-red-600 text-white p-2 rounded-lg hover:bg-red-700 transition shadow-lg">
+                    <h2 class="text-red-800 font-bold uppercase tracking-wider text-sm">
+                        {{ $type == 'role' ? 'System Roles / Permissions' : 'Active Campaigns / Client Accounts' }}
+                    </h2>
+                    <a href="{{ route('accounts.create', ['type' => $type]) }}" class="bg-red-600 text-white p-2 rounded-lg hover:bg-red-700 transition shadow-lg">
                         <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                             <path stroke-linecap="round" stroke-linejoin="round" stroke-width="3" d="M12 4v16m8-8H4" />
                         </svg>
@@ -19,12 +21,17 @@
                     <table class="min-w-full divide-y divide-gray-200">
                         <thead class="bg-white">
                             <tr>
-                                <th class="px-6 py-4 text-left text-xs font-bold text-gray-700 uppercase tracking-wider">Role Name</th>
-                                <th class="px-6 py-4 text-left text-xs font-bold text-gray-700 uppercase tracking-wider">Permissions Category</th>
-                                <th class="px-6 py-4 text-left text-xs font-bold text-gray-700 uppercase tracking-wider">Role Description</th>
-                                <th class="px-6 py-4 text-left text-xs font-bold text-gray-700 uppercase tracking-wider text-center">Level</th>
-                                <th class="px-6 py-4 text-left text-xs font-bold text-gray-700 uppercase tracking-wider">Site</th>
-                                <th class="px-6 py-4 text-left text-xs font-bold text-gray-700 uppercase tracking-wider text-center">Remarks</th>
+                                <th class="px-6 py-4 text-left text-xs font-bold text-gray-700 uppercase tracking-wider">{{ $type == 'role' ? 'Role Name' : 'Campaign Name' }}</th>
+                                @if($type == 'role')
+                                    <th class="px-6 py-4 text-left text-xs font-bold text-gray-700 uppercase tracking-wider">System Permission</th>
+                                @endif
+                                <th class="px-6 py-4 text-left text-xs font-bold text-gray-700 uppercase tracking-wider">{{ $type == 'role' ? 'Role Description' : 'Campaign Description' }}</th>
+                                @if($type == 'role')
+                                    <th class="px-6 py-4 text-left text-xs font-bold text-gray-700 uppercase tracking-wider text-center">Hierarchy</th>
+                                @endif
+                                <th class="px-6 py-4 text-left text-xs font-bold text-gray-700 uppercase tracking-wider">Site Location</th>
+                                <th class="px-6 py-4 text-left text-xs font-bold text-gray-700 uppercase tracking-wider text-center">Population</th>
+                                <th class="px-6 py-4 text-center text-xs font-bold text-gray-700 uppercase tracking-wider">Status</th>
                                 <th class="px-6 py-4 text-right text-xs font-bold text-gray-700 uppercase tracking-wider"></th>
                             </tr>
                         </thead>
@@ -36,27 +43,31 @@
                                             {{ $account->name }}
                                         </a>
                                     </td>
-                                    <td class="px-6 py-4 whitespace-nowrap">
-                                        <span class="px-2 py-1 {{ 
-                                            match($account->system_role) {
-                                                'super_admin' => 'bg-purple-100 text-purple-700',
-                                                'admin' => 'bg-red-100 text-red-700',
-                                                'hr' => 'bg-green-100 text-green-700',
-                                                'accounting' => 'bg-yellow-100 text-yellow-700',
-                                                default => 'bg-gray-100 text-gray-700'
-                                            }
-                                        }} rounded-full text-[10px] font-bold uppercase tracking-wider">
-                                            {{ $account->system_role }}
-                                        </span>
-                                    </td>
+                                    @if($type == 'role')
+                                        <td class="px-6 py-4 whitespace-nowrap">
+                                            <span class="px-2 py-1 {{ 
+                                                match($account->system_role) {
+                                                    'super_admin' => 'bg-purple-100 text-purple-700',
+                                                    'admin' => 'bg-red-100 text-red-700',
+                                                    'hr' => 'bg-green-100 text-green-700',
+                                                    'accounting' => 'bg-yellow-100 text-yellow-700',
+                                                    default => 'bg-gray-100 text-gray-700'
+                                                }
+                                            }} rounded-full text-[10px] font-bold uppercase tracking-wider">
+                                                {{ $account->system_role }}
+                                            </span>
+                                        </td>
+                                    @endif
                                     <td class="px-6 py-4 text-sm text-gray-600">
                                         {{ $account->description ?? '-' }}
                                     </td>
-                                    <td class="px-6 py-4 text-sm text-center">
-                                        <span class="px-2 py-1 bg-blue-50 text-blue-700 font-bold rounded text-xs">
-                                            {{ $account->hierarchy_level }}
-                                        </span>
-                                    </td>
+                                    @if($type == 'role')
+                                        <td class="px-6 py-4 text-sm text-center">
+                                            <span class="px-2 py-1 bg-blue-50 text-blue-700 font-bold rounded text-xs">
+                                                {{ $account->hierarchy_level }}
+                                            </span>
+                                        </td>
+                                    @endif
                                     <td class="px-6 py-4 text-sm text-gray-600">
                                         <span class="px-2 py-1 bg-gray-100 rounded text-xs">
                                             {{ $account->site->name ?? 'Global' }}
@@ -64,6 +75,11 @@
                                     </td>
                                     <td class="px-6 py-4 text-sm text-gray-800 text-center font-bold">
                                         {{ $account->users_count }}
+                                    </td>
+                                    <td class="px-6 py-4 text-sm text-center">
+                                        <span class="px-2 py-1 {{ $account->is_active ? 'bg-green-100 text-green-700' : 'bg-red-100 text-red-700' }} rounded-full text-[10px] font-bold uppercase">
+                                            {{ $account->is_active ? 'Active' : 'Inactive' }}
+                                        </span>
                                     </td>
                                     <td class="px-6 py-4 whitespace-nowrap text-right space-y-2">
                                         <div class="flex flex-col items-end gap-2">

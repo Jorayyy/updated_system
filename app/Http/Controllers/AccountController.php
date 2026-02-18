@@ -10,27 +10,32 @@ use Illuminate\Support\Facades\Auth;
 
 class AccountController extends Controller
 {
-    public function index()
+    public function index(Request $request)
     {
+        $type = $request->get('type', 'role');
         $accounts = Account::with('site')->withCount('users')
+            ->where('type', $type)
             ->orderBy('hierarchy_level', 'desc')
             ->paginate(15);
-        return view('accounts.index', compact('accounts'));
+            
+        return view('accounts.index', compact('accounts', 'type'));
     }
 
-    public function create()
+    public function create(Request $request)
     {
+        $type = $request->get('type', 'role');
         if (!Auth::user()->isSuperAdmin()) {
-            return redirect()->route('accounts.index')->with('error', 'Only Super Admin can create User Roles.');
+            return redirect()->route('accounts.index', ['type' => $type])->with('error', 'Only Super Admin can create accounts.');
         }
         $sites = Site::all();
-        return view('accounts.create', compact('sites'));
+        return view('accounts.create', compact('sites', 'type'));
     }
 
     public function store(Request $request)
     {
         $request->validate([
             'name' => 'required|string|max:255|unique:accounts',
+            'type' => 'required|in:role,campaign',
             'description' => 'nullable|string',
             'site_id' => 'nullable|exists:sites,id',
             'hierarchy_level' => 'required|integer|min:0|max:100',
@@ -38,27 +43,32 @@ class AccountController extends Controller
         ]);
 
         if (!Auth::user()->isSuperAdmin()) {
-            return redirect()->route('accounts.index')->with('error', 'Unauthorized.');
+            return redirect()->route('accounts.index', ['type' => $request->type])->with('error', 'Unauthorized.');
         }
 
-        Account::create($request->all());
+        $data = $request->all();
+        $data['is_active'] = $request->has('is_active');
 
-        return redirect()->route('accounts.index')->with('success', 'User role created successfully.');
+        Account::create($data);
+
+        return redirect()->route('accounts.index', ['type' => $request->type])->with('success', ucfirst($request->type) . ' created successfully.');
     }
 
     public function edit(Account $account)
     {
+        $type = $account->type;
         if (!Auth::user()->isSuperAdmin()) {
-            return redirect()->route('accounts.index')->with('error', 'Only Super Admin can edit User Roles.');
+            return redirect()->route('accounts.index', ['type' => $type])->with('error', 'Only Super Admin can edit accounts.');
         }
         $sites = Site::all();
-        return view('accounts.edit', compact('account', 'sites'));
+        return view('accounts.edit', compact('account', 'sites', 'type'));
     }
 
     public function update(Request $request, Account $account)
     {
         $request->validate([
             'name' => 'required|string|max:255|unique:accounts,name,' . $account->id,
+            'type' => 'required|in:role,campaign',
             'description' => 'nullable|string',
             'site_id' => 'nullable|exists:sites,id',
             'hierarchy_level' => 'required|integer|min:0|max:100',
@@ -66,28 +76,32 @@ class AccountController extends Controller
         ]);
 
         if (!Auth::user()->isSuperAdmin()) {
-            return redirect()->route('accounts.index')->with('error', 'Unauthorized.');
+            return redirect()->route('accounts.index', ['type' => $request->type])->with('error', 'Unauthorized.');
         }
 
         // Protect Super Admin role from renaming if it's the core one
         if ($account->hierarchy_level == 100 && $request->hierarchy_level != 100) {
-           return back()->with('error', 'Cannot downgrade the Super Admin hierarchy.');
+           return back()->with('error', 'Cannot downgrade the Super Admin level.');
         }
 
-        $account->update($request->all());
+        $data = $request->all();
+        $data['is_active'] = $request->has('is_active');
 
-        return redirect()->route('accounts.index')->with('success', 'User role updated successfully.');
+        $account->update($data);
+
+        return redirect()->route('accounts.index', ['type' => $request->type])->with('success', ucfirst($request->type) . ' updated successfully.');
     }
 
     public function destroy(Request $request, Account $account)
     {
+        $type = $account->type;
         if (!Auth::user()->isSuperAdmin()) {
-            return redirect()->route('accounts.index')->with('error', 'Only Super Admin can delete User Roles.');
+            return redirect()->route('accounts.index', ['type' => $type])->with('error', 'Only Super Admin can delete accounts.');
         }
 
         // Prevent deleting Super Admin role
         if ($account->hierarchy_level == 100) {
-            return back()->with('error', 'The Super Admin role is protected and cannot be deleted.');
+            return back()->with('error', 'The Super Admin account is protected and cannot be deleted.');
         }
 
         // Require admin password for deletion
@@ -96,6 +110,6 @@ class AccountController extends Controller
         }
 
         $account->delete();
-        return redirect()->route('accounts.index')->with('success', 'User role deleted successfully.');
+        return redirect()->route('accounts.index', ['type' => $type])->with('success', ucfirst($type) . ' deleted successfully.');
     }
 }

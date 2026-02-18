@@ -206,6 +206,16 @@
                                     @error('date_hired')<p class="mt-1 text-xs text-red-600">{{ $message }}</p>@enderror
                                 </div>
                                 <div class="md:col-span-2">
+                                    <label class="block text-sm font-semibold text-gray-700 uppercase mb-1">Campaign Account *</label>
+                                    <select name="account_id" required class="w-full border-gray-300 rounded-lg shadow-sm focus:border-indigo-500 focus:ring-indigo-500">
+                                        <option value="">Select Campaign Account (e.g. Amazon, Microsoft)</option>
+                                        @foreach($accounts as $acc)
+                                            <option value="{{ $acc->id }}" {{ old('account_id') == $acc->id ? 'selected' : '' }}>{{ $acc->name }}</option>
+                                        @endforeach
+                                    </select>
+                                    @error('account_id')<p class="mt-1 text-xs text-red-600">{{ $message }}</p>@enderror
+                                </div>
+                                <div class="md:col-span-2">
                                     <label class="block text-sm font-semibold text-gray-700 uppercase mb-1">Reports To (Superior)</label>
                                     <select name="report_to" class="w-full border-gray-300 rounded-lg shadow-sm focus:border-indigo-500 focus:ring-indigo-500">
                                         <option value="">None (Top Level)</option>
@@ -232,17 +242,20 @@
                                         class="w-full border-indigo-200 rounded-lg shadow-sm focus:border-indigo-500 focus:ring-indigo-500">
                                     @error('email')<p class="mt-1 text-xs text-red-600 font-semibold">{{ $message }}</p>@enderror
                                 </div>
-                                <div>
-                                    <label class="block text-sm font-bold text-indigo-900 uppercase tracking-wide mb-1">Account Role *</label>
-                                    <select name="account_id" required class="w-full border-indigo-200 rounded-lg shadow-sm focus:border-indigo-500 focus:ring-indigo-500 bg-white">
+                                <div class="md:col-span-1">
+                                    <label class="block text-sm font-bold text-indigo-900 uppercase tracking-wide mb-1">System Access Role *</label>
+                                    <select name="role" required class="w-full border-indigo-200 rounded-lg shadow-sm focus:border-indigo-500 focus:ring-indigo-500 bg-white">
                                         <option value="">Select Role...</option>
-                                        @foreach($accounts as $acc)
-                                            <option value="{{ $acc->id }}" {{ old('account_id') == $acc->id ? 'selected' : '' }}>
-                                                {{ $acc->name }} (Level {{ $acc->hierarchy_level }})
-                                            </option>
-                                        @endforeach
+                                        <option value="employee" {{ old('role') == 'employee' ? 'selected' : '' }}>Employee (Standard)</option>
+                                        <option value="hr" {{ old('role') == 'hr' ? 'selected' : '' }}>HR (Personnel Mgmt)</option>
+                                        <option value="accounting" {{ old('role') == 'accounting' ? 'selected' : '' }}>Accounting (Payroll)</option>
+                                        <option value="admin" {{ old('role') == 'admin' ? 'selected' : '' }}>Admin (Full Control)</option>
+                                        @if(auth()->user()->isSuperAdmin())
+                                            <option value="super_admin" {{ old('role') == 'super_admin' ? 'selected' : '' }}>Super Admin</option>
+                                        @endif
                                     </select>
-                                    <p class="mt-1 text-[10px] text-gray-500 italic">Determines system permissions and menu access.</p>
+                                    <p class="mt-1 text-[10px] text-gray-500 italic uppercase font-bold tracking-tighter">Determines system permissions and menu access.</p>
+                                    @error('role')<p class="mt-1 text-xs text-red-600 font-semibold">{{ $message }}</p>@enderror
                                 </div>
                                 <div>
                                     <!-- Empty space to align pass fields below -->

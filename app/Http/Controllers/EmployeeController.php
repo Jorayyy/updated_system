@@ -59,7 +59,8 @@ class EmployeeController extends Controller
         $departments = Department::orderBy('name')->get();
         
         $allSites = Site::where('is_active', true)->get();
-        $allAccounts = Account::where('is_active', true)->get();
+        // Separation of concerns: Accounts in this context are strictly Campaigns/Projects
+        $allAccounts = Account::where('is_active', true)->where('type', 'campaign')->get();
 
         return view('employees.index', compact('employees', 'departments', 'allSites', 'allAccounts'));
     }
@@ -70,7 +71,9 @@ class EmployeeController extends Controller
     public function create()
     {
         $sites = Site::where('is_active', true)->get();
-        $accounts = Account::where('is_active', true)->get();
+        // Strict separation: Only show true campaigns
+        $accounts = Account::where('is_active', true)->where('type', 'campaign')->get();
+        
         $departments = Department::where('is_active', true)->orderBy('name')->get();
         $payrollGroups = \App\Models\PayrollGroup::where('is_active', true)->get();
         $employees = User::orderBy('name')->get();
@@ -91,6 +94,7 @@ class EmployeeController extends Controller
             'name_extension' => 'nullable|string|max:10',
             'email' => 'required|string|email|max:255|unique:users,email',
             'password' => ['required', 'confirmed', Rules\Password::defaults()],
+            'role' => 'required|string|in:employee,accounting,hr,admin,super_admin',
             'account_id' => 'required|exists:accounts,id',
             'department_id' => 'nullable|exists:departments,id',
             'position' => 'nullable|string|max:100',
@@ -139,7 +143,7 @@ class EmployeeController extends Controller
 
         $account = Account::find($request->account_id);
         $department = $request->department_id ? Department::find($request->department_id) : null;
-        $role = $account->system_role ?? 'employee';
+        $role = $request->role;
 
         $profilePhotoPath = null;
         if ($request->hasFile('profile_photo')) {
@@ -247,7 +251,9 @@ class EmployeeController extends Controller
         }
 
         $sites = Site::all();
-        $accounts = Account::all();
+        // Strict separation: Only show true campaigns
+        $accounts = Account::where('type', 'campaign')->get();
+        
         $departments = Department::where('is_active', true)->orderBy('name')->get();
         $payrollGroups = \App\Models\PayrollGroup::all();
         $employees = User::where('id', '!=', $employee->id)->orderBy('name')->get();
@@ -273,6 +279,7 @@ class EmployeeController extends Controller
             'name_extension' => 'nullable|string|max:10',
             'email' => 'required|string|email|max:255|unique:users,email,' . $employee->id,
             'password' => ['nullable', 'confirmed', Rules\Password::defaults()],
+            'role' => 'required|string|in:employee,accounting,hr,admin,super_admin',
             'site_id' => 'required|exists:sites,id',
             'account_id' => 'required|exists:accounts,id',
             'department_id' => 'required|exists:departments,id',
@@ -335,15 +342,12 @@ class EmployeeController extends Controller
 
         $account = Account::find($request->account_id);
         $department = $request->department_id ? Department::find($request->department_id) : null;
-        $role = $account->system_role ?? 'employee';
+        $role = $request->role;
 
         // Hierarchy Check
         if (!auth()->user()->isSuperAdmin()) {
             if ($account->hierarchy_level > auth()->user()->hierarchy_level) {
-                return back()->with('error', 'Hierarchy Restriction: You cannot assign a role higher than your own level.')->withInput();
-            }
-            if ($account->hierarchy_level == auth()->user()->hierarchy_level && $employee->id !== auth()->id()) {
-                return back()->with('error', 'Hierarchy Restriction: You cannot assign your own level to others.')->withInput();
+                return back()->with('error', 'Hierarchy Restriction: You cannot assign a campaign higher than your own level.')->withInput();
             }
         }
 
