@@ -559,6 +559,19 @@
                             <div x-show="!sidebarOpen" class="tooltip">Sites</div>
                         </div>
 
+                        <!-- Departments -->
+                        <div class="relative nav-item mb-1">
+                            <a href="{{ route('departments.index') }}" class="flex items-center gap-3 px-3 py-2.5 mx-2 rounded-xl transition-all duration-200 group {{ request()->routeIs('departments.*') ? 'bg-blue-600 text-white shadow-lg ring-1 ring-white/20' : 'text-gray-400 hover:bg-white/5 hover:text-white' }}">
+                                <div class="w-8 h-8 flex items-center justify-center flex-shrink-0 transition-transform group-hover:scale-110">
+                                    <svg class="w-5 h-5 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 21V5a2 2 0 00-2-2H7a2 2 0 00-2 2v16m14 0h2m-2 0h-5m-9 0H3m2 0h5M9 7h1m-1 4h1m4-4h1m-1 4h1m-5 10v-5a1 1 0 011-1h2a1 1 0 011 1v5m-4 0h4"/>
+                                    </svg>
+                                </div>
+                                <span x-show="sidebarOpen" x-cloak class="sidebar-text font-medium text-sm" :class="sidebarOpen ? 'sidebar-text-visible' : 'sidebar-text-hidden'">Departments</span>
+                            </a>
+                            <div x-show="!sidebarOpen" class="tooltip">Departments</div>
+                        </div>
+
                         <!-- Schedules -->
                         <div class="relative nav-item mb-1">
                             <a href="{{ route('schedules.index') }}" class="flex items-center gap-3 px-3 py-2.5 mx-2 rounded-xl transition-all duration-200 group {{ request()->routeIs('schedules.*') ? 'bg-blue-600 text-white shadow-lg ring-1 ring-white/20' : 'text-gray-400 hover:bg-white/5 hover:text-white' }}">

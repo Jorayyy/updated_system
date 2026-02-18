@@ -34,6 +34,7 @@ class DailyTimeRecord extends Model
         'late_minutes',
         'undertime_minutes',
         'overtime_minutes',
+        'night_diff_minutes',
         'day_type',
         'attendance_status',
         'leave_request_id',

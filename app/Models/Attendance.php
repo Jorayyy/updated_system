@@ -30,6 +30,7 @@ class Attendance extends Model
         'overtime_minutes',
         'undertime_minutes',
         'late_minutes',
+        'night_diff_minutes',
         'remarks',
     ];
 
@@ -185,6 +186,66 @@ class Attendance extends Model
         }
 
         return $totalBreak;
+    }
+
+    /**
+     * Calculate night differential minutes (10 PM to 6 AM)
+     */
+    public function calculateNightDiffMinutes(): int
+    {
+        if (!$this->time_in || !$this->time_out) {
+            return 0;
+        }
+
+        $nightStart = 22; // 10 PM
+        $nightEnd = 6;    // 6 AM
+        
+        $totalNightMinutes = 0;
+        $current = $this->time_in->copy()->startOfMinute();
+        $end = $this->time_out->copy()->startOfMinute();
+
+        while ($current->lt($end)) {
+            $hour = $current->hour;
+            // Check if current hour is within 10PM - 6AM
+            if ($hour >= $nightStart || $hour < $nightEnd) {
+                // Check if this minute is part of a break
+                if (!$this->isWithinBreak($current)) {
+                    $totalNightMinutes++;
+                }
+            }
+            $current->addMinute();
+        }
+
+        return $totalNightMinutes;
+    }
+
+    /**
+     * Helper to check if a timestamp falls within any break period
+     */
+    protected function isWithinBreak(Carbon $time): bool
+    {
+        // 1st Break
+        if ($this->first_break_out && $this->first_break_in) {
+            if ($time->gte($this->first_break_out) && $time->lt($this->first_break_in)) {
+                return true;
+            }
+        }
+
+        // Lunch Break
+        if ($this->lunch_break_out && $this->lunch_break_in) {
+            if ($time->gte($this->lunch_break_out) && $time->lt($this->lunch_break_in)) {
+                return true;
+            }
+        }
+
+        // 2nd Break
+        if ($this->second_break_out && $this->second_break_in) {
+            if ($time->gte($this->second_break_out) && $time->lt($this->second_break_in)) {
+                return true;
+            }
+        }
+
+        return false;
     }
 
     /**

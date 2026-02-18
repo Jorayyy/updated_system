@@ -1,116 +1,116 @@
 <x-app-layout>
     <x-slot name="header">
         <h2 class="font-semibold text-xl text-gray-800 leading-tight">
-            {{ __('My Payslips') }}
+            {{ __('My Payroll Dashboard') }}
         </h2>
     </x-slot>
 
-    <div class="py-4">
-        <div class="max-w-full mx-auto sm:px-6 lg:px-8">
-            <!-- Year Filter -->
-            <div class="bg-white overflow-hidden shadow-sm sm:rounded-lg mb-6">
-                <div class="p-6">
-                    <form method="GET" class="flex items-center gap-4">
-                        <select name="year" class="border-gray-300 rounded-md shadow-sm">
-                            @for($y = date('Y'); $y >= date('Y') - 3; $y--)
-                                <option value="{{ $y }}" {{ request('year', date('Y')) == $y ? 'selected' : '' }}>{{ $y }}</option>
-                            @endfor
-                        </select>
-                        <button type="submit" class="bg-indigo-600 text-white px-4 py-2 rounded-md hover:bg-indigo-700">
-                            View
-                        </button>
-                    </form>
+    <div class="py-12">
+        <div class="max-w-7xl mx-auto sm:px-6 lg:px-8 space-y-6">
+            
+            <!-- Quick Link / Dropdown Section (Matches Screenshot) -->
+            <div class="bg-gray-50 border-t-4 border-green-200 rounded-lg shadow-sm">
+                <div class="p-4 border-b border-gray-100 bg-white rounded-t-lg">
+                    <h3 class="text-sm font-bold text-green-800 uppercase tracking-wider">Regular Payroll</h3>
                 </div>
-            </div>
-
-            <!-- YTD Summary -->
-            <div class="grid grid-cols-2 md:grid-cols-4 gap-4 mb-6">
-                <div class="bg-white overflow-hidden shadow-sm sm:rounded-lg p-4">
-                    <div class="text-sm text-gray-500">YTD Gross Pay</div>
-                    <div class="text-2xl font-bold text-gray-800">₱{{ number_format($ytdSummary['gross'], 2) }}</div>
-                </div>
-                <div class="bg-white overflow-hidden shadow-sm sm:rounded-lg p-4">
-                    <div class="text-sm text-gray-500">YTD Net Pay</div>
-                    <div class="text-2xl font-bold text-green-600">₱{{ number_format($ytdSummary['net'], 2) }}</div>
-                </div>
-                <div class="bg-white overflow-hidden shadow-sm sm:rounded-lg p-4">
-                    <div class="text-sm text-gray-500">YTD Deductions</div>
-                    <div class="text-2xl font-bold text-red-600">₱{{ number_format($ytdSummary['deductions'], 2) }}</div>
-                </div>
-                <div class="bg-white overflow-hidden shadow-sm sm:rounded-lg p-4">
-                    <div class="text-sm text-gray-500">YTD Overtime</div>
-                    <div class="text-2xl font-bold text-purple-600">₱{{ number_format($ytdSummary['overtime'], 2) }}</div>
-                </div>
-            </div>
-
-            <!-- Payslips List -->
-            <div class="bg-white overflow-hidden shadow-sm sm:rounded-lg">
-                <div class="p-6">
-                    <h3 class="text-lg font-semibold mb-4">Payslip History</h3>
-                    <div class="overflow-x-auto">
-                        <table class="min-w-full divide-y divide-gray-200">
-                            <thead class="bg-gray-50">
-                                <tr>
-                                    <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">Period</th>
-                                    <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">Pay Date</th>
-                                    <th class="px-6 py-3 text-center text-xs font-medium text-gray-500 uppercase">Days Worked</th>
-                                    <th class="px-6 py-3 text-right text-xs font-medium text-gray-500 uppercase">Gross Pay</th>
-                                    <th class="px-6 py-3 text-right text-xs font-medium text-gray-500 uppercase">Deductions</th>
-                                    <th class="px-6 py-3 text-right text-xs font-medium text-gray-500 uppercase">Net Pay</th>
-                                    <th class="px-6 py-3 text-center text-xs font-medium text-gray-500 uppercase">Actions</th>
-                                </tr>
-                            </thead>
-                            <tbody class="bg-white divide-y divide-gray-200">
-                                @forelse($payrolls as $payroll)
-                                    <tr>
-                                        <td class="px-6 py-4 whitespace-nowrap">
-                                            <div class="text-sm font-medium text-gray-900">{{ $payroll->payrollPeriod->name }}</div>
-                                            <div class="text-xs text-gray-500">
-                                                {{ $payroll->payrollPeriod->start_date->format('M d') }} - 
-                                                {{ $payroll->payrollPeriod->end_date->format('M d, Y') }}
-                                            </div>
-                                        </td>
-                                        <td class="px-6 py-4 whitespace-nowrap text-sm">
-                                            {{ $payroll->payrollPeriod->pay_date->format('M d, Y') }}
-                                        </td>
-                                        @if($payroll->is_posted || in_array($payroll->status, ['released', 'paid']))
-                                            <td class="px-6 py-4 whitespace-nowrap text-sm text-center">
-                                                {{ $payroll->days_worked }}
-                                            </td>
-                                            <td class="px-6 py-4 whitespace-nowrap text-sm text-right">
-                                                ₱{{ number_format($payroll->gross_pay, 2) }}
-                                            </td>
-                                            <td class="px-6 py-4 whitespace-nowrap text-sm text-right text-red-600">
-                                                ₱{{ number_format($payroll->total_deductions, 2) }}
-                                            </td>
-                                            <td class="px-6 py-4 whitespace-nowrap text-sm text-right font-bold text-green-600">
-                                                ₱{{ number_format($payroll->net_pay, 2) }}
-                                            </td>
-                                            <td class="px-6 py-4 whitespace-nowrap text-center">
-                                                <a href="{{ route('payroll.my-payslip', $payroll) }}" 
-                                                    class="text-indigo-600 hover:text-indigo-900 text-sm mr-2">View</a>
-                                                <a href="{{ route('payroll.my-payslip-pdf', $payroll) }}" 
-                                                    class="text-green-600 hover:text-green-900 text-sm">PDF</a>
-                                            </td>
-                                        @else
-                                            <td colspan="5" class="px-6 py-4 whitespace-nowrap text-center">
-                                                <span class="px-3 py-1 inline-flex text-xs leading-5 font-semibold rounded-full bg-yellow-100 text-yellow-800">
-                                                    Payslip not posted yet
-                                                </span>
-                                            </td>
-                                        @endif
-                                    </tr>
-                                @empty
-                                    <tr>
-                                        <td colspan="7" class="px-6 py-4 text-center text-gray-500">No payslips found</td>
-                                    </tr>
-                                @endforelse
-                            </tbody>
-                        </table>
+                <div class="p-8 bg-white rounded-b-lg">
+                    <div class="flex flex-col md:flex-row items-start md:items-center gap-6">
+                        <div class="w-full md:w-1/3">
+                            <label class="block text-sm font-bold text-gray-700 mb-2">Payroll Period-Payslip</label>
+                        </div>
+                        <div class="w-full md:w-2/3" x-data="{ payrollId: '' }">
+                            <div class="flex gap-2">
+                                <select 
+                                    x-model="payrollId"
+                                    class="block w-full rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500 text-sm"
+                                >
+                                    <option value="">Select Payroll Period-To View Payslip</option>
+                                    @foreach($allPayrolls as $p)
+                                        <option value="{{ $p->id }}">
+                                            {{ $p->payrollPeriod->start_date->format('F d Y') }} to {{ $p->payrollPeriod->end_date->format('F d Y') }} (Paydate:{{ $p->payrollPeriod->pay_date->format('Y-m-d') }})
+                                        </option>
+                                    @endforeach
+                                </select>
+                                <button 
+                                    @click="if(payrollId) window.location.href = '/payroll/my-payslip/' + payrollId"
+                                    class="bg-blue-600 text-white px-6 py-2 rounded-md hover:bg-blue-700 transition-colors font-bold shadow-sm flex-shrink-0"
+                                    :disabled="!payrollId"
+                                    :class="!payrollId ? 'opacity-50 cursor-not-allowed' : ''"
+                                >
+                                    Go
+                                </button>
+                            </div>
+                        </div>
                     </div>
-                    {{ $payrolls->links() }}
                 </div>
             </div>
+
+            <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+                <!-- Year Summary -->
+                <div class="bg-white p-6 rounded-xl shadow-sm border border-gray-100">
+                    <div class="flex justify-between items-center mb-6">
+                        <h3 class="font-bold text-gray-800">Earnings Summary ({{ $year }})</h3>
+                        <form method="GET" x-ref="yearForm" class="flex items-center gap-2">
+                            <select name="year" @change="$refs.yearForm.submit()" class="text-xs border-gray-200 rounded-lg">
+                                @for($y = date('Y'); $y >= date('Y') - 3; $y--)
+                                    <option value="{{ $y }}" {{ $year == $y ? 'selected' : '' }}>{{ $y }}</option>
+                                @endfor
+                            </select>
+                        </form>
+                    </div>
+                    
+                    <div class="grid grid-cols-2 gap-4">
+                        <div class="p-4 bg-blue-50 rounded-xl border border-blue-100/50">
+                            <p class="text-[10px] font-bold text-blue-600 uppercase tracking-wider mb-1">Gross Pay</p>
+                            <p class="text-xl font-black text-gray-900">₱{{ number_format($ytdSummary['gross'], 2) }}</p>
+                        </div>
+                        <div class="p-4 bg-green-50 rounded-xl border border-green-100/50">
+                            <p class="text-[10px] font-bold text-green-600 uppercase tracking-wider mb-1">Net Pay</p>
+                            <p class="text-xl font-black text-gray-900">₱{{ number_format($ytdSummary['net'], 2) }}</p>
+                        </div>
+                        <div class="p-4 bg-red-50 rounded-xl border border-red-100/50">
+                            <p class="text-[10px] font-bold text-red-600 uppercase tracking-wider mb-1">Deductions</p>
+                            <p class="text-xl font-black text-gray-900">₱{{ number_format($ytdSummary['deductions'], 2) }}</p>
+                        </div>
+                        <div class="p-4 bg-purple-50 rounded-xl border border-purple-100/50">
+                            <p class="text-[10px] font-bold text-purple-600 uppercase tracking-wider mb-1">Overtime</p>
+                            <p class="text-xl font-black text-gray-900">₱{{ number_format($ytdSummary['overtime'], 2) }}</p>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Recent History (Brief) -->
+                <div class="bg-white p-6 rounded-xl shadow-sm border border-gray-100 overflow-hidden">
+                    <h3 class="font-bold text-gray-800 mb-6">Recent History</h3>
+                    <div class="space-y-3">
+                        @forelse($payrolls->take(5) as $payroll)
+                            <div class="flex items-center justify-between p-3 rounded-lg border border-gray-50 hover:bg-gray-50 transition-colors group">
+                                <div class="flex items-center gap-3">
+                                    <div class="w-10 h-10 rounded-full bg-blue-50 flex items-center justify-center text-blue-600 font-bold text-xs uppercase">
+                                        {{ $payroll->payrollPeriod->start_date->format('M') }}
+                                    </div>
+                                    <div>
+                                        <p class="text-xs font-bold text-gray-900">{{ $payroll->payrollPeriod->start_date->format('M d') }} - {{ $payroll->payrollPeriod->end_date->format('M d, Y') }}</p>
+                                        <p class="text-[10px] text-gray-500">Paid: {{ $payroll->payrollPeriod->pay_date->format('M d, Y') }}</p>
+                                    </div>
+                                </div>
+                                <div class="flex items-center gap-4">
+                                    <p class="text-xs font-black text-green-600">₱{{ number_format($payroll->net_pay, 2) }}</p>
+                                    <a href="{{ route('payroll.my-payslip', $payroll) }}" class="p-2 rounded-lg bg-gray-100 text-gray-500 hover:bg-blue-600 hover:text-white transition-all">
+                                        <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z"/><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z"/></svg>
+                                    </a>
+                                </div>
+                            </div>
+                        @empty
+                            <div class="text-center py-6">
+                                <p class="text-sm text-gray-400">No records found for this period.</p>
+                            </div>
+                        @endforelse
+                    </div>
+                </div>
+            </div>
+
         </div>
     </div>
+</x-app-layout>
 </x-app-layout>

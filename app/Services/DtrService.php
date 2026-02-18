@@ -243,6 +243,7 @@ class DtrService
             'late_minutes' => $metrics['late_minutes'],
             'undertime_minutes' => $metrics['undertime_minutes'],
             'overtime_minutes' => $metrics['overtime_minutes'],
+            'night_diff_minutes' => $metrics['night_diff_minutes'],
             'day_type' => $dayType,
             'attendance_status' => $attendanceStatus,
             'leave_request_id' => $leaveRequest?->id,
@@ -373,6 +374,7 @@ class DtrService
             'late_minutes' => 0,
             'undertime_minutes' => 0,
             'overtime_minutes' => 0,
+            'night_diff_minutes' => 0,
         ];
 
         $standardWorkMin = $schedule ? $schedule['work_minutes'] : $this->standardWorkMinutes;
@@ -417,6 +419,14 @@ class DtrService
             $metrics['undertime_minutes'] = $standardWorkMin - $metrics['net_work_minutes'];
         } elseif ($metrics['net_work_minutes'] > $standardWorkMin) {
             $metrics['overtime_minutes'] = $metrics['net_work_minutes'] - $standardWorkMin;
+        }
+
+        // Add night diff minutes from attendance
+        $metrics['night_diff_minutes'] = $attendance->night_diff_minutes ?? 0;
+
+        // If night diff is 0 but it's a night shift, try to recalculate
+        if ($metrics['night_diff_minutes'] == 0 && $attendance->time_in) {
+            $metrics['night_diff_minutes'] = $attendance->calculateNightDiffMinutes();
         }
 
         return $metrics;

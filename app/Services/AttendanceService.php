@@ -142,6 +142,7 @@ class AttendanceService
                 $attendance->current_step = 'completed';
                 $attendance->total_break_minutes = $attendance->calculateBreakMinutes();
                 $attendance->total_work_minutes = $attendance->calculateWorkMinutes();
+                $attendance->night_diff_minutes = $attendance->calculateNightDiffMinutes();
                 
                 // Calculate overtime/undertime (8 hours = 480 minutes)
                 $standardWorkMinutes = 480;

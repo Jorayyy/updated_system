@@ -138,7 +138,7 @@ class DatabaseSeeder extends Seeder
                 'employee_id' => 'FIN-001',
                 'name' => 'Juan Reyes',
                 'password' => $password,
-                'role' => 'admin',
+                'role' => 'accounting',
                 'account_id' => $roles['accounting']->id,
                 'department' => 'Finance',
                 'position' => 'Finance Head',

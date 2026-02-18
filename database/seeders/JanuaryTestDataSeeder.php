@@ -14,23 +14,28 @@ class JanuaryTestDataSeeder extends Seeder
 {
     public function run()
     {
-        // Target ALL 8 employees (including management roles who might also log if needed, 
-        // but typically focus on the 4 BPO and 4 Management as requested)
-        $users = User::all();
+        // 1. Truncate for a clean slate
+        $this->command->info('Truncating attendance, DTR, and payroll tables...');
+        \Illuminate\Support\Facades\DB::statement('PRAGMA foreign_keys = OFF;');
+        Attendance::query()->delete();
+        DailyTimeRecord::query()->delete();
+        \App\Models\Payroll::query()->delete();
+        PayrollPeriod::query()->delete();
+        \Illuminate\Support\Facades\DB::statement('PRAGMA foreign_keys = ON;');
+
+        // 2. Setup Payroll Groups (Match CleanSystemSeeder or create if missing)
+        $bpoGroup = PayrollGroup::firstOrCreate(['name' => 'BPO'], ['description' => 'BPO Employees']);
+        $mgmtGroup = PayrollGroup::firstOrCreate(['name' => 'Administrative Team'], ['description' => 'Management Personnel']);
+
+        // 3. Fetch all users except super_admin to populate data for demo
+        $users = User::where('role', '!=', 'super_admin')->get();
         
         if ($users->isEmpty()) {
             $this->command->error('No users found. Please run CleanSystemSeeder first.');
             return;
         }
 
-        // Setup Payroll Groups if they don't exist
-        $bpoGroup = PayrollGroup::firstOrCreate(['name' => 'BPO'], ['description' => 'BPO Employees']);
-        $mgmtGroup = PayrollGroup::firstOrCreate(['name' => 'Management'], ['description' => 'Management Personnel']);
-
-        // Create Weekly Payroll Periods for January 2026
-        $bpoGroup = PayrollGroup::where('name', 'BPO')->first();
-        $mgmtGroup = PayrollGroup::where('name', 'Management')->first();
-
+        // 4. Create Weekly Payroll Periods for January 2026
         // Weekly schedule: Jan 1-4, 5-11, 12-18, 19-25, 26-31
         $periodDates = [
             ['2026-01-01', '2026-01-04'],
@@ -41,45 +46,39 @@ class JanuaryTestDataSeeder extends Seeder
         ];
 
         $createdPeriods = [];
-        foreach ($periodDates as $dates) {
-            $start = $dates[0];
-            $end = $dates[1];
-            $payDate = Carbon::parse($end)->addDays(5)->format('Y-m-d');
-            $label = Carbon::parse($start)->format('M d') . ' - ' . Carbon::parse($end)->format('M d, Y');
+        $payrollGroups = [$bpoGroup, $mgmtGroup];
 
-            // Create for BPO
-            $createdPeriods[] = PayrollPeriod::firstOrCreate(
-                ['start_date' => $start, 'payroll_group_id' => $bpoGroup->id],
-                [
+        foreach ($payrollGroups as $group) {
+            foreach ($periodDates as $dates) {
+                $start = $dates[0];
+                $end = $dates[1];
+                $payDate = Carbon::parse($end)->addDays(5)->format('Y-m-d');
+                $label = Carbon::parse($start)->format('M d') . ' - ' . Carbon::parse($end)->format('M d, Y');
+
+                $createdPeriods[] = PayrollPeriod::create([
+                    'payroll_group_id' => $group->id,
+                    'start_date' => $start,
                     'end_date' => $end,
-                    'status' => 'draft',
+                    'status' => 'completed',
                     'pay_date' => $payDate,
                     'period_type' => 'weekly',
                     'cover_month' => 'January',
                     'cover_year' => 2026,
                     'cut_off_label' => $label,
-                ]
-            );
-            // Create for Management
-            $createdPeriods[] = PayrollPeriod::firstOrCreate(
-                ['start_date' => $start, 'payroll_group_id' => $mgmtGroup->id],
-                [
-                    'end_date' => $end,
-                    'status' => 'draft',
-                    'pay_date' => $payDate,
-                    'period_type' => 'weekly',
-                    'cover_month' => 'January',
-                    'cover_year' => 2026,
-                    'cut_off_label' => $label,
-                ]
-            );
+                ]);
+            }
         }
 
-        // Generate data for every day in January
+        // 5. Generate data for every day in January
         $startOfMonth = Carbon::parse('2026-01-01');
         $endOfMonth = Carbon::parse('2026-01-31');
 
         foreach ($users as $user) {
+            // Ensure user has a payroll group
+            if (!$user->payroll_group_id) {
+                $user->update(['payroll_group_id' => ($user->role === 'employee' ? $bpoGroup->id : $mgmtGroup->id)]);
+            }
+
             $currentDate = $startOfMonth->copy();
             
             while ($currentDate->lte($endOfMonth)) {
@@ -105,9 +104,9 @@ class JanuaryTestDataSeeder extends Seeder
                 }
 
                 // Shift logic:
-                // Management: 8AM - 5PM (Regular)
-                // BPO: 9PM - 7AM (Graveyard)
-                $isBpo = ($user->payrollGroup && $user->payrollGroup->name === 'BPO');
+                // Administrative Team: 8AM - 5PM (Regular)
+                // BPO: 9PM - 7AM (Graveyard) - Assumes payroll group name contains BPO
+                $isBpo = (str_contains(strtoupper($user->payrollGroup->name ?? ''), 'BPO'));
                 
                 if ($isBpo) {
                     $timeIn = $currentDate->copy()->setTime(21, 0, 0);
@@ -119,7 +118,7 @@ class JanuaryTestDataSeeder extends Seeder
                     $secondBreakIn = $currentDate->copy()->addDay()->setTime(4, 15, 0);
                     $timeOut = $currentDate->copy()->addDay()->setTime(7, 0, 0);
                     
-                    $netWork = 540; // 9 hours (8 hours regular + 1 hour OT)
+                    $netWork = 540; // 9 hours
                     $ot = 60;
                 } else {
                     $timeIn = $currentDate->copy()->setTime(8, 0, 0);
@@ -139,7 +138,7 @@ class JanuaryTestDataSeeder extends Seeder
                 // Create Attendance
                 $attendance = Attendance::create([
                     'user_id' => $user->id,
-                    'date' => $currentDate->format('Y-m-d'),
+                    'date' => $currentDate->toDateString(),
                     'time_in' => $timeIn,
                     'first_break_out' => $firstBreakOut,
                     'first_break_in' => $firstBreakIn,
@@ -152,30 +151,53 @@ class JanuaryTestDataSeeder extends Seeder
                     'current_step' => 'completed',
                     'total_work_minutes' => $netWork,
                     'total_break_minutes' => 60,
+                    'night_diff_minutes' => 0, 
                 ]);
+
+                // Calculate Night Diff
+                $nightDiff = $attendance->calculateNightDiffMinutes();
+                $attendance->update(['night_diff_minutes' => $nightDiff]);
 
                 // Create DTR
                 DailyTimeRecord::create([
                     'user_id' => $user->id,
+                    'date' => $currentDate->toDateString(),
                     'payroll_period_id' => $userPeriod->id,
-                    'date' => $currentDate->format('Y-m-d'),
                     'time_in' => $timeIn,
                     'time_out' => $timeOut,
                     'attendance_id' => $attendance->id,
                     'scheduled_minutes' => 480,
-                    'actual_work_minutes' => $netWork + 60, // Total time logged including breaks
+                    'actual_work_minutes' => $netWork + 60,
                     'total_break_minutes' => 60,
                     'net_work_minutes' => $netWork,
                     'late_minutes' => 0,
                     'undertime_minutes' => 0,
                     'overtime_minutes' => $ot,
-                    'status' => 'pending', 
+                    'night_diff_minutes' => $nightDiff,
+                    'status' => 'approved', // Auto-approved for demo
                     'attendance_status' => 'present',
                     'day_type' => 'regular',
                 ]);
 
                 $currentDate->addDay();
             }
+
+            // 6. Create mock payrolls for each period to show in Payroll Center
+            foreach ($createdPeriods as $cp) {
+                if ($cp->payroll_group_id === $user->payroll_group_id) {
+                    \App\Models\Payroll::create([
+                        'user_id' => $user->id,
+                        'payroll_period_id' => $cp->id,
+                        'basic_pay' => round(($user->monthly_salary ?? 20000) / 4, 2),
+                        'gross_pay' => round(($user->monthly_salary ?? 20000) / 4 * 1.1, 2),
+                        'net_pay' => round(($user->monthly_salary ?? 20000) / 4 * 0.95, 2),
+                        'status' => 'released',
+                        'is_posted' => true,
+                    ]);
+                }
+            }
         }
+        
+        $this->command->info('January 2026 Test Data Generated Successfully!');
     }
 }

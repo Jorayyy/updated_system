@@ -185,7 +185,7 @@ class User extends Authenticatable
      */
     public function isAccounting(): bool
     {
-        return in_array($this->role, ['accounting', 'super_admin']);
+        return $this->role === 'accounting';
     }
 
     /**

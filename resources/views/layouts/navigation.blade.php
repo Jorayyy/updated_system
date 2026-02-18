@@ -81,30 +81,32 @@
                             </x-dropdown>
                         </div>
                     @else
-                        <!-- HR/Admin Menu (Primary Links for Admins) -->
-                        <x-nav-link :href="route('announcements.index')" :active="request()->routeIs('announcements.index')">
-                            {{ __('Announcements') }}
-                        </x-nav-link>
+                        <!-- HR/Admin Menu (Restricted for Accounting) -->
+                        @if(!auth()->user()->isAccounting())
+                            <x-nav-link :href="route('announcements.index')" :active="request()->routeIs('announcements.index')">
+                                {{ __('Announcements') }}
+                            </x-nav-link>
 
-                        <x-nav-link :href="route('employees.index')" :active="request()->routeIs('employees.*')">
-                            {{ __('Employees') }}
-                        </x-nav-link>
+                            <x-nav-link :href="route('employees.index')" :active="request()->routeIs('employees.*')">
+                                {{ __('Employees') }}
+                            </x-nav-link>
 
-                        <x-nav-link :href="route('attendance.manage')" :active="request()->routeIs('attendance.manage')">
-                            {{ __('Attendance') }}
-                        </x-nav-link>
+                            <x-nav-link :href="route('attendance.manage')" :active="request()->routeIs('attendance.manage')">
+                                {{ __('Attendance') }}
+                            </x-nav-link>
+                        @endif
 
                         <x-nav-link :href="route('dtr-approval.index')" :active="request()->routeIs('dtr-approval.*')">
                             {{ __('DTR Center') }}
                         </x-nav-link>
                         
                         <x-nav-link :href="route('payroll.index')" :active="request()->routeIs('payroll.index')">
-                            {{ __('Payroll') }}
+                            {{ __('Payroll Center') }}
                         </x-nav-link>
                     @endif
                     
-                    @if(auth()->user()->isAdmin() || auth()->user()->isHr() || auth()->user()->isAccounting())
-                        <!-- HR/Admin More Dropdown -->
+                    @if(auth()->user()->isAdmin() || auth()->user()->isHr())
+                        <!-- HR Management Dropdown -->
                         <div class="hidden sm:flex sm:items-center">
                             <x-dropdown align="left" width="48">
                                 <x-slot name="trigger">
@@ -157,27 +159,50 @@
                                     <x-dropdown-link :href="route('hr-policies.index')">
                                         {{ __('Policy Management') }}
                                     </x-dropdown-link>
+                                </x-slot>
+                            </x-dropdown>
+                        </div>
+                    @endif
+
+                    @if(auth()->user()->isAdmin() || auth()->user()->isAccounting())
+                        <!-- Payroll Dropdown -->
+                        <div class="hidden sm:flex sm:items-center">
+                            <x-dropdown align="left" width="48">
+                                <x-slot name="trigger">
+                                    <button class="inline-flex items-center px-3 py-2 border border-transparent text-sm leading-4 font-medium rounded-md text-gray-500 bg-white hover:text-gray-700 focus:outline-none transition ease-in-out duration-150">
+                                        <div>Payroll MGMT</div>
+                                        <div class="ms-1">
+                                            <svg class="fill-current h-4 w-4" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20">
+                                                <path fill-rule="evenodd" d="M5.293 7.293a1 1 0 011.414 0L10 10.586l3.293-3.293a1 1 0 111.414 1.414l-4 4a1 1 0 01-1.414 0l-4-4a1 1 0 010-1.414z" clip-rule="evenodd" />
+                                            </svg>
+                                        </div>
+                                    </button>
+                                </x-slot>
+
+                                <x-slot name="content">
+                                    <div class="block px-4 py-2 text-xs text-gray-400">
+                                        {{ __('Processing') }}
+                                    </div>
+                                    <x-dropdown-link :href="route('payroll.periods')">
+                                        {{ __('Payroll Periods') }}
+                                    </x-dropdown-link>
+                                    <x-dropdown-link :href="route('payroll.index')">
+                                        {{ __('Manage Payrolls') }}
+                                    </x-dropdown-link>
+                                    <x-dropdown-link :href="route('payroll.computation.dashboard')">
+                                        {{ __('Compute Payroll') }}
+                                    </x-dropdown-link>
 
                                     <div class="border-t border-gray-100"></div>
                                     <div class="block px-4 py-2 text-xs text-gray-400">
-                                        {{ __('Payroll & Settings') }}
+                                        {{ __('Settings') }}
                                     </div>
                                     <x-dropdown-link :href="route('leave-types.index')">
                                         {{ __('Leave Types') }}
                                     </x-dropdown-link>
-                                    <x-dropdown-link :href="route('payroll.periods')">
-                                        {{ __('Payroll Periods') }}
+                                    <x-dropdown-link :href="route('settings.index')">
+                                        {{ __('Payroll Settings') }}
                                     </x-dropdown-link>
-                                    @if(auth()->user()->isAccounting())
-                                        <x-dropdown-link :href="route('payroll.computation.dashboard')">
-                                            {{ __('Payroll Computation') }}
-                                        </x-dropdown-link>
-                                    @endif
-                                    @if(auth()->user()->isAdmin())
-                                        <x-dropdown-link :href="route('concerns.index')">
-                                            {{ __('Concerns & Tickets') }}
-                                        </x-dropdown-link>
-                                    @endif
                                 </x-slot>
                             </x-dropdown>
                         </div>

@@ -30,6 +30,16 @@ class PayrollController extends Controller
         $user = auth()->user();
         $year = $request->get('year', date('Y'));
         
+        // GET ALL for dropdown filter
+        $allPayrolls = Payroll::with('payrollPeriod')
+            ->where('user_id', $user->id)
+            ->where(function($query) {
+                $query->where('is_posted', true)
+                      ->orWhereIn('status', ['released', 'paid', 'approved', 'computed']);
+            })
+            ->latest()
+            ->get();
+
         $payrolls = Payroll::with('payrollPeriod')
             ->where('user_id', $user->id)
             ->whereYear('created_at', $year)
@@ -56,7 +66,7 @@ class PayrollController extends Controller
             'overtime' => $ytdPayrolls->sum('overtime_pay'),
         ];
 
-        return view('payroll.my-payslips', compact('payrolls', 'ytdSummary', 'year'));
+        return view('payroll.my-payslips', compact('payrolls', 'allPayrolls', 'ytdSummary', 'year'));
     }
 
     /**
