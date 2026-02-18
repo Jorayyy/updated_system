@@ -191,6 +191,13 @@ class TimekeepingController extends Controller
 
         $transactions = $query->orderBy('transaction_time', 'desc')->paginate(25);
         
+        // Fetch Timekeeping Complaints (Concerns)
+        $tkComplaints = \App\Models\Concern::where('category', 'timekeeping')
+            ->with('reporter')
+            ->orderBy('created_at', 'desc')
+            ->limit(10)
+            ->get();
+        
         $employees = User::where('role', 'employee')
             ->where('is_active', true)
             ->orderBy('name')
@@ -208,9 +215,10 @@ class TimekeepingController extends Controller
                 ->count('user_id'),
             'on_break' => $this->countCurrentStatus('break'),
             'in_meeting' => $this->countCurrentStatus('aux_meeting'),
+            'pending_complaints' => \App\Models\Concern::where('category', 'timekeeping')->open()->count(),
         ];
 
-        return view('timekeeping.admin-index', compact('transactions', 'employees', 'transactionTypes', 'categories', 'stats'));
+        return view('timekeeping.admin-index', compact('transactions', 'employees', 'transactionTypes', 'categories', 'stats', 'tkComplaints'));
     }
 
     /**
