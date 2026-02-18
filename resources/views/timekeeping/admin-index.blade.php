@@ -288,14 +288,27 @@
                                                     <div class="text-[10px] font-bold text-red-500 uppercase mt-1">Void Reason: {{ $transaction->void_reason }}</div>
                                                 @endif
                                             </td>
-                                            <td class="px-6 py-4 whitespace-nowrap text-center">
+                                            <td class="px-6 py-4 whitespace-nowrap text-center space-x-1">
                                                 @if($transaction->isVoided())
                                                     <span class="text-xs font-bold text-red-400 italic">Transaction Voided</span>
                                                 @else
+                                                    <button type="button" 
+                                                            onclick="openEditLogModal({{ json_encode([
+                                                                'id' => $transaction->id,
+                                                                'employee' => $transaction->user->name,
+                                                                'time' => $transaction->transaction_time->format('Y-m-d\TH:i'),
+                                                                'type' => $transaction->transaction_type,
+                                                                'notes' => $transaction->notes
+                                                            ]) }})"
+                                                            class="inline-flex items-center px-3 py-1.5 bg-white text-emerald-600 hover:bg-emerald-600 hover:text-white rounded-lg text-xs font-bold transition-all border border-emerald-100 hover:border-emerald-600 shadow-sm">
+                                                        <svg class="w-3.5 h-3.5 mr-1" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z"></path></svg>
+                                                        Edit
+                                                    </button>
+                                                    
                                                     <button type="button" onclick="openVoidModal({{ $transaction->id }})" 
                                                             class="inline-flex items-center px-3 py-1.5 bg-white text-rose-600 hover:bg-rose-600 hover:text-white rounded-lg text-xs font-bold transition-all border border-rose-100 hover:border-rose-600 shadow-sm">
                                                         <svg class="w-3.5 h-3.5 mr-1" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M18.364 18.364A9 9 0 005.636 5.636m12.728 12.728L5.636 5.636"></path></svg>
-                                                        Void Log
+                                                        Void
                                                     </button>
                                                 @endif
                                             </td>
@@ -366,8 +379,85 @@
         </div>
     </div>
 
+    <!-- Edit Log Modal -->
+    <div id="edit-log-modal" class="fixed inset-0 z-50 hidden overflow-y-auto">
+        <div class="flex items-center justify-center min-h-screen px-4 py-8 pointer-events-none">
+            <div class="fixed inset-0 bg-gray-900/60 transition-opacity backdrop-blur-sm pointer-events-auto"></div>
+            <div class="bg-white rounded-[2rem] shadow-2xl w-full max-w-md p-8 relative pointer-events-auto transform transition-all border border-gray-100">
+                <div class="flex items-start gap-4 mb-6">
+                    <div class="p-3 bg-emerald-50 rounded-2xl">
+                        <svg class="w-6 h-6 text-emerald-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z"></path>
+                        </svg>
+                    </div>
+                    <div>
+                        <h3 class="text-lg font-black text-gray-900">Edit Log Entry</h3>
+                        <p id="edit-log-employee" class="text-xs font-bold text-gray-400 uppercase tracking-widest"></p>
+                    </div>
+                </div>
+
+                <form id="edit-log-form" method="POST">
+                    @csrf
+                    @method('PATCH')
+                    
+                    <div class="space-y-4 mb-6">
+                        <div>
+                            <label class="block text-[10px] font-black text-gray-400 uppercase tracking-widest mb-2">Transaction Type</label>
+                            <select name="transaction_type" id="edit-log-type" required
+                                    class="w-full text-sm font-bold border-gray-100 rounded-xl focus:ring-emerald-500 focus:border-emerald-500">
+                                <option value="1">Time In</option>
+                                <option value="2">Time Out</option>
+                                <option value="3">Break In</option>
+                                <option value="4">Break Out</option>
+                            </select>
+                        </div>
+                        
+                        <div>
+                            <label class="block text-[10px] font-black text-gray-400 uppercase tracking-widest mb-2">Timestamp</label>
+                            <input type="datetime-local" name="transaction_time" id="edit-log-time" required
+                                   class="w-full text-sm font-bold border-gray-100 rounded-xl focus:ring-emerald-500 focus:border-emerald-500">
+                        </div>
+
+                        <div>
+                            <label class="block text-[10px] font-black text-gray-400 uppercase tracking-widest mb-2">Internal Note</label>
+                            <textarea name="notes" id="edit-log-notes" rows="2"
+                                      class="w-full text-sm border-gray-100 rounded-xl focus:ring-emerald-500 focus:border-emerald-500 resize-none"
+                                      placeholder="Reason for change..."></textarea>
+                        </div>
+                    </div>
+
+                    <div class="flex gap-3">
+                        <button type="button" onclick="closeEditLogModal()" 
+                                class="flex-1 px-4 py-3 bg-gray-50 text-gray-600 font-bold rounded-2xl hover:bg-gray-100 transition-all">
+                            Cancel
+                        </button>
+                        <button type="submit" class="flex-1 px-4 py-3 bg-emerald-600 text-white font-bold rounded-2xl hover:bg-emerald-700 shadow-lg shadow-emerald-100 transition-all">
+                            Save Changes
+                        </button>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
+
     @push('scripts')
     <script>
+        function openEditLogModal(data) {
+            document.getElementById('edit-log-form').action = `/timekeeping/${data.id}/update`;
+            document.getElementById('edit-log-employee').innerText = data.employee;
+            document.getElementById('edit-log-time').value = data.time;
+            document.getElementById('edit-log-type').value = data.type;
+            document.getElementById('edit-log-notes').value = data.notes || '';
+            
+            document.getElementById('edit-log-modal').classList.remove('hidden');
+            document.body.style.overflow = 'hidden';
+        }
+
+        function closeEditLogModal() {
+            document.getElementById('edit-log-modal').classList.add('hidden');
+            document.body.style.overflow = 'auto';
+        }
+
         function openVoidModal(transactionId) {
             document.getElementById('void-form').action = `/timekeeping/${transactionId}/void`;
             document.getElementById('void-modal').classList.remove('hidden');
@@ -379,8 +469,12 @@
             document.body.style.overflow = 'auto';
         }
 
-        document.getElementById('void-modal').addEventListener('click', function(e) {
-            if (e.target === this) closeVoidModal();
+        // Close on backdrop click
+        window.addEventListener('click', function(e) {
+            const editModal = document.getElementById('edit-log-modal');
+            const voidModal = document.getElementById('void-modal');
+            if (e.target === editModal) closeEditLogModal();
+            if (e.target === voidModal) closeVoidModal();
         });
     </script>
     <style>

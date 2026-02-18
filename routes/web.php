@@ -397,6 +397,7 @@ Route::middleware('auth')->group(function () {
         // Timekeeping Management
         Route::get('/manage/timekeeping', [TimekeepingController::class, 'adminIndex'])->name('timekeeping.admin-index');
         Route::post('/manage/timekeeping', [TimekeepingController::class, 'adminStore'])->name('timekeeping.admin-store');
+        Route::patch('/timekeeping/{transaction}/update', [TimekeepingController::class, 'update'])->name('timekeeping.admin-update');
         Route::patch('/timekeeping/{transaction}/void', [TimekeepingController::class, 'void'])->name('timekeeping.void');
         Route::get('/timekeeping/live-stats', [TimekeepingController::class, 'liveStats'])->name('timekeeping.live-stats');
         // Settings Management

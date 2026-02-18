@@ -271,6 +271,26 @@ class TimekeepingController extends Controller
     }
 
     /**
+     * Update a timekeeping transaction (Edit log/time)
+     */
+    public function update(Request $request, TimekeepingTransaction $transaction)
+    {
+        $validated = $request->validate([
+            'transaction_time' => 'required|date',
+            'transaction_type' => 'required|integer|in:1,2,3,4',
+            'notes'            => 'nullable|string|max:255',
+        ]);
+
+        $transaction->update([
+            'transaction_time' => $validated['transaction_time'],
+            'transaction_type' => $validated['transaction_type'],
+            'notes'            => ($validated['notes'] ? $validated['notes'] . ' (Edited: ' . now()->format('M d, H:i') . ')' : 'Edited: ' . now()->format('M d, H:i')),
+        ]);
+
+        return redirect()->back()->with('success', 'Log updated successfully.');
+    }
+
+    /**
      * View employee's timekeeping details
      */
     public function show(User $user, Request $request)
