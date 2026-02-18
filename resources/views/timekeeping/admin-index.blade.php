@@ -147,60 +147,67 @@
                 <!-- Transactions List -->
                 <div class="lg:col-span-9">
 
-                    <!-- TK Complaints Section (Visible if any) -->
-                    @if($tkComplaints->count() > 0)
-                    <div class="bg-white rounded-2xl shadow-sm border-2 border-red-50 mb-8 overflow-hidden">
-                        <div class="bg-red-50/50 px-6 py-4 border-b border-red-100 flex items-center justify-between">
+                    <!-- TK Complaints Section -->
+                    <div class="bg-white rounded-2xl shadow-sm border-2 {{ $tkComplaints->count() > 0 ? 'border-red-50' : 'border-gray-50' }} mb-8 overflow-hidden">
+                        <div class="px-6 py-4 border-b {{ $tkComplaints->count() > 0 ? 'bg-red-50/50 border-red-100' : 'bg-gray-50/50 border-gray-100' }} flex items-center justify-between">
                             <div class="flex items-center gap-3">
-                                <div class="p-1.5 bg-red-100 rounded-lg">
-                                    <svg class="w-5 h-5 text-red-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <div class="p-1.5 {{ $tkComplaints->count() > 0 ? 'bg-red-100' : 'bg-gray-100' }} rounded-lg transition-colors">
+                                    <svg class="w-5 h-5 {{ $tkComplaints->count() > 0 ? 'text-red-600' : 'text-gray-400' }}" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                                         <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z"></path>
                                     </svg>
                                 </div>
-                                <h3 class="text-sm font-black text-red-800 uppercase tracking-wider">Active Timekeeping Complaints</h3>
+                                <h3 class="text-sm font-black {{ $tkComplaints->count() > 0 ? 'text-red-800' : 'text-gray-500' }} uppercase tracking-wider">Active Timekeeping Complaints</h3>
                             </div>
-                            <a href="{{ route('concerns.index', ['category' => 'timekeeping']) }}" class="text-xs font-bold text-red-600 hover:text-red-800 transition-colors uppercase">View All Tickets &rarr;</a>
+                            @if($tkComplaints->count() > 0)
+                                <a href="{{ route('concerns.index', ['category' => 'timekeeping']) }}" class="text-xs font-bold text-red-600 hover:text-red-800 transition-colors uppercase">View All Tickets &rarr;</a>
+                            @endif
                         </div>
                         <div class="divide-y divide-red-50">
-                            @foreach($tkComplaints as $complaint)
-                            <div class="p-6 flex items-start justify-between gap-4 hover:bg-red-50/20 transition-colors">
-                                <div class="flex items-start gap-4">
-                                    <div class="w-10 h-10 rounded-full bg-red-100 flex items-center justify-center text-red-700 font-bold shrink-0">
-                                        {{ substr($complaint->reporter->name, 0, 1) }}
-                                    </div>
-                                    <div>
-                                        <div class="flex items-center gap-2 mb-1">
-                                            <span class="text-sm font-black text-gray-900">{{ $complaint->reporter->name }}</span>
-                                            <span class="px-2 py-0.5 text-[10px] font-bold uppercase rounded-md {{ $complaint->status == 'open' ? 'bg-red-100 text-red-700' : 'bg-amber-100 text-amber-700' }}">
-                                                {{ $complaint->status }}
-                                            </span>
+                            @forelse($tkComplaints as $complaint)
+                                <div class="p-6 flex items-start justify-between gap-4 hover:bg-red-50/20 transition-colors">
+                                    <div class="flex items-start gap-4">
+                                        <div class="w-10 h-10 rounded-full bg-red-100 flex items-center justify-center text-red-700 font-bold shrink-0 shadow-sm">
+                                            {{ substr($complaint->reporter->name, 0, 1) }}
                                         </div>
-                                        <h4 class="text-sm font-medium text-gray-800 mb-1">{{ $complaint->title }}</h4>
-                                        <p class="text-xs text-gray-500 line-clamp-2 max-w-2xl">{{ $complaint->description }}</p>
-                                        <div class="mt-2 text-[10px] font-bold text-gray-400 uppercase tracking-widest">{{ $complaint->created_at->diffForHumans() }}</div>
+                                        <div>
+                                            <div class="flex items-center gap-2 mb-1">
+                                                <span class="text-sm font-black text-gray-900 capitalize">{{ $complaint->reporter->name }}</span>
+                                                <span class="px-2 py-0.5 text-[10px] font-bold uppercase rounded-md {{ $complaint->status == 'open' ? 'bg-red-100 text-red-700' : 'bg-amber-100 text-amber-700' }}">
+                                                    {{ $complaint->status }}
+                                                </span>
+                                            </div>
+                                            <h4 class="text-sm font-bold text-gray-800 mb-1">{{ $complaint->title }}</h4>
+                                            <p class="text-xs text-gray-500 line-clamp-2 max-w-2xl leading-relaxed">{{ $complaint->description }}</p>
+                                            <div class="mt-2 text-[10px] font-bold text-gray-400 uppercase tracking-widest">{{ $complaint->created_at->diffForHumans() }}</div>
+                                        </div>
+                                    </div>
+                                    <div class="flex flex-col gap-2 shrink-0">
+                                        <a href="{{ route('concerns.show', $complaint) }}" class="px-4 py-2 bg-white text-gray-700 font-bold text-xs rounded-xl border border-gray-200 hover:bg-gray-50 hover:border-gray-300 transition-all shadow-sm text-center">
+                                            View Details
+                                        </a>
+                                        @if($complaint->isOpen())
+                                            <form action="{{ route('concerns.status', $complaint) }}" method="POST">
+                                                @csrf
+                                                @method('PATCH')
+                                                <input type="hidden" name="status" value="resolved">
+                                                <input type="hidden" name="resolution_notes" value="Resolved via Timekeeping Management Hub.">
+                                                <button type="submit" class="w-full px-4 py-2 bg-emerald-600 text-white font-bold text-xs rounded-xl hover:bg-emerald-700 transition-all shadow-md shadow-emerald-100 border border-emerald-500">
+                                                    Approve & Resolve
+                                                </button>
+                                            </form>
+                                        @endif
                                     </div>
                                 </div>
-                                <div class="flex flex-col gap-2 shrink-0">
-                                    <a href="{{ route('concerns.show', $complaint) }}" class="px-4 py-2 bg-white text-gray-700 font-bold text-xs rounded-xl border border-gray-200 hover:bg-gray-50 hover:border-gray-300 transition-all shadow-sm text-center">
-                                        View Details
-                                    </a>
-                                    @if($complaint->isOpen())
-                                    <form action="{{ route('concerns.status', $complaint) }}" method="POST">
-                                        @csrf
-                                        @method('PATCH')
-                                        <input type="hidden" name="status" value="resolved">
-                                        <input type="hidden" name="resolution_notes" value="Resolved via Timekeeping Management Hub.">
-                                        <button type="submit" class="w-full px-4 py-2 bg-emerald-600 text-white font-bold text-xs rounded-xl hover:bg-emerald-700 transition-all shadow-md shadow-emerald-100">
-                                            Approve & Resolve
-                                        </button>
-                                    </form>
-                                    @endif
+                            @empty
+                                <div class="px-6 py-10 text-center">
+                                    <div class="p-3 bg-gray-50 rounded-full w-12 h-12 flex items-center justify-center mx-auto mb-3">
+                                        <svg class="w-6 h-6 text-gray-300" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"></path></svg>
+                                    </div>
+                                    <p class="text-sm font-bold text-gray-400 uppercase tracking-wider">No active JK complaints found.</p>
                                 </div>
-                            </div>
-                            @endforeach
+                            @endforelse
                         </div>
                     </div>
-                    @endif
 
                     <!-- Filters -->
                     <div class="bg-white rounded-2xl shadow-sm border border-gray-100 mb-6 p-6">
@@ -405,10 +412,13 @@
                             <label class="block text-[10px] font-black text-gray-400 uppercase tracking-widest mb-2">Transaction Type</label>
                             <select name="transaction_type" id="edit-log-type" required
                                     class="w-full text-sm font-bold border-gray-100 rounded-xl focus:ring-emerald-500 focus:border-emerald-500">
-                                <option value="1">Time In</option>
-                                <option value="2">Time Out</option>
-                                <option value="3">Break In</option>
-                                <option value="4">Break Out</option>
+                                @foreach($transactionTypes as $category => $types)
+                                    <optgroup label="{{ $category }}">
+                                        @foreach($types as $key => $label)
+                                            <option value="{{ $key }}">{{ $label }}</option>
+                                        @endforeach
+                                    </optgroup>
+                                @endforeach
                             </select>
                         </div>
                         
@@ -469,12 +479,20 @@
             document.body.style.overflow = 'auto';
         }
 
-        // Close on backdrop click
-        window.addEventListener('click', function(e) {
+        // Close on backdrop click (outside click)
+        window.addEventListener('mousedown', function(e) {
             const editModal = document.getElementById('edit-log-modal');
             const voidModal = document.getElementById('void-modal');
-            if (e.target === editModal) closeEditLogModal();
-            if (e.target === voidModal) closeVoidModal();
+            
+            // Only close if the click was exactly on the modal wrapper OR its pointer-events-auto backdrop
+            if (e.target.id === 'edit-log-modal') closeEditLogModal();
+            if (e.target.id === 'void-modal') closeVoidModal();
+            
+            // Support for the common 'backdrop' div inside
+            if (e.target.classList.contains('bg-gray-900/60')) {
+                if (!editModal.classList.contains('hidden')) closeEditLogModal();
+                if (!voidModal.classList.contains('hidden')) closeVoidModal();
+            }
         });
     </script>
     <style>

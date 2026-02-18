@@ -540,12 +540,13 @@ class ConcernController extends Controller
     /**
      * Show form for employee to create concern
      */
-    public function userCreate()
+    public function userCreate(Request $request)
     {
         $categories = Concern::CATEGORIES;
         $priorities = Concern::PRIORITIES;
+        $prefilled = $request->only(['category', 'title', 'description']);
 
-        return view('concerns.user-create', compact('categories', 'priorities'));
+        return view('concerns.user-create', compact('categories', 'priorities', 'prefilled'));
     }
 
     /**

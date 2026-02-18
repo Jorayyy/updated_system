@@ -277,7 +277,7 @@ class TimekeepingController extends Controller
     {
         $validated = $request->validate([
             'transaction_time' => 'required|date',
-            'transaction_type' => 'required|integer|in:1,2,3,4',
+            'transaction_type' => ['required', 'string', \Illuminate\Validation\Rule::in(array_keys(TimekeepingTransaction::TRANSACTION_TYPES))],
             'notes'            => 'nullable|string|max:255',
         ]);
 
