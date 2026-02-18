@@ -348,8 +348,8 @@
     </div>
 
     <!-- Modern Void Modal -->
-    <div id="void-modal" class="fixed inset-0 bg-gray-900/60 backdrop-blur-sm hidden overflow-y-auto h-full w-full z-50 flex items-center justify-center p-4">
-        <div class="relative mx-auto w-full max-w-md bg-white rounded-2xl shadow-2xl animate-pop-in">
+    <div id="void-modal" class="fixed inset-0 bg-gray-900/60 backdrop-blur-sm hidden overflow-y-auto h-full w-full z-50 flex items-center justify-center p-4" onclick="if(event.target === this) closeVoidModal()">
+        <div class="relative mx-auto w-full max-w-md bg-white rounded-2xl shadow-2xl animate-pop-in" onclick="event.stopPropagation()">
             <div class="p-6">
                 <div class="flex items-center gap-4 mb-6">
                     <div class="p-3 bg-red-100 rounded-xl">
@@ -387,66 +387,63 @@
     </div>
 
     <!-- Edit Log Modal -->
-    <div id="edit-log-modal" class="fixed inset-0 z-50 hidden overflow-y-auto">
-        <div class="flex items-center justify-center min-h-screen px-4 py-8 pointer-events-none">
-            <div class="fixed inset-0 bg-gray-900/60 transition-opacity backdrop-blur-sm pointer-events-auto"></div>
-            <div class="bg-white rounded-[2rem] shadow-2xl w-full max-w-md p-8 relative pointer-events-auto transform transition-all border border-gray-100">
-                <div class="flex items-start gap-4 mb-6">
-                    <div class="p-3 bg-emerald-50 rounded-2xl">
-                        <svg class="w-6 h-6 text-emerald-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z"></path>
-                        </svg>
-                    </div>
+    <div id="edit-log-modal" class="fixed inset-0 bg-gray-900/60 backdrop-blur-sm hidden overflow-y-auto h-full w-full z-50 flex items-center justify-center p-4" onclick="if(event.target === this) closeEditLogModal()">
+        <div class="relative mx-auto w-full max-w-md bg-white rounded-[2rem] shadow-2xl p-8 animate-pop-in pointer-events-auto border border-gray-100" onclick="event.stopPropagation()">
+            <div class="flex items-start gap-4 mb-6">
+                <div class="p-3 bg-emerald-50 rounded-2xl">
+                    <svg class="w-6 h-6 text-emerald-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z"></path>
+                    </svg>
+                </div>
+                <div>
+                    <h3 class="text-lg font-black text-gray-900">Edit Log Entry</h3>
+                    <p id="edit-log-employee" class="text-xs font-bold text-gray-400 uppercase tracking-widest"></p>
+                </div>
+            </div>
+
+            <form id="edit-log-form" method="POST">
+                @csrf
+                @method('PATCH')
+                
+                <div class="space-y-4 mb-6">
                     <div>
-                        <h3 class="text-lg font-black text-gray-900">Edit Log Entry</h3>
-                        <p id="edit-log-employee" class="text-xs font-bold text-gray-400 uppercase tracking-widest"></p>
+                        <label class="block text-[10px] font-black text-gray-400 uppercase tracking-widest mb-2">Transaction Type</label>
+                        <select name="transaction_type" id="edit-log-type" required
+                                class="w-full text-sm font-bold border-gray-100 rounded-xl focus:ring-emerald-500 focus:border-emerald-500">
+                            @foreach($transactionTypes as $category => $types)
+                                <optgroup label="{{ $category }}">
+                                    @foreach($types as $key => $label)
+                                        <option value="{{ $key }}">{{ $label }}</option>
+                                    @endforeach
+                                </optgroup>
+                            @endforeach
+                        </select>
+                    </div>
+                    
+                    <div>
+                        <label class="block text-[10px] font-black text-gray-400 uppercase tracking-widest mb-2">Timestamp</label>
+                        <input type="datetime-local" name="transaction_time" id="edit-log-time" required
+                               class="w-full text-sm font-bold border-gray-100 rounded-xl focus:ring-emerald-500 focus:border-emerald-500">
+                    </div>
+
+                    <div>
+                        <label class="block text-[10px] font-black text-gray-400 uppercase tracking-widest mb-2">Internal Note</label>
+                        <textarea name="notes" id="edit-log-notes" rows="2"
+                                  class="w-full text-sm border-gray-100 rounded-xl focus:ring-emerald-500 focus:border-emerald-500 resize-none"
+                                  placeholder="Reason for change..."></textarea>
                     </div>
                 </div>
 
-                <form id="edit-log-form" method="POST">
-                    @csrf
-                    @method('PATCH')
-                    
-                    <div class="space-y-4 mb-6">
-                        <div>
-                            <label class="block text-[10px] font-black text-gray-400 uppercase tracking-widest mb-2">Transaction Type</label>
-                            <select name="transaction_type" id="edit-log-type" required
-                                    class="w-full text-sm font-bold border-gray-100 rounded-xl focus:ring-emerald-500 focus:border-emerald-500">
-                                @foreach($transactionTypes as $category => $types)
-                                    <optgroup label="{{ $category }}">
-                                        @foreach($types as $key => $label)
-                                            <option value="{{ $key }}">{{ $label }}</option>
-                                        @endforeach
-                                    </optgroup>
-                                @endforeach
-                            </select>
-                        </div>
-                        
-                        <div>
-                            <label class="block text-[10px] font-black text-gray-400 uppercase tracking-widest mb-2">Timestamp</label>
-                            <input type="datetime-local" name="transaction_time" id="edit-log-time" required
-                                   class="w-full text-sm font-bold border-gray-100 rounded-xl focus:ring-emerald-500 focus:border-emerald-500">
-                        </div>
-
-                        <div>
-                            <label class="block text-[10px] font-black text-gray-400 uppercase tracking-widest mb-2">Internal Note</label>
-                            <textarea name="notes" id="edit-log-notes" rows="2"
-                                      class="w-full text-sm border-gray-100 rounded-xl focus:ring-emerald-500 focus:border-emerald-500 resize-none"
-                                      placeholder="Reason for change..."></textarea>
-                        </div>
-                    </div>
-
-                    <div class="flex gap-3">
-                        <button type="button" onclick="closeEditLogModal()" 
-                                class="flex-1 px-4 py-3 bg-gray-50 text-gray-600 font-bold rounded-2xl hover:bg-gray-100 transition-all">
-                            Cancel
-                        </button>
-                        <button type="submit" class="flex-1 px-4 py-3 bg-emerald-600 text-white font-bold rounded-2xl hover:bg-emerald-700 shadow-lg shadow-emerald-100 transition-all">
-                            Save Changes
-                        </button>
-                    </div>
-                </form>
-            </div>
+                <div class="flex gap-3">
+                    <button type="button" onclick="closeEditLogModal()" 
+                            class="flex-1 px-4 py-3 bg-gray-50 text-gray-600 font-bold rounded-2xl hover:bg-gray-100 transition-all">
+                        Cancel
+                    </button>
+                    <button type="submit" class="flex-1 px-4 py-3 bg-emerald-600 text-white font-bold rounded-2xl hover:bg-emerald-700 shadow-lg shadow-emerald-100 transition-all">
+                        Save Changes
+                    </button>
+                </div>
+            </form>
         </div>
     </div>
 
@@ -459,41 +456,33 @@
             document.getElementById('edit-log-type').value = data.type;
             document.getElementById('edit-log-notes').value = data.notes || '';
             
-            document.getElementById('edit-log-modal').classList.remove('hidden');
+            const modal = document.getElementById('edit-log-modal');
+            modal.classList.remove('hidden');
+            modal.classList.add('flex');
             document.body.style.overflow = 'hidden';
         }
 
         function closeEditLogModal() {
-            document.getElementById('edit-log-modal').classList.add('hidden');
+            const modal = document.getElementById('edit-log-modal');
+            modal.classList.add('hidden');
+            modal.classList.remove('flex');
             document.body.style.overflow = 'auto';
         }
 
         function openVoidModal(transactionId) {
             document.getElementById('void-form').action = `/timekeeping/${transactionId}/void`;
-            document.getElementById('void-modal').classList.remove('hidden');
+            const modal = document.getElementById('void-modal');
+            modal.classList.remove('hidden');
+            modal.classList.add('flex');
             document.body.style.overflow = 'hidden';
         }
 
         function closeVoidModal() {
-            document.getElementById('void-modal').classList.add('hidden');
+            const modal = document.getElementById('void-modal');
+            modal.classList.add('hidden');
+            modal.classList.remove('flex');
             document.body.style.overflow = 'auto';
         }
-
-        // Close on backdrop click (outside click)
-        window.addEventListener('mousedown', function(e) {
-            const editModal = document.getElementById('edit-log-modal');
-            const voidModal = document.getElementById('void-modal');
-            
-            // Only close if the click was exactly on the modal wrapper OR its pointer-events-auto backdrop
-            if (e.target.id === 'edit-log-modal') closeEditLogModal();
-            if (e.target.id === 'void-modal') closeVoidModal();
-            
-            // Support for the common 'backdrop' div inside
-            if (e.target.classList.contains('bg-gray-900/60')) {
-                if (!editModal.classList.contains('hidden')) closeEditLogModal();
-                if (!voidModal.classList.contains('hidden')) closeVoidModal();
-            }
-        });
     </script>
     <style>
         @keyframes pop-in {
