@@ -30,6 +30,10 @@
                             class="bg-green-600 text-white px-4 py-2 rounded-md hover:bg-green-700">
                             Download PDF
                         </a>
+                        <a href="{{ route('concerns.user-create', ['category' => 'timekeeping', 'title' => 'DTR Discrepancy - ' . date('F Y', mktime(0, 0, 0, $month, 1))]) }}" 
+                            class="bg-red-50 text-red-700 font-bold px-4 py-2 rounded-md border border-red-200 hover:bg-red-100 transition-colors">
+                            Report TK Complaint
+                        </a>
                     </form>
                 </div>
             </div>

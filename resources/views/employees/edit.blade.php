@@ -172,7 +172,8 @@
                                 <div>
                                     <label class="block text-sm font-semibold text-gray-700 uppercase mb-1">Pay Type *</label>
                                     <select name="pay_type" required class="w-full border-gray-300 rounded-lg shadow-sm focus:border-indigo-500 focus:ring-indigo-500">
-                                        <option value="Daily" {{ old('pay_type', $employee->pay_type) == 'Daily' ? 'selected' : '' }}>Daily</option>
+                                        <option value="Weekly" {{ old('pay_type', $employee->pay_type) == 'Weekly' ? 'selected' : '' }}>Weekly</option>
+                                        <option value="Bi-Weekly" {{ old('pay_type', $employee->pay_type) == 'Bi-Weekly' ? 'selected' : '' }}>Bi-Weekly</option>
                                         <option value="Monthly" {{ old('pay_type', $employee->pay_type) == 'Monthly' ? 'selected' : '' }}>Monthly</option>
                                     </select>
                                 </div>

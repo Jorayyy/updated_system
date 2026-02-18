@@ -24,7 +24,7 @@
                                 <label for="title" class="block text-sm font-medium text-gray-700">
                                     Subject / Title <span class="text-red-500">*</span>
                                 </label>
-                                <input type="text" name="title" id="title" value="{{ old('title') }}" required
+                                <input type="text" name="title" id="title" value="{{ old('title', request('title')) }}" required
                                        placeholder="Brief description of your concern"
                                        class="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500">
                                 @error('title')
@@ -42,7 +42,7 @@
                                             class="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500">
                                         <option value="">Select a category</option>
                                         @foreach($categories as $key => $label)
-                                            <option value="{{ $key }}" {{ old('category') == $key ? 'selected' : '' }}>{{ $label }}</option>
+                                            <option value="{{ $key }}" {{ old('category', request('category')) == $key ? 'selected' : '' }}>{{ $label }}</option>
                                         @endforeach
                                     </select>
                                     @error('category')
@@ -102,7 +102,7 @@
                                 </label>
                                 <textarea name="description" id="description" rows="5" required
                                           placeholder="Please provide detailed information about your concern. Include any relevant details that can help us address it faster."
-                                          class="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500">{{ old('description') }}</textarea>
+                                          class="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500">{{ old('description', request('description')) }}</textarea>
                                 @error('description')
                                     <span class="text-red-500 text-sm">{{ $message }}</span>
                                 @enderror

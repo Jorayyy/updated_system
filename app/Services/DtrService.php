@@ -108,7 +108,7 @@ class DtrService
      * Generate DTR for a specific date and active employees
      * Called by end-of-day scheduled job and manual period generation
      */
-    public function generateDtrForDate(Carbon $date, ?int $payrollPeriodId = null): array
+    public function generateDtrForDate(Carbon $date, ?int $payrollPeriodId = null, ?array $userIds = null): array
     {
         $this->loadSettings();
         $results = [
@@ -123,20 +123,23 @@ class DtrService
         $query = User::where('is_active', true)
             ->whereIn('role', ['employee', 'hr', 'admin', 'super_admin']);
 
-        // If generating for a specific period, respect the group
-        if ($payrollPeriodId) {
-            $period = PayrollPeriod::find($payrollPeriodId);
-            if ($period) {
-                if ($period->payroll_group_id) {
-                    $query->where('payroll_group_id', $period->payroll_group_id);
-                } else {
-                    // Global period: Only users NOT in any group
-                    $query->whereNull('payroll_group_id');
+        // If specific user IDs are provided, use them
+        if (!empty($userIds)) {
+            $query->whereIn('id', $userIds);
+        } else {
+            // Otherwise, if generating for a specific period, respect the group
+            if ($payrollPeriodId) {
+                $period = PayrollPeriod::find($payrollPeriodId);
+                if ($period) {
+                    if ($period->payroll_group_id) {
+                        $query->where('payroll_group_id', $period->payroll_group_id);
+                    } else {
+                        // Global period: Only users NOT in any group
+                        $query->whereNull('payroll_group_id');
+                    }
                 }
             }
         }
-        // If payrollPeriodId is NULL (e.g. Scheduled Job), we process ALL active employees
-        // regardless of group.
 
         $employees = $query->get();
 
@@ -500,7 +503,13 @@ class DtrService
     /**
      * Generate DTR for entire payroll period
      */
-    public function generateDtrForPeriod(PayrollPeriod $period): array
+    /**
+     * Generate DTR for a specific payroll period
+     * @param PayrollPeriod $period
+     * @param array|null $userIds Filter employees by ID
+     * @return array
+     */
+    public function generateDtrForPeriod(PayrollPeriod $period, ?array $userIds = null): array
     {
         $this->loadSettings();
         $results = [
@@ -527,7 +536,7 @@ class DtrService
                 $this->processIncompleteAttendance($currentDate);
                 
                 // Generate DTR for this date
-                $dayResults = $this->generateDtrForDate($currentDate, $period->id);
+                $dayResults = $this->generateDtrForDate($currentDate, $period->id, $userIds);
                 
                 $results['days_processed']++;
                 $results['total_dtrs_created'] += $dayResults['created'];
@@ -540,17 +549,22 @@ class DtrService
             }
 
             // Update period status
-            $totalEmployees = User::where('is_active', true)->where('role', 'employee');
-            if ($period->payroll_group_id) {
-                $totalEmployees->where('payroll_group_id', $period->payroll_group_id);
+            $totalEmployeesQuery = User::where('is_active', true)->where('role', 'employee');
+            
+            if ($userIds) {
+                $totalEmployeesQuery->whereIn('id', $userIds);
+            } else if ($period->payroll_group_id) {
+                $totalEmployeesQuery->where('payroll_group_id', $period->payroll_group_id);
             } else {
-                $totalEmployees->whereNull('payroll_group_id');
+                $totalEmployeesQuery->whereNull('payroll_group_id');
             }
+            
+            $totalCount = $totalEmployeesQuery->count();
             
             $period->update([
                 'dtr_generated' => true,
                 'dtr_generated_at' => now(),
-                'total_employees' => $totalEmployees->count(),
+                'total_employees' => $totalCount,
             ]);
 
             // Update DTR counts

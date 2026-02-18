@@ -37,7 +37,7 @@ class DtrApprovalController extends Controller
     public function index(Request $request)
     {
         $user = Auth::user();
-        $query = DailyTimeRecord::with(['user', 'payrollPeriod', 'attendance']);
+        $query = DailyTimeRecord::with(['user.site', 'user.account', 'user.payrollGroup', 'payrollPeriod', 'attendance']);
 
         // Role-based filtering
         if ($user->role === 'employee') {
@@ -47,6 +47,24 @@ class DtrApprovalController extends Controller
         // Apply filters
         if ($request->filled('user_id') && $user->role !== 'employee') {
             $query->where('user_id', $request->user_id);
+        }
+
+        if ($request->filled('site_id')) {
+            $query->whereHas('user', function($q) use ($request) {
+                $q->where('site_id', $request->site_id);
+            });
+        }
+
+        if ($request->filled('account_id')) {
+            $query->whereHas('user', function($q) use ($request) {
+                $q->where('account_id', $request->account_id);
+            });
+        }
+
+        if ($request->filled('payroll_group_id')) {
+            $query->whereHas('user', function($q) use ($request) {
+                $q->where('payroll_group_id', $request->payroll_group_id);
+            });
         }
 
         if ($request->filled('payroll_period_id')) {
@@ -76,13 +94,17 @@ class DtrApprovalController extends Controller
             ->take(12)
             ->get();
 
+        $sites = \App\Models\Site::where('is_active', true)->orderBy('name')->get();
+        $accounts = \App\Models\Account::orderBy('name')->get();
+        $payrollGroups = \App\Models\PayrollGroup::orderBy('name')->get();
+
         $employees = $user->role !== 'employee' 
             ? User::where('is_active', true)->orderBy('name')->get()
             : collect();
 
         $stats = $this->approvalService->getApprovalStats($request->payroll_period_id);
 
-        return view('dtr-approval.index', compact('dtrs', 'payrollPeriods', 'employees', 'stats'));
+        return view('dtr-approval.index', compact('dtrs', 'payrollPeriods', 'employees', 'stats', 'sites', 'accounts', 'payrollGroups'));
     }
 
     /**
@@ -457,11 +479,26 @@ class DtrApprovalController extends Controller
             'payroll_period_id' => 'required|exists:payroll_periods,id',
             'user_ids' => 'nullable|array',
             'user_ids.*' => 'exists:users,id',
+            'site_id' => 'nullable|exists:sites,id',
+            'account_id' => 'nullable|exists:accounts,id',
+            'payroll_group_id' => 'nullable|exists:payroll_groups,id',
         ]);
 
         $payrollPeriod = PayrollPeriod::findOrFail($validated['payroll_period_id']);
 
-        $result = $this->dtrService->generateDtrForPeriod($payrollPeriod);
+        // Determine user filter
+        $targetUserIds = null;
+        if (!empty($validated['user_ids'])) {
+            $targetUserIds = $validated['user_ids'];
+        } else if ($request->filled('site_id') || $request->filled('account_id') || $request->filled('payroll_group_id')) {
+            $query = User::query();
+            if ($request->filled('site_id')) $query->where('site_id', $validated['site_id']);
+            if ($request->filled('account_id')) $query->where('account_id', $validated['account_id']);
+            if ($request->filled('payroll_group_id')) $query->where('payroll_group_id', $validated['payroll_group_id']);
+            $targetUserIds = $query->pluck('id')->toArray();
+        }
+
+        $result = $this->dtrService->generateDtrForPeriod($payrollPeriod, $targetUserIds);
 
         $message = sprintf(
             'DTR generation: %d days processed, %d total DTRs created',

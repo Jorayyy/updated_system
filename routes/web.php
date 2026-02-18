@@ -162,6 +162,7 @@ Route::middleware('auth')->group(function () {
         // Employees Management
         Route::resource('employees', EmployeeController::class);
         Route::post('/employees/{employee}/toggle-status', [EmployeeController::class, 'toggleStatus'])->name('employees.toggle-status');
+        Route::post('/employees/{employee}/force-delete', [EmployeeController::class, 'forceDelete'])->name('employees.force-delete');
         Route::post('/employees/bulk-assign-site', [EmployeeController::class, 'bulkAssignSite'])->name('employees.bulk-assign-site');
         Route::post('/employees/bulk-assign-account', [EmployeeController::class, 'bulkAssignAccount'])->name('employees.bulk-assign-account');
 

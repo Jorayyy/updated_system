@@ -47,6 +47,7 @@ class Concern extends Model
         'technical' => 'Technical Issue',
         'network' => 'Network/Connectivity',
         'facilities' => 'Facilities/Equipment',
+        'timekeeping' => 'Timekeeping (TK) Complaint',
         'schedule' => 'Schedule/Shift',
         'payroll' => 'Payroll/Compensation',
         'hr_related' => 'HR Related',

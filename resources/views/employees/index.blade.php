@@ -200,15 +200,29 @@
                                         <td class="px-6 py-4 whitespace-nowrap text-sm">
                                             <a href="{{ route('employees.show', $employee) }}" class="text-indigo-600 hover:text-indigo-900 mr-3 transition-colors duration-200">View</a>
                                             <a href="{{ route('employees.edit', $employee) }}" class="text-yellow-600 hover:text-yellow-900 mr-3 transition-colors duration-200">Edit</a>
+                                            
+                                            <!-- Toggle Status -->
                                             <form action="{{ route('employees.toggle-status', $employee) }}" method="POST" class="inline" id="toggle-form-{{ $employee->id }}">
                                                 @csrf
-                                                <input type="hidden" name="admin_password" id="admin_password_{{ $employee->id }}">
+                                                <input type="hidden" name="admin_password" id="admin_password_toggle_{{ $employee->id }}">
                                                 @if($employee->is_active)
-                                                    <button type="button" class="text-red-600 hover:text-red-900 transition-colors duration-200" 
-                                                        onclick="const password = prompt('Critical Action: You are about to DEACTIVATE this employee. Enter ADMIN PASSWORD to confirm:'); if(password) { document.getElementById('admin_password_{{ $employee->id }}').value = password; document.getElementById('toggle-form-{{ $employee->id }}').submit(); }">Deactivate</button>
+                                                    <button type="button" class="text-red-600 hover:text-red-900 transition-colors duration-200 mr-3" 
+                                                        onclick="const password = prompt('Critical Action: You are about to DEACTIVATE this employee. Enter ADMIN PASSWORD to confirm:'); if(password) { document.getElementById('admin_password_toggle_{{ $employee->id }}').value = password; document.getElementById('toggle-form-{{ $employee->id }}').submit(); }">Deactivate</button>
                                                 @else
-                                                    <button type="submit" class="text-green-600 hover:text-green-900 transition-colors duration-200">Activate</button>
+                                                    <button type="submit" class="text-green-600 hover:text-green-900 transition-colors duration-200 mr-3">Activate</button>
                                                 @endif
+                                            </form>
+
+                                            <!-- Permanent Delete -->
+                                            <form action="{{ route('employees.force-delete', $employee) }}" method="POST" class="inline" id="delete-form-{{ $employee->id }}">
+                                                @csrf
+                                                <input type="hidden" name="admin_password" id="admin_password_delete_{{ $employee->id }}">
+                                                <button type="button" class="text-gray-400 hover:text-red-700 transition-all duration-200 group" 
+                                                    title="PERMANENTLY REMOVE FROM SYSTEM"
+                                                    onclick="if(confirm('DANGER: This will permanently delete ALL records (DTRs, Payroll, Leves) for {{ $employee->name }}. This action CANNOT BE UNDONE. Proceed anyway?')) { const password = prompt('Enter ADMIN PASSWORD to confirm permanent deletion:'); if(password) { document.getElementById('admin_password_delete_{{ $employee->id }}').value = password; document.getElementById('delete-form-{{ $employee->id }}').submit(); } }">
+                                                    <svg class="w-4 h-4 inline" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" /></svg>
+                                                    <span class="text-xs font-bold hidden group-hover:inline ml-1">DELETE</span>
+                                                </button>
                                             </form>
                                         </td>
                                     </tr>

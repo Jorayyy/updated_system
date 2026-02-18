@@ -189,7 +189,7 @@
             <a href="{{ route('dtr-approval.index') }}" class="text-xs text-blue-600 hover:text-blue-800 font-medium">Reset All</a>
         </div>
         <div class="p-6">
-            <form method="GET" action="{{ route('dtr-approval.index') }}" id="filterForm" class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-5 gap-4">
+            <form method="GET" action="{{ route('dtr-approval.index') }}" id="filterForm" class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 xl:grid-cols-6 gap-4">
                 <div class="space-y-1">
                     <label class="block text-xs font-semibold text-gray-600 uppercase">Payroll Period</label>
                     <select name="payroll_period_id" class="w-full rounded-lg border-gray-200 text-sm focus:border-blue-500 focus:ring-blue-500" onchange="this.form.submit()">
@@ -201,17 +201,37 @@
                         @endforeach
                     </select>
                 </div>
+
                 <div class="space-y-1">
-                    <label class="block text-xs font-semibold text-gray-600 uppercase">Employee</label>
-                    <select name="user_id" class="w-full rounded-lg border-gray-200 text-sm focus:border-blue-500 focus:ring-blue-500" onchange="this.form.submit()">
-                        <option value="">All Employees</option>
-                        @foreach($employees as $employee)
-                            <option value="{{ $employee->id }}" {{ request('user_id') == $employee->id ? 'selected' : '' }}>
-                                {{ $employee->name }}
-                            </option>
+                    <label class="block text-xs font-semibold text-gray-600 uppercase">Site</label>
+                    <select name="site_id" class="w-full rounded-lg border-gray-200 text-sm focus:border-blue-500 focus:ring-blue-500" onchange="this.form.submit()">
+                        <option value="">All Sites</option>
+                        @foreach($sites as $site)
+                            <option value="{{ $site->id }}" {{ request('site_id') == $site->id ? 'selected' : '' }}>{{ $site->name }}</option>
                         @endforeach
                     </select>
                 </div>
+
+                <div class="space-y-1">
+                    <label class="block text-xs font-semibold text-gray-600 uppercase">Account/Section</label>
+                    <select name="account_id" class="w-full rounded-lg border-gray-200 text-sm focus:border-blue-500 focus:ring-blue-500" onchange="this.form.submit()">
+                        <option value="">All Accounts</option>
+                        @foreach($accounts as $account)
+                            <option value="{{ $account->id }}" {{ request('account_id') == $account->id ? 'selected' : '' }}>{{ $account->name }}</option>
+                        @endforeach
+                    </select>
+                </div>
+
+                <div class="space-y-1">
+                    <label class="block text-xs font-semibold text-gray-600 uppercase">Payroll Group</label>
+                    <select name="payroll_group_id" class="w-full rounded-lg border-gray-200 text-sm focus:border-blue-500 focus:ring-blue-500" onchange="this.form.submit()">
+                        <option value="">All Groups</option>
+                        @foreach($payrollGroups as $group)
+                            <option value="{{ $group->id }}" {{ request('payroll_group_id') == $group->id ? 'selected' : '' }}>{{ $group->name }}</option>
+                        @endforeach
+                    </select>
+                </div>
+
                 <div class="space-y-1">
                     <label class="block text-xs font-semibold text-gray-600 uppercase">Status</label>
                     <select name="status" class="w-full rounded-lg border-gray-200 text-sm focus:border-blue-500 focus:ring-blue-500" onchange="this.form.submit()">
@@ -223,13 +243,17 @@
                         <option value="correction_pending" {{ request('status') == 'correction_pending' ? 'selected' : '' }}>Correction Pending</option>
                     </select>
                 </div>
+
                 <div class="space-y-1">
-                    <label class="block text-xs font-semibold text-gray-600 uppercase">From Date</label>
-                    <input type="date" name="date_from" class="w-full rounded-lg border-gray-200 text-sm focus:border-blue-500 focus:ring-blue-500" value="{{ request('date_from') }}" onchange="this.form.submit()">
-                </div>
-                <div class="space-y-1">
-                    <label class="block text-xs font-semibold text-gray-600 uppercase">To Date</label>
-                    <input type="date" name="date_to" class="w-full rounded-lg border-gray-200 text-sm focus:border-blue-500 focus:ring-blue-500" value="{{ request('date_to') }}" onchange="this.form.submit()">
+                    <label class="block text-xs font-semibold text-gray-600 uppercase">Employee</label>
+                    <select name="user_id" class="w-full rounded-lg border-gray-200 text-sm focus:border-blue-500 focus:ring-blue-500 select2" onchange="this.form.submit()">
+                        <option value="">All Employees</option>
+                        @foreach($employees as $employee)
+                            <option value="{{ $employee->id }}" {{ request('user_id') == $employee->id ? 'selected' : '' }}>
+                                {{ $employee->name }}
+                            </option>
+                        @endforeach
+                    </select>
                 </div>
             </form>
         </div>
@@ -396,7 +420,7 @@
                     </div>
                     <div class="mt-3 text-center sm:mt-0 sm:ml-4 sm:text-left">
                         <h3 class="text-lg leading-6 font-bold text-gray-900" id="modal-title">Generate DTR Records</h3>
-                        <div class="mt-2 text-sm text-gray-500">Manual generation for a specific period and employees.</div>
+                        <div class="mt-2 text-sm text-gray-500">Choose who to generate DTRs for.</div>
                     </div>
                 </div>
                 <form action="{{ route('dtr-approval.generate') }}" method="POST" class="mt-6 space-y-4">
@@ -412,15 +436,47 @@
                             @endforeach
                         </select>
                     </div>
+
+                    <div class="grid grid-cols-1 md:grid-cols-3 gap-4">
+                        <div>
+                            <label class="block text-xs font-bold text-gray-600 uppercase mb-1">Site</label>
+                            <select name="site_id" class="w-full rounded-xl border-gray-200 focus:ring-blue-500 focus:border-blue-500">
+                                <option value="">Optional</option>
+                                @foreach($sites as $site)
+                                    <option value="{{ $site->id }}">{{ $site->name }}</option>
+                                @endforeach
+                            </select>
+                        </div>
+                        <div>
+                            <label class="block text-xs font-bold text-gray-600 uppercase mb-1">Account</label>
+                            <select name="account_id" class="w-full rounded-xl border-gray-200 focus:ring-blue-500 focus:border-blue-500">
+                                <option value="">Optional</option>
+                                @foreach($accounts as $account)
+                                    <option value="{{ $account->id }}">{{ $account->name }}</option>
+                                @endforeach
+                            </select>
+                        </div>
+                        <div>
+                            <label class="block text-xs font-bold text-gray-600 uppercase mb-1">Group</label>
+                            <select name="payroll_group_id" class="w-full rounded-xl border-gray-200 focus:ring-blue-500 focus:border-blue-500">
+                                <option value="">Optional</option>
+                                @foreach($payrollGroups as $group)
+                                    <option value="{{ $group->id }}">{{ $group->name }}</option>
+                                @endforeach
+                            </select>
+                        </div>
+                    </div>
+
                     <div>
-                        <label class="block text-xs font-bold text-gray-600 uppercase mb-1">Employees (optional)</label>
-                        <select name="user_ids[]" class="w-full rounded-xl border-gray-200 focus:ring-blue-500 focus:border-blue-500 overflow-y-auto" multiple size="5">
+                        <label class="block text-xs font-bold text-gray-600 uppercase mb-1">Individual Employees (Alt Selection)</label>
+                        <select name="user_ids[]" class="w-full rounded-xl border-gray-200 focus:ring-blue-500 focus:border-blue-500 overflow-y-auto" multiple size="4">
                             @foreach($employees as $employee)
                                 <option value="{{ $employee->id }}">{{ $employee->name }}</option>
                             @endforeach
                         </select>
-                        <p class="mt-1 text-xs text-gray-400 italic font-medium">Hold Ctrl (Windows) or Cmd (Mac) for multiple select.</p>
+                        <p class="mt-1 text-xs text-gray-400 italic">Overrides Site/Account/Group if selected.</p>
                     </div>
+
                     <div class="mt-8 flex justify-end gap-3 pb-2 px-1">
                         <button type="button" @click="showGenerateModal = false" class="px-6 py-2.5 rounded-xl border border-gray-200 bg-white text-gray-700 font-bold hover:bg-gray-50 transition-colors">Cancel</button>
                         <button type="submit" class="px-6 py-2.5 rounded-xl bg-blue-600 text-white font-bold hover:bg-blue-700 shadow-md transition-all shadow-blue-200">Generate Now</button>

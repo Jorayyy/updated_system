@@ -496,6 +496,40 @@ class EmployeeController extends Controller
     }
 
     /**
+     * Delete an employee (permanently)
+     */
+    public function forceDelete(Request $request, User $employee)
+    {
+        // Hierarchy Check: Cannot delete higher or equal ranks
+        if (!auth()->user()->canManage($employee)) {
+            return redirect()->route('employees.index')->with('error', 'Hierarchy Restriction: You do not have permission to delete this employee.');
+        }
+
+        // Require admin password for permanent deletion
+        if (!Hash::check($request->admin_password, auth()->user()->password)) {
+            if ($request->expectsJson()) {
+                return response()->json(['success' => false, 'message' => 'Incorrect admin password.'], 403);
+            }
+            return back()->with('error', 'Unauthorized. Incorrect admin password provided.');
+        }
+
+        try {
+            // Delete related files if any
+            if ($employee->profile_photo && \Storage::disk('public')->exists($employee->profile_photo)) {
+                \Storage::disk('public')->delete($employee->profile_photo);
+            }
+
+            // Perform deletion
+            $employee->delete();
+
+            return redirect()->route('employees.index')
+                ->with('success', 'Employee records have been PERMANENTLY removed from the system.');
+        } catch (\Exception $e) {
+            return back()->with('error', 'Could not delete employee. They may have related records that prevent deletion.');
+        }
+    }
+
+    /**
      * Bulk assign employees to a site
      */
     public function bulkAssignSite(Request $request)
