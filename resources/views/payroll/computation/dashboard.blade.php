@@ -478,6 +478,12 @@
                                             <a href="{{ route('payroll.computation.export', $period) }}" class="text-green-600 hover:text-green-900">
                                                 Export
                                             </a>
+                                            <form action="{{ route('payroll.computation.reset', $period) }}" method="POST" class="inline">
+                                                @csrf
+                                                <button type="submit" class="text-red-600 hover:text-red-900 ml-2" onclick="return confirm('DANGER: This will reset the status to DRAFT. \n\nAre you sure you want to re-open this payroll period?')">
+                                                    Reset
+                                                </button>
+                                            </form>
                                         </td>
                                     </tr>
                                 @endforeach

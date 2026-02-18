@@ -15,6 +15,14 @@
             </div>
             
             <div class="flex space-x-2">
+                @if($period->status === 'completed')
+                    <form action="{{ route('payroll.computation.reset', $period) }}" method="POST" class="inline">
+                        @csrf
+                        <button type="submit" class="px-4 py-2 bg-red-50 text-red-600 border border-red-200 rounded-md hover:bg-red-100 text-sm font-medium shadow-sm transition" onclick="return confirm('WARNING: You are re-opening a COMPLETED payroll period.\n\nThis will reset its status to DRAFT so you can re-compute or edit. Proceed?')">
+                            <i class="fas fa-undo mr-1"></i> Re-open Period
+                        </button>
+                    </form>
+                @endif
                 <a href="{{ route('payroll.computation.dashboard') }}" class="px-4 py-2 bg-gray-200 text-gray-700 rounded-md hover:bg-gray-300 text-sm font-medium">
                     ← Back to Dashboard
                 </a>
