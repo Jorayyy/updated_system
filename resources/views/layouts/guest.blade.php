@@ -147,14 +147,23 @@
                         @endif
                     </div>
                     
-                    <h1 class="text-5xl font-extrabold text-slate-800 mb-2 reveal-text" style="animation-delay: 0.2s; opacity: 0;">{{ $companyName }}</h1>
-                    <h2 class="text-4xl font-bold text-slate-700 mb-4 reveal-text" style="animation-delay: 0.4s; opacity: 0;">Business Solutions</h2>
-                    <p class="text-xl text-blue-600 font-bold tracking-[0.2em] reveal-text" style="animation-delay: 0.6s; opacity: 0;">CALL CENTER PH</p>
+                    <h1 class="text-6xl font-black text-slate-900 mb-2 reveal-text tracking-tighter" style="animation-delay: 0.2s; opacity: 0;">{{ $companyName }}</h1>
+                    <h2 class="text-3xl font-bold text-slate-700 mb-6 reveal-text" style="animation-delay: 0.4s; opacity: 0;">Business Solutions</h2>
                     
-                    <div class="border-t border-slate-300 pt-8 mt-10 max-w-xs mx-auto reveal-text" style="animation-delay: 0.8s; opacity: 0;">
-                        <p class="text-slate-500 text-sm font-medium uppercase tracking-widest">HR Information System</p>
-                        <div class="flex items-center justify-center gap-2 mt-3">
-                            <span class="text-slate-400 text-[10px] font-bold">V1.2.0</span>
+                    <div class="flex items-center justify-center gap-4 mb-8 reveal-text" style="animation-delay: 0.5s; opacity: 0;">
+                        <span class="h-px w-8 bg-blue-200"></span>
+                        <p class="text-sm text-blue-600 font-black tracking-[0.4em] uppercase">Call Center PH</p>
+                        <span class="h-px w-8 bg-blue-200"></span>
+                    </div>
+                    
+                    <div class="grid grid-cols-2 gap-4 mt-12 max-w-sm mx-auto reveal-text" style="animation-delay: 0.7s; opacity: 0;">
+                        <div class="bg-white/40 backdrop-blur-md p-4 rounded-3xl border border-white/50 shadow-sm">
+                            <div class="text-blue-600 font-black text-xl mb-1">Secure</div>
+                            <div class="text-slate-500 text-[10px] font-bold uppercase tracking-widest">Encrypted Entry</div>
+                        </div>
+                        <div class="bg-white/40 backdrop-blur-md p-4 rounded-3xl border border-white/50 shadow-sm">
+                            <div class="text-blue-600 font-black text-xl mb-1">V1.2.0</div>
+                            <div class="text-slate-500 text-[10px] font-bold uppercase tracking-widest">HRIS Powered</div>
                         </div>
                     </div>
                 </div>
