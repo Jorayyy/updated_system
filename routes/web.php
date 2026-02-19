@@ -154,6 +154,8 @@ Route::middleware('auth')->group(function () {
         // Sites & Accounts Management
         Route::resource('sites', SiteController::class);
         Route::resource('accounts', AccountController::class);
+        Route::get('schedules/group', [ScheduleController::class, 'groupCreate'])->name('schedules.group-create');
+        Route::post('schedules/group', [ScheduleController::class, 'groupStore'])->name('schedules.group-store');
         Route::resource('schedules', ScheduleController::class);
         
         Route::post('/payroll-groups/{payrollGroup}/add-employee', [PayrollGroupController::class, 'addEmployee'])->name('payroll-groups.add-employee');

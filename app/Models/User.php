@@ -8,6 +8,7 @@ use Illuminate\Notifications\Notifiable;
 use Laravel\Sanctum\HasApiTokens;
 use Illuminate\Database\Eloquent\Relations\HasMany;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
+use Carbon\Carbon;
 
 class User extends Authenticatable
 {
@@ -84,6 +85,15 @@ class User extends Authenticatable
         'present_address',
         'present_province',
         'other_info',
+        'monday_schedule',
+        'tuesday_schedule',
+        'wednesday_schedule',
+        'thursday_schedule',
+        'friday_schedule',
+        'saturday_schedule',
+        'sunday_schedule',
+        'special_1_hour_only',
+        'special_case_policy',
     ];
 
     /**
@@ -369,5 +379,33 @@ class User extends Authenticatable
     public function expenseClaims(): HasMany
     {
         return $this->hasMany(ExpenseClaim::class);
+    }
+
+    /**
+     * Get the scheduled shift for a given date
+     */
+    public function getShiftForDate($date): array
+    {
+        $date = Carbon::parse($date);
+        $dayName = strtolower($date->format('l')); // monday, tuesday, etc.
+        $schedule = $this->{$dayName . '_schedule'} ?? 'Rest day';
+
+        if ($schedule === 'Rest day') {
+            return [
+                'is_rest_day' => true,
+                'in' => null,
+                'out' => null,
+                'label' => 'Rest day'
+            ];
+        }
+
+        // Example: "21:00 to 07:00"
+        $parts = explode(' to ', $schedule);
+        return [
+            'is_rest_day' => false,
+            'in' => $parts[0] ?? null,
+            'out' => $parts[1] ?? null,
+            'label' => $schedule
+        ];
     }
 }

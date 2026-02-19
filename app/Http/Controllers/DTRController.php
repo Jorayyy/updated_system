@@ -34,7 +34,7 @@ class DTRController extends Controller
         $attendances = $this->attendanceService->getAttendanceForDTR($user, $startDate, $endDate);
 
         // Calculate summary
-        $summary = $this->calculateDTRSummary($attendances);
+        $summary = $this->calculateDTRSummary($attendances, $user, $startDate, $endDate);
 
         return view('dtr.index', compact('attendances', 'summary', 'month', 'year', 'user'));
     }
@@ -53,7 +53,7 @@ class DTRController extends Controller
         $endDate = $startDate->copy()->endOfMonth();
 
         $attendances = $this->attendanceService->getAttendanceForDTR($user, $startDate, $endDate);
-        $summary = $this->calculateDTRSummary($attendances);
+        $summary = $this->calculateDTRSummary($attendances, $user, $startDate, $endDate);
 
         $pdf = Pdf::loadView('dtr.pdf', compact('attendances', 'summary', 'month', 'year', 'user'));
         
@@ -102,7 +102,7 @@ class DTRController extends Controller
         
         foreach ($filteredEmployees as $employee) {
             $attendances = $this->attendanceService->getAttendanceForDTR($employee, $startDate, $endDate);
-            $summary = $this->calculateDTRSummary($attendances);
+            $summary = $this->calculateDTRSummary($attendances, $employee, $startDate, $endDate);
             
             $dtrData[] = [
                 'employee' => $employee,
@@ -132,7 +132,7 @@ class DTRController extends Controller
         $endDate = $startDate->copy()->endOfMonth();
 
         $attendances = $this->attendanceService->getAttendanceForDTR($user, $startDate, $endDate);
-        $summary = $this->calculateDTRSummary($attendances);
+        $summary = $this->calculateDTRSummary($attendances, $user, $startDate, $endDate);
 
         return view('dtr.index', compact('attendances', 'summary', 'month', 'year', 'user'));
     }
@@ -149,7 +149,7 @@ class DTRController extends Controller
         $endDate = $startDate->copy()->endOfMonth();
 
         $attendances = $this->attendanceService->getAttendanceForDTR($user, $startDate, $endDate);
-        $summary = $this->calculateDTRSummary($attendances);
+        $summary = $this->calculateDTRSummary($attendances, $user, $startDate, $endDate);
 
         $pdf = Pdf::loadView('dtr.pdf', compact('attendances', 'summary', 'month', 'year', 'user'));
         
@@ -178,7 +178,7 @@ class DTRController extends Controller
         $dtrs = [];
         foreach ($employees as $employee) {
             $attendances = $this->attendanceService->getAttendanceForDTR($employee, $startDate, $endDate);
-            $summary = $this->calculateDTRSummary($attendances);
+            $summary = $this->calculateDTRSummary($attendances, $employee, $startDate, $endDate);
             
             $dtrs[] = [
                 'user' => $employee,
@@ -200,27 +200,88 @@ class DTRController extends Controller
     /**
      * Calculate DTR summary
      */
-    protected function calculateDTRSummary($attendances): array
+    protected function calculateDTRSummary($attendances, User $user, Carbon $startDate, Carbon $endDate): array
     {
-        $totalWorkMinutes = $attendances->sum('total_work_minutes');
-        $totalBreakMinutes = $attendances->sum('total_break_minutes');
-        $totalOvertimeMinutes = $attendances->sum('overtime_minutes');
-        $totalUndertimeMinutes = $attendances->sum('undertime_minutes');
+        $metrics = [
+            'regular' => ['worked' => 0, 'nd' => 0, 'ot' => 0, 'ot_nd' => 0],
+            'restday' => ['worked' => 0, 'nd' => 0, 'ot' => 0, 'ot_nd' => 0],
+            'holiday' => ['worked' => 0, 'nd' => 0, 'ot' => 0, 'ot_nd' => 0],
+            'counts' => [
+                'absences' => 0,
+                'absences_occ' => 0,
+                'undertime' => 0,
+                'undertime_occ' => 0,
+                'tardiness' => 0,
+                'tardiness_occ' => 0,
+                'overbreak' => 0,
+                'overbreak_occ' => 0,
+            ],
+            'holidays' => [
+                'type1' => 0,
+                'type2' => 0,
+            ]
+        ];
+
+        $currentDate = $startDate->copy();
+        while ($currentDate->lte($endDate)) {
+            $dateStr = $currentDate->format('Y-m-d');
+            $shiftData = $user->getShiftForDate($dateStr);
+            $isRestDay = $shiftData['is_rest_day'] ?? ($shiftData['label'] === 'Rest day');
+            
+            $attendance = $attendances->firstWhere('date', $dateStr);
+            
+            if ($isRestDay) {
+                if ($attendance && $attendance->total_work_minutes > 0) {
+                    $metrics['restday']['worked'] += $attendance->total_work_minutes / 60;
+                    $metrics['restday']['nd'] += ($attendance->night_diff_minutes ?? 0) / 60;
+                    $metrics['restday']['ot'] += ($attendance->overtime_minutes ?? 0) / 60;
+                }
+            } else {
+                if ($attendance) {
+                    if ($attendance->time_in) {
+                        $metrics['regular']['worked'] += $attendance->total_work_minutes / 60;
+                        $metrics['regular']['nd'] += ($attendance->night_diff_minutes ?? 0) / 60;
+                        $metrics['regular']['ot'] += ($attendance->overtime_minutes ?? 0) / 60;
+
+                        // Tardiness
+                        if ($attendance->late_minutes > 0) {
+                            $metrics['counts']['tardiness'] += $attendance->late_minutes / 60;
+                            $metrics['counts']['tardiness_occ']++;
+                        }
+                        // Undertime
+                        if ($attendance->undertime_minutes > 0) {
+                            $metrics['counts']['undertime'] += $attendance->undertime_minutes / 60;
+                            $metrics['counts']['undertime_occ']++;
+                        }
+                        // Overbreak
+                        if ($attendance->total_break_minutes > 60) {
+                            $metrics['counts']['overbreak'] += ($attendance->total_break_minutes - 60) / 60;
+                            $metrics['counts']['overbreak_occ']++;
+                        }
+                    } else {
+                        $metrics['counts']['absences']++;
+                        $metrics['counts']['absences_occ']++;
+                    }
+                } elseif (!$currentDate->isFuture() && !$currentDate->isToday()) {
+                    $metrics['counts']['absences']++;
+                    $metrics['counts']['absences_occ']++;
+                }
+            }
+            
+            $currentDate->addDay();
+        }
+
+        // Just for display logic in the Type 1 / Type 2 boxes from legacy screenshot
+        $metrics['holidays']['type2'] = $attendances->where('is_rest_day', true)->count(); 
 
         return [
-            'total_days' => $attendances->count(),
-            'present_days' => $attendances->whereIn('status', ['present', 'late'])->count(),
-            'late_days' => $attendances->where('status', 'late')->count(),
-            'absent_days' => $attendances->where('status', 'absent')->count(),
-            'half_days' => $attendances->where('status', 'half_day')->count(),
-            'leave_days' => $attendances->where('status', 'on_leave')->count(),
-            'total_work_hours' => round($totalWorkMinutes / 60, 2),
-            'total_break_hours' => round($totalBreakMinutes / 60, 2),
-            'total_overtime_hours' => round($totalOvertimeMinutes / 60, 2),
-            'total_undertime_hours' => round($totalUndertimeMinutes / 60, 2),
-            'total_work_minutes' => $totalWorkMinutes,
-            'total_overtime_minutes' => $totalOvertimeMinutes,
-            'total_undertime_minutes' => $totalUndertimeMinutes,
+            'metrics' => $metrics,
+            'total_work_hours' => $metrics['regular']['worked'],
+            'restday_work_hours' => $metrics['restday']['worked'],
+            'holiday_work_hours' => $metrics['holiday']['worked'],
+            'total_overtime_hours' => $metrics['regular']['ot'] + $metrics['restday']['ot'],
+            'present_days' => $attendances->whereNotNull('time_in')->count(),
+            'rest_days' => $metrics['holidays']['type2'],
         ];
     }
 }
