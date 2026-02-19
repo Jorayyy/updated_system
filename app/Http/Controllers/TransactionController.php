@@ -117,7 +117,7 @@ class TransactionController extends Controller
         // Add type-specific validations
         if ($typeInfo['requires_dates'] ?? false) {
             $rules['effective_date'] = 'required|date';
-            if ($type !== 'leave_cancellation' && $type !== 'timekeeping_complaint') {
+            if ($type !== 'leave_cancellation') {
                 $rules['effective_date_end'] = 'nullable|date|after_or_equal:effective_date';
             }
         }
@@ -149,11 +149,6 @@ class TransactionController extends Controller
         if ($type === 'official_business') {
             $rules['destination'] = 'required|string|max:200';
             $rules['purpose'] = 'required|string|max:500';
-        }
-
-        if ($type === 'timekeeping_complaint') {
-            $rules['complaint_type'] = 'required|string|max:100';
-            $rules['resolution_requested'] = 'required|string|max:100';
         }
 
         $validated = $request->validate($rules);
@@ -215,12 +210,6 @@ class TransactionController extends Controller
             }
             if ($type === 'undertime') {
                 $details['undertime_type'] = $request->input('undertime_type', 'early_out');
-            }
-            if ($type === 'timekeeping_complaint') {
-                $details['complaint_type'] = $validated['complaint_type'];
-                $details['punch_type'] = $request->input('punch_type');
-                $details['expected_time'] = $request->input('expected_time');
-                $details['resolution_requested'] = $validated['resolution_requested'];
             }
 
             if (!empty($details)) {

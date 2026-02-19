@@ -152,6 +152,10 @@ class TimekeepingController extends Controller
      */
     public function adminIndex(Request $request)
     {
+        if (!Auth::user()->isAdmin()) {
+            abort(403, 'Unauthorized access to Timekeeping Management Hub.');
+        }
+
         $query = TimekeepingTransaction::with(['user', 'attendance']);
 
         // Search by employee
@@ -278,6 +282,10 @@ class TimekeepingController extends Controller
      */
     public function adminStore(Request $request)
     {
+        if (!Auth::user()->isAdmin()) {
+            abort(403, 'Unauthorized access to record transactions.');
+        }
+
         $validated = $request->validate([
             'user_id' => 'required|exists:users,id',
             'transaction_type' => ['required', Rule::in(array_keys(TimekeepingTransaction::TRANSACTION_TYPES))],

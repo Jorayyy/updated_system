@@ -189,69 +189,12 @@
                                 </div>
                             @endif
 
-                            {{-- Timekeeping Complaint specific fields --}}
-                            @if($type === 'timekeeping_complaint')
-                                <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
-                                    <div>
-                                        <label for="complaint_type" class="block text-sm font-medium text-gray-700">
-                                            Issue Type <span class="text-red-500">*</span>
-                                        </label>
-                                        <select name="complaint_type" id="complaint_type" required
-                                                class="mt-1 block w-full rounded-md border-gray-300 shadow-sm">
-                                            <option value="missing_punch" {{ old('complaint_type', 'missing_punch') === 'missing_punch' ? 'selected' : '' }}>Missing Punch</option>
-                                            <option value="wrong_time" {{ old('complaint_type') === 'wrong_time' ? 'selected' : '' }}>Wrong Time Recorded</option>
-                                            <option value="system_error" {{ old('complaint_type') === 'system_error' ? 'selected' : '' }}>System Error</option>
-                                            <option value="other" {{ old('complaint_type') === 'other' ? 'selected' : '' }}>Other</option>
-                                        </select>
-                                        @error('complaint_type')
-                                            <span class="text-red-500 text-sm">{{ $message }}</span>
-                                        @enderror
-                                    </div>
-                                    <div>
-                                        <label for="punch_type" class="block text-sm font-medium text-gray-700">
-                                            Affected Punch
-                                        </label>
-                                        <select name="punch_type" id="punch_type"
-                                                class="mt-1 block w-full rounded-md border-gray-300 shadow-sm">
-                                            <option value="none">N/A</option>
-                                            <option value="time_in" {{ old('punch_type') === 'time_in' ? 'selected' : '' }}>Time In</option>
-                                            <option value="break_out" {{ old('punch_type') === 'break_out' ? 'selected' : '' }}>Break Out</option>
-                                            <option value="break_in" {{ old('punch_type') === 'break_in' ? 'selected' : '' }}>Break In</option>
-                                            <option value="time_out" {{ old('punch_type') === 'time_out' ? 'selected' : '' }}>Time Out</option>
-                                        </select>
-                                    </div>
-                                    <div>
-                                        <label for="expected_time" class="block text-sm font-medium text-gray-700">
-                                            Expected/Correct Time
-                                        </label>
-                                        <input type="time" name="expected_time" id="expected_time"
-                                               value="{{ old('expected_time') }}"
-                                               class="mt-1 block w-full rounded-md border-gray-300 shadow-sm">
-                                        @error('expected_time')
-                                            <span class="text-red-500 text-sm">{{ $message }}</span>
-                                        @enderror
-                                    </div>
-                                    <div>
-                                        <label for="resolution_requested" class="block text-sm font-medium text-gray-700">
-                                            Resolution Requested <span class="text-red-500">*</span>
-                                        </label>
-                                        <select name="resolution_requested" id="resolution_requested" required
-                                                class="mt-1 block w-full rounded-md border-gray-300 shadow-sm">
-                                            <option value="adjust_time" {{ old('resolution_requested') === 'adjust_time' ? 'selected' : '' }}>Adjust Time Record</option>
-                                            <option value="add_missing" {{ old('resolution_requested') === 'add_missing' ? 'selected' : '' }}>Add Missing Punch</option>
-                                            <option value="remove_error" {{ old('resolution_requested') === 'remove_error' ? 'selected' : '' }}>Remove Erroneous Entry</option>
-                                            <option value="other" {{ old('resolution_requested') === 'other' ? 'selected' : '' }}>Other</option>
-                                        </select>
-                                    </div>
-                                </div>
-                            @endif
-
                             {{-- Date Fields --}}
                             @if($typeInfo['requires_dates'] ?? false)
                                 <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
                                     <div>
                                         <label for="effective_date" class="block text-sm font-medium text-gray-700">
-                                            {{ $type === 'timekeeping_complaint' ? 'Date of Issue' : ($type === 'leave' ? 'Start Date' : 'Effective Date') }} <span class="text-red-500">*</span>
+                                            {{ $type === 'leave' ? 'Start Date' : 'Effective Date' }} <span class="text-red-500">*</span>
                                         </label>
                                         <input type="date" name="effective_date" id="effective_date" required
                                                value="{{ old('effective_date') }}"
@@ -260,7 +203,7 @@
                                             <span class="text-red-500 text-sm">{{ $message }}</span>
                                         @enderror
                                     </div>
-                                    @if($type !== 'leave_cancellation' && $type !== 'timekeeping_complaint')
+                                    @if($type !== 'leave_cancellation')
                                         <div>
                                             <label for="effective_date_end" class="block text-sm font-medium text-gray-700">
                                                 {{ $type === 'leave' ? 'End Date' : 'End Date (if applicable)' }}
@@ -320,7 +263,7 @@
                             {{-- Reason (all types) --}}
                             <div>
                                 <label for="reason" class="block text-sm font-medium text-gray-700">
-                                    {{ $type === 'payroll_complaint' || $type === 'timekeeping_complaint' ? 'Details / Explanation' : 'Reason' }} <span class="text-red-500">*</span>
+                                    {{ $type === 'payroll_complaint' ? 'Details / Explanation' : 'Reason' }} <span class="text-red-500">*</span>
                                 </label>
                                 <textarea name="reason" id="reason" rows="4" required
                                           placeholder="Please provide detailed information..."

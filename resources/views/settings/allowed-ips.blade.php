@@ -1,6 +1,6 @@
 <x-app-layout>
     <x-slot name="header">
-        <div class="flex flex-col md:flex-row justify-between items-start md:items-center gap-4">
+        <div class="w-full flex flex-col md:flex-row justify-between items-start md:items-center gap-4">
             <div class="flex items-center gap-4">
                 <a href="{{ route('settings.index') }}" class="group bg-white/40 backdrop-blur-xl p-3 rounded-2xl border border-white/60 hover:bg-slate-900 transition-all duration-300">
                     <svg class="w-5 h-5 text-slate-900 group-hover:text-white transition-colors" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -40,7 +40,7 @@
             });
         }
     }">
-        <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+        <div class="w-full">
             @if(session('success'))
                 <div class="mb-8 p-4 bg-emerald-500 text-white text-xs font-black uppercase tracking-widest rounded-2xl shadow-lg shadow-emerald-100 flex items-center gap-3">
                     <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="3" d="M5 13l4 4L19 7"></path></svg>
@@ -48,20 +48,20 @@
                 </div>
             @endif
 
-            <div class="grid grid-cols-1 lg:grid-cols-12 gap-8">
+            <div class="grid grid-cols-1 md:grid-cols-12 gap-8 items-start w-full mx-auto max-w-[1920px]">
                 <!-- IP Configuration Panel -->
-                <div class="lg:col-span-4 space-y-8">
+                <div class="md:col-span-12 lg:col-span-4 space-y-8 w-full">
                     <!-- Current Vector Card -->
-                    <div class="bg-slate-900 rounded-[2.5rem] p-8 shadow-2xl relative overflow-hidden group">
+                    <div class="bg-slate-900 rounded-3xl p-8 shadow-2xl relative overflow-hidden group">
                         <div class="absolute -right-4 -top-4 w-24 h-24 bg-blue-600/20 rounded-full blur-3xl group-hover:scale-150 transition-transform duration-700"></div>
-                        <h3 class="text-xs font-black text-blue-400 uppercase tracking-widest mb-4">Origin Vector</h3>
-                        <div class="flex flex-col gap-1">
-                            <span class="text-3xl font-black text-white tracking-tighter">{{ $currentIp }}</span>
-                            <div class="flex items-center gap-2 mt-2">
+                        <h3 class="text-xs font-black text-blue-400 uppercase tracking-widest mb-4 font-sans">Origin Vector</h3>
+                        <div class="flex flex-col gap-1 relative z-10 w-full">
+                            <span class="text-3xl font-black text-white tracking-tighter break-all">{{ $currentIp }}</span>
+                            <div class="flex flex-wrap items-center gap-2 mt-2">
                                 @if(!$isCurrentIpAllowed)
                                     <span class="w-2 h-2 bg-amber-500 rounded-full"></span>
                                     <span class="text-[11px] font-black text-slate-400 uppercase tracking-widest">Unregistered Origin</span>
-                                    <form action="{{ route('settings.allowed-ips.add-current') }}" method="POST" class="ml-auto">
+                                    <form action="{{ route('settings.allowed-ips.add-current') }}" method="POST" class="inline-block ml-auto">
                                         @csrf
                                         <button type="submit" class="text-[11px] font-black text-blue-400 hover:text-white uppercase tracking-widest underline decoration-2 underline-offset-4 transition-colors">
                                             Authorize
@@ -76,9 +76,9 @@
                     </div>
 
                     <!-- Add Entry Card -->
-                    <div class="bg-white/40 backdrop-blur-xl border border-white/60 p-8 rounded-[2.5rem] shadow-sm">
+                    <div class="bg-white/40 backdrop-blur-xl border border-white/60 p-8 rounded-3xl shadow-sm">
                         <div class="flex items-center gap-4 mb-8">
-                            <div class="w-10 h-10 bg-slate-900 rounded-2xl flex items-center justify-center">
+                            <div class="w-10 h-10 bg-slate-900 rounded-2xl flex items-center justify-center shadow-lg">
                                 <svg class="w-5 h-5 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 9v3m0 0v3m0-3h3m-3 0H9m12 0a9 9 0 11-18 0 9 9 0 0118 0z"/></svg>
                             </div>
                             <h3 class="text-sm font-black text-slate-900 uppercase tracking-widest">New Gateway</h3>
@@ -105,12 +105,12 @@
                                 </div>
                                 <div class="flex items-end pb-3">
                                     <label class="flex items-center cursor-pointer group">
-                                        <input type="checkbox" name="is_active" value="1" checked class="w-5 h-5 rounded-lg border-white/60 bg-white/40 text-blue-600 focus:ring-blue-500/20 transition-all">
+                                        <input type="checkbox" name="is_active" value="1" checked class="w-5 h-5 rounded-lg border-white/60 bg-white/40 text-blue-600 focus:ring-blue-500/20 transition-all shadow-sm">
                                         <span class="ml-3 text-xs font-black text-slate-500 uppercase tracking-widest group-hover:text-slate-900">Active</span>
                                     </label>
                                 </div>
                             </div>
-                            <button type="submit" class="w-full py-5 bg-slate-900 text-sm font-black uppercase tracking-widest rounded-2xl hover:bg-blue-600 transition-all duration-300 shadow-xl shadow-slate-200">
+                            <button type="submit" class="w-full py-5 bg-slate-900 text-white text-sm font-black uppercase tracking-widest rounded-2xl hover:bg-blue-600 transition-all duration-300 shadow-xl shadow-slate-200">
                                 Deploy Gateway
                             </button>
                         </form>
@@ -118,22 +118,24 @@
                 </div>
 
                 <!-- Verified Gateways List -->
-                <div class="lg:col-span-8">
-                    <div class="bg-white/40 backdrop-blur-xl border border-white/60 rounded-[2.5rem] shadow-sm overflow-hidden">
-                        <div class="p-8 border-b border-white/60 flex flex-col md:flex-row justify-between items-start md:items-center gap-4 bg-white/20">
-                            <div class="flex items-center gap-4">
-                                <div class="w-10 h-10 bg-blue-600/10 rounded-2xl flex items-center justify-center">
-                                    <svg class="w-5 h-5 text-blue-600" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m5.618-4.016A11.955 11.955 0 0112 2.944a11.955 11.955 0 01-8.618 3.04A12.02 12.02 0 003 9c0 5.591 3.824 10.29 9 11.622 5.176-1.332 9-6.03 9-11.622 0-1.042-.133-2.052-.382-3.016z"/></svg>
-                                </div>
-                                <div>
-                                    <h3 class="text-sm font-black text-slate-900 uppercase tracking-widest">Verified Gateways</h3>
-                                    <p class="text-[9px] font-bold text-slate-400 uppercase tracking-[0.2em] mt-0.5">{{ $allowedIps->total() }} ACTIVE NODES</p>
+                <div class="md:col-span-12 lg:col-span-8 w-full">
+                    <div class="bg-white/40 backdrop-blur-xl border border-white/60 rounded-3xl shadow-sm overflow-hidden">
+                        <div class="p-8 border-b border-white/60 bg-white/20">
+                            <div class="flex flex-col md:flex-row justify-between items-start md:items-center gap-4">
+                                <div class="flex items-center gap-4">
+                                    <div class="w-10 h-10 bg-blue-600/10 rounded-2xl flex items-center justify-center">
+                                        <svg class="w-5 h-5 text-blue-600" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m5.618-4.016A11.955 11.955 0 0112 2.944a11.955 11.955 0 01-8.618 3.04A12.02 12.02 0 003 9c0 5.591 3.824 10.29 9 11.622 5.176-1.332 9-6.03 9-11.622 0-1.042-.133-2.052-.382-3.016z"/></svg>
+                                    </div>
+                                    <div>
+                                        <h3 class="text-sm font-black text-slate-900 uppercase tracking-widest">Verified Gateways</h3>
+                                        <p class="text-[9px] font-bold text-slate-400 uppercase tracking-[0.2em] mt-0.5">{{ $allowedIps->total() }} ACTIVE NODES</p>
+                                    </div>
                                 </div>
                             </div>
                         </div>
 
-                        <div class="overflow-x-auto">
-                            <table class="w-full text-left border-collapse">
+                        <div class="w-full overflow-x-auto">
+                            <table class="w-full text-left border-collapse min-w-[600px]">
                                 <thead>
                                     <tr class="bg-slate-900/5">
                                         <th class="px-8 py-5 text-[10px] font-black text-slate-500 uppercase tracking-widest border-b border-white/20">Address Vector</th>
@@ -145,7 +147,7 @@
                                 <tbody class="divide-y divide-white/60">
                                     @forelse($allowedIps as $ip)
                                         <tr class="group hover:bg-white/40 transition-all duration-300 {{ !$ip->is_active ? 'opacity-40' : '' }}">
-                                            <td class="px-8 py-6">
+                                            <td class="px-8 py-6 whitespace-nowrap">
                                                 <div class="flex items-center gap-3">
                                                     <span class="px-3 py-1.5 bg-slate-900 rounded-lg text-[11px] font-black text-white tracking-widest font-mono">{{ $ip->ip_address }}</span>
                                                     @if($ip->ip_address == $currentIp)
@@ -153,28 +155,28 @@
                                                     @endif
                                                 </div>
                                             </td>
-                                            <td class="px-8 py-6">
-                                                <div class="text-[10px] font-black text-slate-900 uppercase tracking-widest">{{ $ip->label }}</div>
+                                            <td class="px-8 py-6 whitespace-nowrap">
+                                                <div class="text-[10px] font-black text-slate-900 uppercase tracking-widest truncate max-w-[150px]">{{ $ip->label }}</div>
                                                 <div class="text-[9px] font-bold text-slate-400 uppercase tracking-widest mt-1">{{ $ip->location ?: "UNSPECIFIED LOC" }}</div>
                                             </td>
-                                            <td class="px-8 py-6 text-center">
-                                                <form action="{{ route("settings.allowed-ips.toggle", $ip) }}" method="POST">
+                                            <td class="px-8 py-6 text-center whitespace-nowrap">
+                                                <form action="{{ route('settings.allowed-ips.toggle', $ip) }}" method="POST">
                                                     @csrf
-                                                    @method("PATCH")
+                                                    @method('PATCH')
                                                     <button type="submit" class="px-4 py-1.5 rounded-xl text-[9px] font-black uppercase tracking-widest border transition-all
-                                                        {{ $ip->is_active ? "bg-emerald-500/10 border-emerald-500/20 text-emerald-600 hover:bg-emerald-500 hover:text-white" : "bg-slate-500/10 border-slate-500/20 text-slate-600 hover:bg-slate-500 hover:text-white" }}">
-                                                        {{ $ip->is_active ? "Shield On" : "Shield Off" }}
+                                                        {{ $ip->is_active ? 'bg-emerald-500/10 border-emerald-500/20 text-emerald-600 hover:bg-emerald-500 hover:text-white' : 'bg-slate-500/10 border-slate-500/20 text-slate-600 hover:bg-slate-50 hover:text-white' }}">
+                                                        {{ $ip->is_active ? 'Shield On' : 'Shield Off' }}
                                                     </button>
                                                 </form>
                                             </td>
-                                            <td class="px-8 py-6 text-right">
+                                            <td class="px-8 py-6 text-right whitespace-nowrap">
                                                 <div class="flex justify-end items-center gap-2">
                                                     <button @click="openEdit({{ json_encode($ip) }})" class="p-2.5 bg-blue-600/10 text-blue-600 rounded-xl hover:bg-blue-600 hover:text-white transition-all transform hover:scale-110">
                                                         <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15.232 5.232l3.536 3.536m-2.036-5.036a2.5 2.5 0 113.536 3.536L6.5 21.036H3v-3.572L16.732 3.732z"/></svg>
                                                     </button>
-                                                    <form action="{{ route("settings.allowed-ips.destroy", $ip) }}" method="POST" class="inline" onsubmit="return confirm("Terminate this gateway node?");">
+                                                    <form action="{{ route('settings.allowed-ips.destroy', $ip) }}" method="POST" class="inline" onsubmit="return confirm('Terminate this gateway node?');">
                                                         @csrf
-                                                        @method("DELETE")
+                                                        @method('DELETE')
                                                         <button type="submit" class="p-2.5 bg-rose-600/10 text-rose-600 rounded-xl hover:bg-rose-600 hover:text-white transition-all transform hover:scale-110">
                                                             <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"/></svg>
                                                         </button>

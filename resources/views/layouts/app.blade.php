@@ -676,7 +676,8 @@
                             <div x-show="!sidebarOpen" class="tooltip">DTR Center</div>
                         </div>
 
-                        <!-- Timekeeping (Live) -->
+                        <!-- Timekeeping (Live) Restricted to Admin -->
+                        @if(auth()->user()->isAdmin())
                         <div class="relative nav-item mb-1">
                             <a href="{{ route('timekeeping.admin-index', ['tab' => 'logs']) }}" class="flex items-center gap-3 px-3 py-2.5 mx-2 rounded-xl transition-all duration-200 group {{ (request()->routeIs('timekeeping.admin-index') && (request('tab', 'logs') === 'logs')) ? 'bg-blue-600 text-white shadow-lg ring-1 ring-white/20' : 'text-gray-400 hover:bg-white/5 hover:text-white' }}">
                                 <div class="w-8 h-8 flex items-center justify-center flex-shrink-0 transition-transform group-hover:scale-110">
@@ -688,6 +689,7 @@
                             </a>
                             <div x-show="!sidebarOpen" class="tooltip">Timekeeping Management</div>
                         </div>
+                        @endif
 
                         <!-- Leave Management -->
                         @if(!auth()->user()->isAccounting() || auth()->user()->isSuperAdmin())
