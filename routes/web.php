@@ -178,6 +178,15 @@ Route::middleware('auth')->group(function () {
         Route::get('/manage/attendance/{attendance}', [AttendanceController::class, 'show'])->name('attendance.show');
         Route::get('/manage/attendance/{attendance}/edit', [AttendanceController::class, 'edit'])->name('attendance.edit');
         Route::put('/manage/attendance/{attendance}', [AttendanceController::class, 'update'])->name('attendance.update');
+        Route::delete('/manage/attendance/{attendance}', [AttendanceController::class, 'destroy'])->name('attendance.destroy');
+
+        // Timekeeping Management
+        Route::get('/manage/timekeeping', [TimekeepingController::class, 'adminIndex'])->name('timekeeping.admin-index');
+        Route::post('/manage/timekeeping', [TimekeepingController::class, 'adminStore'])->name('timekeeping.admin-store');
+        Route::patch('/timekeeping/{transaction}/update', [TimekeepingController::class, 'update'])->name('timekeeping.admin-update');
+        Route::patch('/timekeeping/{transaction}/void', [TimekeepingController::class, 'void'])->name('timekeeping.void');
+        Route::delete('/timekeeping/{transaction}', [TimekeepingController::class, 'destroy'])->name('timekeeping.destroy');
+        Route::get('/timekeeping/live-stats', [TimekeepingController::class, 'liveStats'])->name('timekeeping.live-stats');
 
         // Leave Management
         Route::get('/manage/leaves', [LeaveController::class, 'manage'])->name('leaves.manage');
@@ -399,12 +408,6 @@ Route::middleware('auth')->group(function () {
         Route::get('/audit-logs', [AuditLogController::class, 'index'])->name('audit-logs.index');
         Route::get('/audit-logs/{auditLog}', [AuditLogController::class, 'show'])->name('audit-logs.show');
 
-        // Timekeeping Management
-        Route::get('/manage/timekeeping', [TimekeepingController::class, 'adminIndex'])->name('timekeeping.admin-index');
-        Route::post('/manage/timekeeping', [TimekeepingController::class, 'adminStore'])->name('timekeeping.admin-store');
-        Route::patch('/timekeeping/{transaction}/update', [TimekeepingController::class, 'update'])->name('timekeeping.admin-update');
-        Route::patch('/timekeeping/{transaction}/void', [TimekeepingController::class, 'void'])->name('timekeeping.void');
-        Route::get('/timekeeping/live-stats', [TimekeepingController::class, 'liveStats'])->name('timekeeping.live-stats');
         // Settings Management
         Route::get('/settings', [SettingsController::class, 'index'])->name('settings.index');
         Route::get('/settings/company', [SettingsController::class, 'company'])->name('settings.company');

@@ -54,7 +54,7 @@
                                     <span class="px-2 py-1 text-xs rounded-full {{ $statusColors[$concern->status] ?? '' }}">
                                         {{ $statuses[$concern->status] ?? $concern->status }}
                                     </span>
-                                    @if($concern->details['is_confidential'] ?? false)
+                                    @if($concern->is_confidential)
                                         <span class="px-2 py-1 text-xs rounded-full bg-red-100 text-red-800 flex items-center">
                                             <svg class="w-3 h-3 mr-1" fill="currentColor" viewBox="0 0 20 20">
                                                 <path fill-rule="evenodd" d="M5 9V7a5 5 0 0110 0v2a2 2 0 012 2v5a2 2 0 01-2 2H5a2 2 0 01-2-2v-5a2 2 0 012-2zm8-2v2H7V7a3 3 0 016 0z" clip-rule="evenodd" />
@@ -69,7 +69,34 @@
                                 {!! nl2br(e($concern->description)) !!}
                             </div>
 
-                            @if(!empty($concern->details['attachment']))
+                            @php
+                                $tkCategory = 'timekeeping';
+                            @endphp
+
+                            @if($concern->category === $tkCategory && $concern->date_affected)
+                                <div class="mt-4 p-4 bg-blue-50 border-l-4 border-blue-500 rounded-lg shadow-sm">
+                                    <div class="flex flex-col sm:flex-row sm:items-center gap-4 text-sm">
+                                        <div class="flex items-center">
+                                            <svg class="w-5 h-5 text-blue-500 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 00-2 2z"></path>
+                                            </svg>
+                                            <span class="font-bold text-blue-700">Date Affected:</span>
+                                            <span class="ml-2 font-mono text-blue-800">{{ $concern->date_affected->format('M d, Y') }}</span>
+                                        </div>
+                                        @if($concern->affected_punch)
+                                            <div class="flex items-center sm:border-l sm:pl-4 sm:border-blue-200">
+                                                <svg class="w-5 h-5 text-blue-500 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z"></path>
+                                                </svg>
+                                                <span class="font-bold text-blue-700">Punch:</span>
+                                                <span class="ml-2 font-black text-blue-800 uppercase tracking-wider">{{ $concern->affected_punch }}</span>
+                                            </div>
+                                        @endif
+                                    </div>
+                                </div>
+                            @endif
+
+                            @if(!empty($concern->attachment))
                                 <div class="mt-6 p-4 bg-gray-50 rounded-lg border border-gray-100">
                                     <h4 class="text-sm font-semibold text-gray-700 mb-2 flex items-center">
                                         <svg class="w-4 h-4 mr-1" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -78,7 +105,7 @@
                                         Attachment
                                     </h4>
                                     <div class="flex items-center">
-                                        <a href="{{ asset('storage/' . $concern->details['attachment']) }}" target="_blank" class="text-blue-600 hover:text-blue-800 text-sm font-medium flex items-center">
+                                        <a href="{{ asset('storage/' . $concern->attachment) }}" target="_blank" class="text-blue-600 hover:text-blue-800 text-sm font-medium flex items-center">
                                             <span>View Uploaded File</span>
                                             <svg class="w-4 h-4 ml-1" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                                                 <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10 6H6a2 2 0 00-2 2v10a2 2 0 002 2h10a2 2 0 002-2v-4M14 4h6m0 0v6m0-6L10 14"></path>
@@ -98,16 +125,10 @@
                                         <span class="font-medium">Assigned To:</span>
                                         {{ $concern->assignee->name ?? 'Not yet assigned' }}
                                     </div>
-                                    @if(!empty($concern->details['location']))
+                                    @if(!empty($concern->location))
                                         <div>
                                             <span class="font-medium">Location:</span>
-                                            {{ $concern->details['location'] }}
-                                        </div>
-                                    @endif
-                                    @if(!empty($concern->details['affected_pc']))
-                                        <div>
-                                            <span class="font-medium">Affected PC:</span>
-                                            {{ $concern->details['affected_pc'] }}
+                                            {{ $concern->location }}
                                         </div>
                                     @endif
                                     <div>

@@ -40,7 +40,7 @@
                         </div>
 
                         <!-- Category, Priority & Status -->
-                        <div class="grid grid-cols-1 md:grid-cols-3 gap-6">
+                        <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
                             <div>
                                 <label for="category" class="block text-sm font-medium text-gray-700 mb-1">
                                     Category <span class="text-red-500">*</span>
@@ -85,7 +85,80 @@
                                     <p class="mt-1 text-sm text-red-500">{{ $message }}</p>
                                 @enderror
                             </div>
+
+                            <div>
+                                <label for="location" class="block text-sm font-medium text-gray-700 mb-1">
+                                    Location / Site
+                                </label>
+                                <select name="location" id="location" 
+                                        class="w-full border-gray-300 rounded-md shadow-sm focus:ring-indigo-500 focus:border-indigo-500 @error('location') border-red-500 @enderror">
+                                    <option value="">Select Location</option>
+                                    @foreach($sites as $id => $name)
+                                        <option value="{{ $name }}" {{ old('location', $concern->location) == $name ? 'selected' : '' }}>{{ $name }}</option>
+                                    @endforeach
+                                </select>
+                                @error('location')
+                                    <p class="mt-1 text-sm text-red-500">{{ $message }}</p>
+                                @enderror
+                            </div>
                         </div>
+
+                        <div id="date_affected_container" class="grid grid-cols-1 md:grid-cols-2 gap-6 p-4 bg-gray-50 rounded-xl border border-gray-200" style="{{ old('category', $concern->category) == 'timekeeping' ? '' : 'display: none;' }}">
+                            <div>
+                                <label for="date_affected" class="block text-sm font-medium text-gray-700 mb-1">
+                                    Date Affected <span class="text-red-500 font-bold">*</span>
+                                </label>
+                                <input type="date" name="date_affected" id="date_affected" value="{{ old('date_affected', $concern->date_affected ? $concern->date_affected->format('Y-m-d') : '') }}"
+                                       class="w-full border-gray-300 rounded-md shadow-sm focus:ring-indigo-500 focus:border-indigo-500 @error('date_affected') border-red-500 @enderror">
+                                @error('date_affected')
+                                    <p class="mt-1 text-sm text-red-500">{{ $message }}</p>
+                                @enderror
+                            </div>
+
+                            <div>
+                                <label for="affected_punch" class="block text-sm font-medium text-gray-700 mb-1">
+                                    Affected Punch <span class="text-red-500 font-bold">*</span>
+                                </label>
+                                <select name="affected_punch" id="affected_punch" 
+                                        class="w-full border-gray-300 rounded-md shadow-sm focus:ring-indigo-500 focus:border-indigo-500 @error('affected_punch') border-red-500 @enderror">
+                                    <option value="">Select Punch</option>
+                                    @php
+                                        $punches = ['IN', '1st BREAK OUT', '1st BREAK IN', 'LUNCH BREAK OUT', 'LUNCH BREAK IN', '2nd BREAK OUT', '2nd BREAK IN', 'OUT'];
+                                    @endphp
+                                    @foreach($punches as $punch)
+                                        <option value="{{ $punch }}" {{ old('affected_punch', $concern->affected_punch) == $punch ? 'selected' : '' }}>{{ $punch }}</option>
+                                    @endforeach
+                                </select>
+                                @error('affected_punch')
+                                    <p class="mt-1 text-sm text-red-500">{{ $message }}</p>
+                                @enderror
+                            </div>
+                        </div>
+
+                        <script>
+                            document.addEventListener('DOMContentLoaded', function() {
+                                const categorySelect = document.getElementById('category');
+                                const dateAffectedContainer = document.getElementById('date_affected_container');
+                                const dateAffectedInput = document.getElementById('date_affected');
+                                const affectedPunchSelect = document.getElementById('affected_punch');
+
+                                function toggleFields() {
+                                    const category = categorySelect.value;
+                                    if (category === 'timekeeping') {
+                                        dateAffectedContainer.style.display = 'grid';
+                                        dateAffectedInput.setAttribute('required', 'required');
+                                        affectedPunchSelect.setAttribute('required', 'required');
+                                    } else {
+                                        dateAffectedContainer.style.display = 'none';
+                                        dateAffectedInput.removeAttribute('required');
+                                        affectedPunchSelect.removeAttribute('required');
+                                    }
+                                }
+
+                                categorySelect.addEventListener('change', toggleFields);
+                                toggleFields();
+                            });
+                        </script>
 
                         <!-- Assign To -->
                         <div>

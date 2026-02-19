@@ -358,4 +358,20 @@ class AttendanceController extends Controller
         return redirect()->route('attendance.manage')
             ->with('success', 'Attendance record updated successfully.');
     }
+
+    /**
+     * Admin/HR: Delete attendance record
+     */
+    public function destroy(Attendance $attendance)
+    {
+        if (!auth()->user()->isAdmin()) {
+            abort(403, 'Only admins can delete attendance records.');
+        }
+
+        // Delete associated transactions if any
+        $attendance->timekeepingTransactions()->delete();
+        $attendance->delete();
+
+        return redirect()->route('attendance.manage')->with('success', 'Attendance record deleted successfully.');
+    }
 }

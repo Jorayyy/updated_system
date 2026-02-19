@@ -189,14 +189,49 @@ class TimekeepingController extends Controller
             $query->where('status', $request->status);
         }
 
-        $transactions = $query->orderBy('transaction_time', 'desc')->paginate(25);
+        // Fetch All Concerns/Tickets if in "tickets" mode, otherwise just TK complaints
+        $activeTab = $request->get('tab', 'logs');
         
-        // Fetch Timekeeping Complaints (Concerns)
-        $tkComplaints = \App\Models\Concern::where('category', 'timekeeping')
-            ->with('reporter')
-            ->orderBy('created_at', 'desc')
-            ->limit(10)
-            ->get();
+        $concernsQuery = \App\Models\Concern::with('reporter');
+        
+        // Execute queries based on active tab
+        if ($activeTab === 'tickets') {
+            // Apply Concern filters if we are in ticket tab
+            if ($request->filled('ticket_search')) {
+                $concernsQuery->where(function($q) use ($request) {
+                    $q->where('ticket_number', 'like', '%' . $request->ticket_search . '%')
+                      ->orWhere('title', 'like', '%' . $request->ticket_search . '%')
+                      ->orWhereHas('reporter', function($sq) use ($request) {
+                          $sq->where('name', 'like', '%' . $request->ticket_search . '%')
+                             ->orWhere('employee_id', 'like', '%' . $request->ticket_search . '%');
+                      });
+                });
+            }
+            if ($request->filled('ticket_status')) {
+                $concernsQuery->where('status', $request->ticket_status);
+            }
+            if ($request->filled('ticket_category')) {
+                $concernsQuery->where('category', $request->ticket_category);
+            }
+            if ($request->filled('ticket_priority')) {
+                $concernsQuery->where('priority', $request->ticket_priority);
+            }
+            $concerns = $concernsQuery->orderBy('created_at', 'desc')->paginate(15, ['*'], 'concerns_page')->withQueryString();
+            $transactions = collect();
+            $tkComplaints = collect();
+        } else {
+            // Log Tab: Execute transaction query
+            $transactions = $query->orderBy('transaction_time', 'desc')->paginate(15)->withQueryString();
+
+            // TK Preview for Logs tab
+            $tkComplaints = \App\Models\Concern::where('category', 'timekeeping')
+                ->whereIn('status', ['open', 'in_progress', 'pending_info'])
+                ->with('reporter')
+                ->orderBy('created_at', 'desc')
+                ->limit(10)
+                ->get();
+            $concerns = collect();
+        }
         
         $employees = User::where('role', 'employee')
             ->where('is_active', true)
@@ -205,6 +240,9 @@ class TimekeepingController extends Controller
 
         $transactionTypes = TimekeepingTransaction::getGroupedTransactionTypes();
         $categories = TimekeepingTransaction::CATEGORIES;
+        $concernCategories = \App\Models\Concern::CATEGORIES;
+        $concernStatuses = \App\Models\Concern::STATUSES;
+        $concernPriorities = \App\Models\Concern::PRIORITIES;
 
         // Stats for today
         $stats = [
@@ -215,10 +253,24 @@ class TimekeepingController extends Controller
                 ->count('user_id'),
             'on_break' => $this->countCurrentStatus('break'),
             'in_meeting' => $this->countCurrentStatus('aux_meeting'),
-            'pending_complaints' => \App\Models\Concern::where('category', 'timekeeping')->open()->count(),
+            'pending_complaints' => \App\Models\Concern::whereIn('status', ['open', 'in_progress', 'pending_info'])->count(),
+            'open_tk_complaints' => \App\Models\Concern::where('category', 'timekeeping')->whereIn('status', ['open', 'in_progress'])->count(),
         ];
 
-        return view('timekeeping.admin-index', compact('transactions', 'employees', 'transactionTypes', 'categories', 'stats', 'tkComplaints'));
+        // Anomaly Detection: Missing Time-Outs
+        $anomalies = Attendance::with('user')
+            ->whereDate('date', '<', today())
+            ->whereNotNull('time_in')
+            ->whereNull('time_out')
+            ->orderBy('date', 'desc')
+            ->take(10)
+            ->get();
+
+        return view('timekeeping.admin-index', compact(
+            'transactions', 'employees', 'transactionTypes', 'categories', 
+            'stats', 'tkComplaints', 'concerns', 'activeTab',
+            'concernCategories', 'concernStatuses', 'concernPriorities', 'anomalies'
+        ));
     }
 
     /**
@@ -288,6 +340,20 @@ class TimekeepingController extends Controller
         ]);
 
         return redirect()->back()->with('success', 'Log updated successfully.');
+    }
+
+    /**
+     * Delete a timekeeping transaction
+     */
+    public function destroy(TimekeepingTransaction $transaction)
+    {
+        if (!auth()->user()->isAdmin()) {
+            abort(403, 'Only admins can delete transactions.');
+        }
+
+        $transaction->delete();
+
+        return redirect()->back()->with('success', 'Transaction deleted permanently.');
     }
 
     /**

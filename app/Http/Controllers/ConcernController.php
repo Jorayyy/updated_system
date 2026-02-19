@@ -94,7 +94,9 @@ class ConcernController extends Controller
             ->orderBy('name')
             ->get(['id', 'name']);
 
-        return view('concerns.create', compact('categories', 'priorities', 'assignees'));
+        $sites = \App\Models\Site::orderBy('name')->pluck('name', 'id');
+
+        return view('concerns.create', compact('categories', 'priorities', 'assignees', 'sites'));
     }
 
     /**
@@ -107,6 +109,9 @@ class ConcernController extends Controller
             'description' => 'required|string',
             'category' => ['required', Rule::in(array_keys(Concern::CATEGORIES))],
             'priority' => ['required', Rule::in(array_keys(Concern::PRIORITIES))],
+            'location' => 'nullable|string|max:255',
+            'date_affected' => 'nullable|date',
+            'affected_punch' => 'nullable|string|max:255',
             'assigned_to' => 'nullable|exists:users,id',
         ]);
 
@@ -118,6 +123,9 @@ class ConcernController extends Controller
                 'description' => $validated['description'],
                 'category' => $validated['category'],
                 'priority' => $validated['priority'],
+                'location' => $validated['location'] ?? null,
+                'date_affected' => $validated['date_affected'] ?? null,
+                'affected_punch' => $validated['affected_punch'] ?? null,
                 'status' => 'open',
                 'reported_by' => Auth::id(),
                 'assigned_to' => $validated['assigned_to'] ?? null,
@@ -199,7 +207,9 @@ class ConcernController extends Controller
             ->orderBy('name')
             ->get(['id', 'name']);
 
-        return view('concerns.edit', compact('concern', 'categories', 'priorities', 'statuses', 'assignees'));
+        $sites = \App\Models\Site::orderBy('name')->pluck('name', 'id');
+
+        return view('concerns.edit', compact('concern', 'categories', 'priorities', 'statuses', 'assignees', 'sites'));
     }
 
     /**
@@ -213,12 +223,15 @@ class ConcernController extends Controller
             'category' => ['required', Rule::in(array_keys(Concern::CATEGORIES))],
             'priority' => ['required', Rule::in(array_keys(Concern::PRIORITIES))],
             'status' => ['required', Rule::in(array_keys(Concern::STATUSES))],
+            'location' => 'nullable|string|max:255',
+            'date_affected' => 'nullable|date',
+            'affected_punch' => 'nullable|string|max:255',
             'assigned_to' => 'nullable|exists:users,id',
         ]);
 
         DB::beginTransaction();
         try {
-            $oldValues = $concern->only(['title', 'description', 'category', 'priority', 'status', 'assigned_to']);
+            $oldValues = $concern->only(['title', 'description', 'category', 'priority', 'status', 'location', 'date_affected', 'affected_punch', 'assigned_to']);
             
             $concern->update($validated);
 
@@ -545,8 +558,9 @@ class ConcernController extends Controller
         $categories = Concern::CATEGORIES;
         $priorities = Concern::PRIORITIES;
         $prefilled = $request->only(['category', 'title', 'description']);
+        $sites = \App\Models\Site::orderBy('name')->pluck('name', 'id');
 
-        return view('concerns.user-create', compact('categories', 'priorities', 'prefilled'));
+        return view('concerns.user-create', compact('categories', 'priorities', 'prefilled', 'sites'));
     }
 
     /**
@@ -560,7 +574,8 @@ class ConcernController extends Controller
             'category' => ['required', Rule::in(array_keys(Concern::CATEGORIES))],
             'priority' => ['required', Rule::in(array_keys(Concern::PRIORITIES))],
             'location' => 'nullable|string|max:255',
-            'affected_pc' => 'nullable|string|max:100',
+            'date_affected' => 'nullable|date',
+            'affected_punch' => 'nullable|string|max:255',
             'attachment' => 'nullable|file|mimes:jpg,jpeg,png,pdf,docx|max:5120',
             'is_confidential' => 'boolean',
         ]);
@@ -574,7 +589,8 @@ class ConcernController extends Controller
                 'category' => $validated['category'],
                 'priority' => $validated['priority'],
                 'location' => $validated['location'] ?? null,
-                'affected_pc' => $validated['affected_pc'] ?? null,
+                'date_affected' => $validated['date_affected'] ?? null,
+                'affected_punch' => $validated['affected_punch'] ?? null,
                 'is_confidential' => $request->boolean('is_confidential'),
                 'status' => 'open',
                 'reported_by' => Auth::id(),

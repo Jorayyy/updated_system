@@ -75,6 +75,14 @@ class Attendance extends Model
     }
 
     /**
+     * Get the timekeeping transactions for this attendance
+     */
+    public function timekeepingTransactions(): HasMany
+    {
+        return $this->hasMany(TimekeepingTransaction::class);
+    }
+
+    /**
      * Check if employee is currently on break (any break)
      */
     public function isOnBreak(): bool

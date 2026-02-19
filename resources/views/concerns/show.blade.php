@@ -60,7 +60,7 @@
                                     <span class="px-3 py-1 text-sm rounded-full {{ $concern->category_badge }}">
                                         {{ $categories[$concern->category] ?? $concern->category }}
                                     </span>
-                                    @if($concern->details['is_confidential'] ?? false)
+                                    @if($concern->is_confidential)
                                         <span class="px-3 py-1 text-sm rounded-full bg-red-100 text-red-800 flex items-center">
                                             <svg class="w-4 h-4 mr-1" fill="currentColor" viewBox="0 0 20 20">
                                                 <path fill-rule="evenodd" d="M5 9V7a5 5 0 0110 0v2a2 2 0 012 2v5a2 2 0 01-2 2H5a2 2 0 01-2-2v-5a2 2 0 012-2zm8-2v2H7V7a3 3 0 016 0z" clip-rule="evenodd" />
@@ -73,10 +73,34 @@
                             
                             <div class="prose max-w-none">
                                 <h3 class="text-lg font-semibold mb-2">Description</h3>
+
+                                @if($concern->category === 'timekeeping' && $concern->date_affected)
+                                    <div class="mb-4 p-4 bg-red-50 border-l-4 border-red-500 rounded-lg shadow-sm">
+                                        <div class="flex flex-col sm:flex-row sm:items-center gap-4 text-sm">
+                                            <div class="flex items-center">
+                                                <svg class="w-5 h-5 text-red-500 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 00-2 2z"></path>
+                                                </svg>
+                                                <span class="font-bold text-red-700 uppercase tracking-widest">Date Affected:</span>
+                                                <span class="ml-2 font-black text-red-800">{{ $concern->date_affected->format('F d, Y') }}</span>
+                                            </div>
+                                            @if($concern->affected_punch)
+                                                <div class="flex items-center sm:border-l sm:pl-4 sm:border-red-200">
+                                                    <svg class="w-5 h-5 text-red-500 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z"></path>
+                                                    </svg>
+                                                    <span class="font-bold text-red-700 uppercase tracking-widest text-shadow-sm">Affected Punch:</span>
+                                                    <span class="ml-2 px-2 py-0.5 bg-red-600 text-white rounded font-black tracking-tighter">{{ $concern->affected_punch }}</span>
+                                                </div>
+                                            @endif
+                                        </div>
+                                    </div>
+                                @endif
+
                                 <div class="bg-gray-50 rounded-lg p-4 whitespace-pre-wrap text-gray-800">{{ $concern->description }}</div>
                             </div>
 
-                            @if(!empty($concern->details['attachment']))
+                            @if(!empty($concern->attachment))
                                 <div class="mt-6">
                                     <h3 class="text-lg font-semibold mb-2">Evidence / Attachment</h3>
                                     <div class="bg-blue-50 border border-blue-100 rounded-lg p-4 flex items-center justify-between">
@@ -89,7 +113,7 @@
                                                 <p class="text-xs text-blue-600">Click to view/download</p>
                                             </div>
                                         </div>
-                                        <a href="{{ asset('storage/' . $concern->details['attachment']) }}" target="_blank" 
+                                        <a href="{{ asset('storage/' . $concern->attachment) }}" target="_blank" 
                                            class="bg-blue-600 text-white px-4 py-2 rounded shadow hover:bg-blue-700 transition">
                                             View File
                                         </a>
@@ -227,18 +251,13 @@
                                 <div class="flex justify-between">
                                     <dt class="text-sm text-gray-500">Assignee</dt>
                                     <dd class="text-sm font-medium">{{ $concern->assignee->name ?? 'Unassigned' }}</dd>
-                                </div>                                @if(!empty($concern->details['location']))
+                                </div>                                @if(!empty($concern->location))
                                     <div class="flex justify-between">
                                         <dt class="text-sm text-gray-500">Location</dt>
-                                        <dd class="text-sm font-medium">{{ $concern->details['location'] }}</dd>
+                                        <dd class="text-sm font-medium">{{ $concern->location }}</dd>
                                     </div>
                                 @endif
-                                @if(!empty($concern->details['affected_pc']))
-                                    <div class="flex justify-between">
-                                        <dt class="text-sm text-gray-500">Affected PC/Asset</dt>
-                                        <dd class="text-sm font-medium">{{ $concern->details['affected_pc'] }}</dd>
-                                    </div>
-                                @endif                                <div class="flex justify-between">
+                                <div class="flex justify-between">
                                     <dt class="text-sm text-gray-500">Created</dt>
                                     <dd class="text-sm">{{ $concern->created_at->format('M d, Y H:i') }}</dd>
                                 </div>

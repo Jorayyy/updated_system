@@ -380,7 +380,7 @@
                     </x-responsive-nav-link>
                 @endif
                 @if(auth()->user()->isAdmin())
-                    <x-responsive-nav-link :href="route('concerns.index')">
+                    <x-responsive-nav-link :href="route('timekeeping.admin-index', ['tab' => 'tickets'])" :active="request()->routeIs('timekeeping.admin-index') && request('tab') === 'tickets'">
                         {{ __('Concerns & Tickets') }}
                     </x-responsive-nav-link>
                 @endif

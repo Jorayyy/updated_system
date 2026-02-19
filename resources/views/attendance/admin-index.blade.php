@@ -190,7 +190,15 @@
                                             <a href="{{ route('attendance.show', $attendance) }}" 
                                                 class="text-indigo-600 hover:text-indigo-900 text-sm mr-2">View</a>
                                             <a href="{{ route('attendance.edit', $attendance) }}" 
-                                                class="text-yellow-600 hover:text-yellow-900 text-sm">Edit</a>
+                                                class="text-yellow-600 hover:text-yellow-900 text-sm mr-2">Edit</a>
+                                            
+                                            @if(auth()->user()->isAdmin())
+                                                <form action="{{ route('attendance.destroy', $attendance) }}" method="POST" class="inline" onsubmit="return confirm('Are you sure you want to delete this entire attendance record? This will also delete all associated logs.')">
+                                                    @csrf
+                                                    @method('DELETE')
+                                                    <button type="submit" class="text-red-600 hover:text-red-900 text-sm font-medium">Delete</button>
+                                                </form>
+                                            @endif
                                         </td>
                                     </tr>
                                 @empty

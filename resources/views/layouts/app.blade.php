@@ -65,15 +65,27 @@
             }
             
             .content-transition {
-                transition: margin-left 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+                transition: margin-left 0.3s cubic-bezier(0.4, 0, 0.2, 1), width 0.3s cubic-bezier(0.4, 0, 0.2, 1);
             }
             
             .content-expanded {
-                margin-left: 288px !important;
+                align-content: stretch;
             }
             
             .content-collapsed {
-                margin-left: 80px !important;
+                margin-left: 0px !important;
+            }
+            
+            /* Desktop */
+            @media (min-width: 1024px) {
+                .content-expanded {
+                    margin-left: 288px !important;
+                    width: calc(100% - 288px) !important;
+                }
+                .content-collapsed {
+                    margin-left: 80px !important;
+                    width: calc(100% - 80px) !important;
+                }
             }
             
             /* Mobile responsiveness */
@@ -91,6 +103,7 @@
                 .content-expanded,
                 .content-collapsed {
                     margin-left: 0 !important;
+                    width: 100% !important;
                 }
             }
             
@@ -652,7 +665,7 @@
 
                         <!-- Timekeeping (Live) -->
                         <div class="relative nav-item mb-1">
-                            <a href="{{ route('timekeeping.admin-index') }}" class="flex items-center gap-3 px-3 py-2.5 mx-2 rounded-xl transition-all duration-200 group {{ request()->routeIs('timekeeping.admin-index') ? 'bg-blue-600 text-white shadow-lg ring-1 ring-white/20' : 'text-gray-400 hover:bg-white/5 hover:text-white' }}">
+                            <a href="{{ route('timekeeping.admin-index', ['tab' => 'logs']) }}" class="flex items-center gap-3 px-3 py-2.5 mx-2 rounded-xl transition-all duration-200 group {{ (request()->routeIs('timekeeping.admin-index') && (request('tab', 'logs') === 'logs')) ? 'bg-blue-600 text-white shadow-lg ring-1 ring-white/20' : 'text-gray-400 hover:bg-white/5 hover:text-white' }}">
                                 <div class="w-8 h-8 flex items-center justify-center flex-shrink-0 transition-transform group-hover:scale-110">
                                     <svg class="w-5 h-5 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                                         <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 10V3L4 14h7v7l9-11h-7z"/>
@@ -801,9 +814,9 @@
                                 <div x-show="!sidebarOpen" class="tooltip">Backups</div>
                             </div>
 
-                            <!-- Concerns & Tickets -->
+                            <!-- Concerns & Tickets (Merged into Timekeeping Hub) -->
                             <div class="relative nav-item mb-1">
-                                <a href="{{ route('concerns.index') }}" class="flex items-center gap-3 px-3 py-2.5 mx-2 rounded-xl transition-all duration-200 group {{ request()->routeIs('concerns.*') ? 'bg-blue-600 text-white shadow-lg ring-1 ring-white/20' : 'text-gray-400 hover:bg-white/5 hover:text-white' }}">
+                                <a href="{{ route('timekeeping.admin-index', ['tab' => 'tickets']) }}" class="flex items-center gap-3 px-3 py-2.5 mx-2 rounded-xl transition-all duration-200 group {{ (request()->routeIs('timekeeping.admin-index') && request('tab') === 'tickets') || request()->routeIs('concerns.*') ? 'bg-blue-600 text-white shadow-lg ring-1 ring-white/20' : 'text-gray-400 hover:bg-white/5 hover:text-white' }}">
                                     <div class="w-8 h-8 flex items-center justify-center flex-shrink-0 transition-transform group-hover:scale-110">
                                         <svg class="w-5 h-5 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                                             <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M18.364 5.636l-3.536 3.536m0 5.656l3.536 3.536M9.172 9.172L5.636 5.636m3.536 9.192l-3.536 3.536M21 12a9 9 0 11-18 0 9 9 0 0118 0zm-5 0a4 4 0 11-8 0 4 4 0 018 0z"/>
@@ -825,7 +838,7 @@
             <div x-show="sidebarOpen && window.innerWidth < 1024" @click="sidebarOpen = false" class="fixed inset-0 bg-black bg-opacity-50 z-20 lg:hidden" x-cloak></div>
 
             <!-- Main Content -->
-            <div :class="sidebarOpen ? 'content-expanded' : 'content-collapsed'" class="flex-1 bg-gray-50/50 content-transition min-h-screen w-full flex flex-col relative overflow-hidden">
+            <div :class="sidebarOpen ? 'content-expanded' : 'content-collapsed'" class="flex-1 bg-gray-50/50 content-transition min-h-screen flex flex-col relative w-full">
                 <!-- Mobile Header -->
                 <header class="lg:hidden bg-white shadow-sm h-16 flex items-center px-4 sticky top-0 z-20">
                     <button @click="sidebarOpen = !sidebarOpen" class="p-2 rounded-lg hover:bg-gray-100 transition">

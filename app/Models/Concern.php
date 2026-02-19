@@ -19,8 +19,9 @@ class Concern extends Model
         'category',
         'priority',
         'description',
+        'date_affected',
+        'affected_punch',
         'location',
-        'affected_pc',
         'status',
         'resolution_notes',
         'resolved_by',
@@ -33,6 +34,7 @@ class Concern extends Model
     ];
 
     protected $casts = [
+        'date_affected' => 'date',
         'resolved_at' => 'datetime',
         'acknowledged_at' => 'datetime',
         'first_response_at' => 'datetime',

@@ -140,12 +140,12 @@
                                                 {{ $concern->title }}
                                             </div>
                                             <div class="flex flex-shrink-0 space-x-1">
-                                                @if($concern->details['is_confidential'] ?? false)
+                                                @if($concern->is_confidential)
                                                     <svg class="w-4 h-4 text-red-500" fill="currentColor" viewBox="0 0 20 20" title="Confidential">
                                                         <path fill-rule="evenodd" d="M5 9V7a5 5 0 0110 0v2a2 2 0 012 2v5a2 2 0 01-2 2H5a2 2 0 01-2-2v-5a2 2 0 012-2zm8-2v2H7V7a3 3 0 016 0z" clip-rule="evenodd" />
                                                     </svg>
                                                 @endif
-                                                @if(!empty($concern->details['attachment']))
+                                                @if(!empty($concern->attachment))
                                                     <svg class="w-4 h-4 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24" title="Has Attachment">
                                                         <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15.172 7l-6.586 6.586a2 2 0 102.828 2.828l6.414-6.586a4 4 0 00-5.656-5.656l-6.415 6.585a6 6 0 108.486 8.486L20.5 13"></path>
                                                     </svg>
@@ -157,6 +157,21 @@
                                         <span class="px-2 py-1 text-xs rounded-full {{ $concern->category_badge }}">
                                             {{ \App\Models\Concern::CATEGORIES[$concern->category] ?? $concern->category }}
                                         </span>
+                                        @if($concern->category === 'timekeeping' && $concern->date_affected)
+                                            <div class="flex flex-col mt-1">
+                                                <div class="flex items-center text-[10px] font-bold text-red-600 bg-red-50 px-1 rounded border border-red-100 w-fit">
+                                                    <svg class="w-2.5 h-2.5 mr-0.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 00-2 2z"></path>
+                                                    </svg>
+                                                    {{ $concern->date_affected->format('M d') }}
+                                                </div>
+                                                @if($concern->affected_punch)
+                                                    <div class="text-[9px] font-black text-white bg-red-500 px-1 rounded mt-0.5 w-fit uppercase tracking-tighter shadow-sm">
+                                                        {{ $concern->affected_punch }}
+                                                    </div>
+                                                @endif
+                                            </div>
+                                        @endif
                                     </td>
                                     <td class="px-6 py-4 whitespace-nowrap text-center">
                                         <span class="px-2 py-1 text-xs rounded-full {{ $concern->priority_badge }}">
