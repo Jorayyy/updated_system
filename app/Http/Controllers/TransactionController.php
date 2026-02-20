@@ -140,7 +140,10 @@ class TransactionController extends Controller
             $rules['payroll_period'] = 'required|string|max:100';
             $rules['complaint_type'] = 'required|string|max:100';
         }
-
+        if ($type === 'timekeeping_complaint') {
+            $rules['date_affected'] = 'required|date';
+            $rules['affected_punch'] = 'required|string|max:255';
+        }
         if ($type === 'schedule_change' || $type === 'restday_change') {
             $rules['current_schedule'] = 'required|string|max:200';
             $rules['requested_schedule'] = 'required|string|max:200';
@@ -196,6 +199,10 @@ class TransactionController extends Controller
             if ($type === 'payroll_complaint') {
                 $details['payroll_period'] = $validated['payroll_period'];
                 $details['complaint_type'] = $validated['complaint_type'];
+            }
+            if ($type === 'timekeeping_complaint') {
+                $data['effective_date'] = $validated['date_affected'];
+                $details['affected_punch'] = $validated['affected_punch'];
             }
             if ($type === 'schedule_change' || $type === 'restday_change') {
                 $details['current_schedule'] = $validated['current_schedule'];
@@ -343,6 +350,10 @@ class TransactionController extends Controller
             return back()->with('error', 'Only SuperAdmin can approve leave requests.');
         }
 
+        if ($transaction->transaction_type === 'timekeeping_complaint' && !auth()->user()->isAdmin()) {
+            return back()->with('error', 'Only Admins and SuperAdmins can approve Timekeeping Complaints.');
+        }
+
         if (!$transaction->needsHrApproval()) {
             return back()->with('error', 'This transaction does not need HR approval.');
         }
@@ -368,6 +379,10 @@ class TransactionController extends Controller
 
         if (!auth()->user()->isSuperAdmin() && $transaction->transaction_type === 'leave') {
             return back()->with('error', 'Only SuperAdmin can approve leave requests.');
+        }
+
+        if ($transaction->transaction_type === 'timekeeping_complaint' && !auth()->user()->isAdmin()) {
+            return back()->with('error', 'Only Admins and SuperAdmins can approve Timekeeping Complaints.');
         }
 
         if (!$transaction->needsAdminApproval() && $transaction->status !== 'pending') {
@@ -437,6 +452,10 @@ class TransactionController extends Controller
         // Hierarchy Check
         if (!auth()->user()->isSuperAdmin() && auth()->user()->hierarchy_level <= $transaction->user->hierarchy_level) {
             return back()->with('error', 'Hierarchy Restriction: You cannot reject transactions for users with equal or higher rank.');
+        }
+
+        if ($transaction->transaction_type === 'timekeeping_complaint' && !auth()->user()->isAdmin()) {
+            return back()->with('error', 'Only Admins and SuperAdmins can reject Timekeeping Complaints.');
         }
 
         $validated = $request->validate([

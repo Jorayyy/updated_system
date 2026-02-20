@@ -97,6 +97,17 @@ class User extends Authenticatable
     ];
 
     /**
+     * Get the full name for display.
+     */
+    public function getFullNameAttribute(): string
+    {
+        if ($this->first_name && $this->last_name) {
+            return "{$this->last_name}, {$this->first_name}";
+        }
+        return $this->name;
+    }
+
+    /**
      * Get the profile photo URL checking multiple possible paths
      */
     public function getProfilePhotoUrl()

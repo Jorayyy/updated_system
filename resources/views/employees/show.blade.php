@@ -1,9 +1,16 @@
 <x-app-layout>
     <x-slot name="header">
         <div class="flex justify-between items-center">
-            <h2 class="font-semibold text-xl text-gray-800 leading-tight">
-                {{ $employee->name }}
-            </h2>
+            <div class="flex items-center gap-4">
+                <a href="{{ route('employees.index') }}" class="text-gray-400 hover:text-gray-600 transition-colors" title="Back to Employees List">
+                    <svg xmlns="http://www.w3.org/2000/svg" class="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10 19l-7-7m0 0l7-7m-7 7h18" />
+                    </svg>
+                </a>
+                <h2 class="font-semibold text-xl text-gray-800 leading-tight">
+                    {{ $employee->name }}
+                </h2>
+            </div>
             <div class="flex gap-2">
                 <a href="{{ route('employees.edit', $employee) }}" class="bg-yellow-600 text-white px-4 py-2 rounded-md hover:bg-yellow-700">
                     Edit

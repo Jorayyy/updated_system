@@ -55,7 +55,9 @@ class PayrollGroupController extends Controller
             $q->latest()->limit(5);
         }]);
         
-        $availableUsers = User::whereNull('payroll_group_id')->orderBy('last_name')->get();
+        $availableUsers = User::whereNull('payroll_group_id')
+            ->orderByRaw('COALESCE(last_name, name)')
+            ->get();
 
         return view('admin.payroll-groups.show', compact('payrollGroup', 'availableUsers'));
     }

@@ -111,6 +111,41 @@
                                 </div>
                             @endif
 
+                            {{-- Timekeeping Complaint specific fields --}}
+                            @if($type === 'timekeeping_complaint')
+                                <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+                                    <div>
+                                        <label for="date_affected" class="block text-sm font-medium text-gray-700">
+                                            Date Affected <span class="text-red-500">*</span>
+                                        </label>
+                                        <input type="date" name="date_affected" id="date_affected" required
+                                               value="{{ old('date_affected') }}"
+                                               class="mt-1 block w-full rounded-md border-gray-300 shadow-sm">
+                                        @error('date_affected')
+                                            <span class="text-red-500 text-sm">{{ $message }}</span>
+                                        @enderror
+                                    </div>
+                                    <div>
+                                        <label for="affected_punch" class="block text-sm font-medium text-gray-700">
+                                            Affected Punch <span class="text-red-500">*</span>
+                                        </label>
+                                        <select name="affected_punch" id="affected_punch" required
+                                                class="mt-1 block w-full rounded-md border-gray-300 shadow-sm">
+                                            <option value="">Select Punch</option>
+                                            @php
+                                                $punches = ['IN', '1st BREAK OUT', '1st BREAK IN', 'LUNCH BREAK OUT', 'LUNCH BREAK IN', '2nd BREAK OUT', '2nd BREAK IN', 'OUT'];
+                                            @endphp
+                                            @foreach($punches as $punch)
+                                                <option value="{{ $punch }}" {{ old('affected_punch') == $punch ? 'selected' : '' }}>{{ $punch }}</option>
+                                            @endforeach
+                                        </select>
+                                        @error('affected_punch')
+                                            <span class="text-red-500 text-sm">{{ $message }}</span>
+                                        @enderror
+                                    </div>
+                                </div>
+                            @endif
+
                             {{-- Schedule Change / Rest Day Change specific fields --}}
                             @if($type === 'schedule_change' || $type === 'restday_change')
                                 <div class="grid grid-cols-1 md:grid-cols-2 gap-4">

@@ -1,11 +1,11 @@
 <x-app-layout>
     <x-slot name="header">
-        <div class="flex justify-between items-center bg-red-800 text-white p-4 -m-4 sm:-m-6 lg:-m-8 mb-4">
-            <h2 class="font-bold text-lg uppercase tracking-wider">
-                MAASIN ADMINS
+        <div class="flex justify-between items-center bg-red-800 text-white px-6 py-5 -mx-4 sm:-mx-6 lg:-mx-8 -mt-4 shadow-lg border-b-4 border-red-900">
+            <h2 class="font-bold text-xl uppercase tracking-widest flex items-center">
+                SITE ADMINS
             </h2>
-            <a href="{{ route('schedules.index') }}" class="hover:opacity-80">
-                <svg xmlns="http://www.w3.org/2000/svg" class="h-8 w-8" viewBox="0 0 20 20" fill="currentColor">
+            <a href="{{ route('schedules.index') }}" class="hover:scale-110 transition-transform bg-white/10 p-1.5 rounded-full">
+                <svg xmlns="http://www.w3.org/2000/svg" class="h-7 w-7 text-white" viewBox="0 0 20 20" fill="currentColor">
                     <path fill-rule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zm.707-10.293a1 1 0 00-1.414-1.414l-3 3a1 1 0 000 1.414l3 3a1 1 0 001.414-1.414L9.414 11H13a1 1 0 100-2H9.414l1.293-1.293z" clip-rule="evenodd" />
                 </svg>
             </a>

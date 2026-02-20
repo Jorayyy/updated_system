@@ -10,7 +10,16 @@
         <div class="max-w-[1500px] mx-auto sm:px-4 lg:px-6">
             <!-- Breadcrumb style title -->
             <div class="mb-4 bg-white p-3 border border-slate-200 rounded text-sm font-bold text-slate-600 shadow-sm flex items-center justify-between">
-                <div>View DTR</div>
+                <div class="flex items-center gap-2">
+                    @if(auth()->user()->id !== $user->id)
+                        <a href="{{ route('dtr.admin-index') }}" class="text-slate-400 hover:text-slate-600 transition-colors mr-1" title="Back to DTR Center">
+                            <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10 19l-7-7m0 0l7-7m-7 7h18" />
+                            </svg>
+                        </a>
+                    @endif
+                    <div>View DTR</div>
+                </div>
                 <div class="flex gap-4">
                     <a href="{{ route('concerns.user-create', ['category' => 'timekeeping', 'title' => 'DTR Discrepancy - ' . $startDate->format('F Y')]) }}" 
                         class="text-[10px] bg-red-50 text-red-700 px-3 py-1 rounded border border-red-200 hover:bg-red-100 transition-colors">

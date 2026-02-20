@@ -183,6 +183,7 @@
                             <h3 class="text-lg font-semibold mb-4">Quick Actions</h3>
                             
                             <!-- Status Update -->
+                            @if($concern->category !== 'timekeeping' || auth()->user()->isAdmin())
                             <form action="{{ route('concerns.status', $concern) }}" method="POST" class="mb-4">
                                 @csrf
                                 @method('PATCH')
@@ -199,6 +200,11 @@
                                     Update Status
                                 </button>
                             </form>
+                            @else
+                                <div class="p-4 bg-gray-50 border border-gray-200 rounded-md mb-4 text-xs text-gray-500 italic">
+                                    Only Admins/SuperAdmins can modify status for Timekeeping Complaints.
+                                </div>
+                            @endif
 
                             <!-- Assignment -->
                             <form action="{{ route('concerns.assign', $concern) }}" method="POST" class="mb-4">

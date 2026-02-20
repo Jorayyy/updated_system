@@ -91,7 +91,7 @@
                                     class="mt-1 block w-full border-gray-300 rounded-md shadow-sm focus:border-indigo-500 focus:ring-indigo-500">
                                     <option value="">-- Global / All Unassigned --</option>
                                     @foreach($groups as $group)
-                                        <option value="{{ $group->id }}" {{ old('payroll_group_id') == $group->id ? 'selected' : '' }}>
+                                        <option value="{{ $group->id }}" {{ old('payroll_group_id', $selectedGroupId ?? '') == $group->id ? 'selected' : '' }}>
                                             {{ $group->name }}
                                         </option>
                                     @endforeach

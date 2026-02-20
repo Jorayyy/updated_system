@@ -3,7 +3,10 @@
 namespace App\Http\Controllers;
 
 use App\Models\Account;
+use App\Models\Department;
 use App\Models\Schedule;
+use App\Models\PayrollGroup;
+use App\Models\Site;
 use App\Models\User;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Hash;
@@ -13,19 +16,42 @@ class ScheduleController extends Controller
 {
     public function index(Request $request)
     {
-        $query = User::query();
+        $query = User::with(['site', 'account', 'assignedDepartment']);
 
-        if ($request->has('search')) {
-            $search = $request->get('search');
-            $query->where(function($q) use ($search) {
+        // Filter by search
+        if ($request->filled('search')) {
+            $search = $request->search;
+            $query->where(function ($q) use ($search) {
                 $q->where('name', 'like', "%{$search}%")
-                  ->orWhere('employee_id', 'like', "%{$search}%");
+                    ->orWhere('employee_id', 'like', "%{$search}%")
+                    ->orWhere('email', 'like', "%{$search}%");
             });
         }
 
-        $users = $query->paginate(10);
+        // Filter by Site
+        if ($request->filled('site_id')) {
+            $query->where('site_id', $request->site_id);
+        }
+
+        // Filter by Account
+        if ($request->filled('account_id')) {
+            $query->where('account_id', $request->account_id);
+        }
+
+        // Filter by Department
+        if ($request->filled('department_id')) {
+            $query->where('department_id', $request->department_id);
+        }
+
+        // Standard Order
+        $users = $query->orderBy('name')->paginate(10);
         
-        return view('schedules.index', compact('users'));
+        // Data for filters
+        $sites = Site::orderBy('name')->get();
+        $accounts = Account::orderBy('name')->get();
+        $departments = Department::orderBy('name')->get();
+
+        return view('schedules.index', compact('users', 'sites', 'accounts', 'departments'));
     }
 
     public function edit($id)
@@ -39,20 +65,30 @@ class ScheduleController extends Controller
     {
         $query = User::where('is_active', true);
         
-        if ($request->has('account_id')) {
+        if ($request->filled('site_id')) {
+            $query->where('site_id', $request->site_id);
+        }
+
+        if ($request->filled('account_id')) {
             $query->where('account_id', $request->account_id);
         }
 
-        if ($request->has('department_id')) {
+        if ($request->filled('department_id')) {
             $query->where('department_id', $request->department_id);
+        }
+
+        if ($request->filled('payroll_group_id')) {
+            $query->where('payroll_group_id', $request->payroll_group_id);
         }
 
         $users = $query->orderBy('name')->get();
         $accounts = Account::all();
         $departments = Department::all();
+        $sites = Site::all();
+        $payrollGroups = PayrollGroup::where('is_active', true)->get();
         $schedules = Schedule::all(); // Shift templates
         
-        return view('schedules.group-create', compact('users', 'accounts', 'departments', 'schedules'));
+        return view('schedules.group-create', compact('users', 'accounts', 'departments', 'sites', 'payrollGroups', 'schedules'));
     }
 
     public function groupStore(Request $request)

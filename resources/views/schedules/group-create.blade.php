@@ -1,11 +1,11 @@
 <x-app-layout>
     <x-slot name="header">
-        <div class="flex justify-between items-center bg-red-800 text-white p-4 -m-4 sm:-m-6 lg:-m-8 mb-4">
-            <h2 class="font-bold text-lg uppercase tracking-wider">
-                MAASIN ADMINS - GROUP PLOTTING
+        <div class="flex justify-between items-center bg-red-800 text-white px-6 py-5 -mx-4 sm:-mx-6 lg:-mx-8 -mt-4 shadow-lg border-b-4 border-red-900">
+            <h2 class="font-bold text-xl uppercase tracking-widest flex items-center">
+                SITE ADMINS - GROUP PLOTTING
             </h2>
-            <a href="{{ route('schedules.index') }}" class="hover:opacity-80">
-                <svg xmlns="http://www.w3.org/2000/svg" class="h-8 w-8" viewBox="0 0 20 20" fill="currentColor">
+            <a href="{{ route('schedules.index') }}" class="hover:scale-110 transition-transform bg-white/10 p-1.5 rounded-full">
+                <svg xmlns="http://www.w3.org/2000/svg" class="h-7 w-7 text-white" viewBox="0 0 20 20" fill="currentColor">
                     <path fill-rule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zm.707-10.293a1 1 0 00-1.414-1.414l-3 3a1 1 0 000 1.414l3 3a1 1 0 001.414-1.414L9.414 11H13a1 1 0 100-2H9.414l1.293-1.293z" clip-rule="evenodd" />
                 </svg>
             </a>
@@ -26,14 +26,32 @@
                                 
                                 <div class="bg-slate-50 p-4 rounded-md space-y-3">
                                     <div class="text-xs font-bold text-slate-500 uppercase">Filters:</div>
-                                    <div class="space-y-2">
-                                        <select class="w-full text-xs rounded border-gray-200" onchange="window.location.href='?account_id='+this.value">
+                                    <form id="filterForm" method="GET" action="{{ route('schedules.group-create') }}" class="space-y-2">
+                                        <select name="site_id" class="w-full text-xs rounded border-gray-200" onchange="this.form.submit()">
+                                            <option value="">Filter by Site...</option>
+                                            @foreach($sites as $site)
+                                                <option value="{{ $site->id }}" {{ request('site_id') == $site->id ? 'selected' : '' }}>{{ $site->name }}</option>
+                                            @endforeach
+                                        </select>
+
+                                        <select name="account_id" class="w-full text-xs rounded border-gray-200" onchange="this.form.submit()">
                                             <option value="">Filter by Account...</option>
                                             @foreach($accounts as $acc)
                                                 <option value="{{ $acc->id }}" {{ request('account_id') == $acc->id ? 'selected' : '' }}>{{ $acc->name }}</option>
                                             @endforeach
                                         </select>
-                                    </div>
+                                        
+                                        <select name="payroll_group_id" class="w-full text-xs rounded border-gray-200" onchange="this.form.submit()">
+                                            <option value="">Filter by Group...</option>
+                                            @foreach($payrollGroups as $group)
+                                                <option value="{{ $group->id }}" {{ request('payroll_group_id') == $group->id ? 'selected' : '' }}>{{ $group->name }}</option>
+                                            @endforeach
+                                        </select>
+
+                                        @if(request()->anyFilled(['site_id', 'account_id', 'payroll_group_id']))
+                                            <a href="{{ route('schedules.group-create') }}" class="block text-center text-[10px] text-red-600 font-bold uppercase hover:underline">Clear Filters</a>
+                                        @endif
+                                    </form>
                                 </div>
 
                                 <div class="max-h-[500px] overflow-y-auto border border-gray-100 rounded bg-gray-50/30">
@@ -54,7 +72,7 @@
                                                     </td>
                                                     <td class="px-3 py-2">
                                                         <div class="text-[11px] font-bold text-gray-800 uppercase">{{ $user->name }}</div>
-                                                        <div class="text-[10px] text-gray-500">{{ $user->employee_id }}</div>
+                                                        <div class="text-[10px] text-gray-500">{{ $user->employee_id }} | {{ $user->site->name ?? 'NO SITE' }} {{ $user->payrollGroup ? '| ' . $user->payrollGroup->name : '' }}</div>
                                                     </td>
                                                 </tr>
                                             @empty

@@ -92,6 +92,12 @@ class EmployeeTransaction extends Model
             'color' => 'red',
             'requires_dates' => true,
         ],
+        'timekeeping_complaint' => [
+            'name' => 'Timekeeping (TK) Complaint',
+            'icon' => 'clock',
+            'color' => 'rose',
+            'requires_dates' => true,
+        ],
         'restday_change' => [
             'name' => 'Request of Change of Rest Day',
             'icon' => 'refresh',

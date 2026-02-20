@@ -276,11 +276,14 @@ class DTRController extends Controller
 
         return [
             'metrics' => $metrics,
-            'total_work_hours' => $metrics['regular']['worked'],
+            'total_work_hours' => number_format($metrics['regular']['worked'] + $metrics['restday']['worked'] + $metrics['holiday']['worked'], 2),
             'restday_work_hours' => $metrics['restday']['worked'],
             'holiday_work_hours' => $metrics['holiday']['worked'],
-            'total_overtime_hours' => $metrics['regular']['ot'] + $metrics['restday']['ot'],
+            'total_overtime_hours' => number_format($metrics['regular']['ot'] + $metrics['restday']['ot'], 2),
             'present_days' => $attendances->whereNotNull('time_in')->count(),
+            'late_days' => $metrics['counts']['tardiness_occ'],
+            'absent_days' => $metrics['counts']['absences_occ'],
+            'leave_days' => 0, // Placeholder for leave logic
             'rest_days' => $metrics['holidays']['type2'],
         ];
     }

@@ -281,6 +281,13 @@ class ConcernController extends Controller
             'resolution_notes' => 'nullable|string',
         ]);
 
+        // Security: Only admins can resolve TK complaints
+        if ($concern->category === 'timekeeping' && in_array($validated['status'], ['resolved', 'closed', 'escalated'])) {
+            if (!auth()->user()->isAdmin()) {
+                return back()->with('error', 'Only Admins and SuperAdmins can approve or resolve Timekeeping Complaints.');
+            }
+        }
+
         DB::beginTransaction();
         try {
             $oldStatus = $concern->status;

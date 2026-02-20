@@ -47,12 +47,18 @@
                                 <select name="user_id" class="w-full rounded-md shadow-sm border-gray-300 focus:border-indigo-300 focus:ring focus:ring-indigo-200 focus:ring-opacity-50" required>
                                     <option value="">-- Select Employee to Add --</option>
                                     @foreach($availableUsers as $user)
-                                        <option value="{{ $user->id }}">{{ $user->last_name }}, {{ $user->first_name }}</option>
+                                        <option value="{{ $user->id }}">{{ $user->full_name }}</option>
                                     @endforeach
                                 </select>
                             </div>
                             <button type="submit" class="bg-indigo-600 text-white px-4 py-2 rounded-md hover:bg-indigo-700">Add</button>
                         </form>
+
+                        <div class="flex flex-wrap gap-2 mb-6">
+                            <a href="{{ route('schedules.group-create', ['payroll_group_id' => $payrollGroup->id]) }}" class="inline-flex items-center px-4 py-2 bg-red-600 border border-transparent rounded-md font-semibold text-xs text-white uppercase tracking-widest hover:bg-red-700 active:bg-red-900 focus:outline-none focus:border-red-900 focus:ring ring-red-300 transition ease-in-out duration-150">
+                                📅 Plot Group Schedule
+                            </a>
+                        </div>
 
                         <!-- Employee List -->
                         <div class="overflow-y-auto max-h-96">
@@ -61,7 +67,7 @@
                                     <li class="py-3 flex justify-between items-center">
                                         <div class="flex items-center">
                                             <div class="ml-3">
-                                                <p class="text-sm font-medium text-gray-900">{{ $user->last_name }}, {{ $user->first_name }}</p>
+                                                <p class="text-sm font-medium text-gray-900">{{ $user->full_name }}</p>
                                                 <p class="text-xs text-gray-500">{{ $user->email }}</p>
                                             </div>
                                         </div>
@@ -82,7 +88,12 @@
                 <!-- Recent Payroll Periods -->
                 <div class="bg-white overflow-hidden shadow-sm sm:rounded-lg">
                     <div class="p-6 bg-white border-b border-gray-200">
-                        <h3 class="text-lg font-medium text-gray-900 mb-4">Recent Payroll Periods</h3>
+                        <div class="flex justify-between items-center mb-4">
+                            <h3 class="text-lg font-medium text-gray-900">Recent Payroll Periods</h3>
+                            <a href="{{ route('payroll.create-period', ['payroll_group_id' => $payrollGroup->id]) }}" class="inline-flex items-center px-3 py-1.5 bg-blue-600 border border-transparent rounded-md font-semibold text-xs text-white uppercase tracking-widest hover:bg-blue-700 focus:bg-blue-700 active:bg-blue-900 focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:ring-offset-2 transition ease-in-out duration-150">
+                                ➕ Generate Period
+                            </a>
+                        </div>
                         
                         <div class="overflow-x-auto">
                             <table class="min-w-full divide-y divide-gray-200">

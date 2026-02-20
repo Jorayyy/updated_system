@@ -109,7 +109,7 @@
                             @empty
                                 <tr>
                                     <td colspan="5" class="px-6 py-10 text-center text-gray-500 italic">
-                                        No roles found.
+                                        No {{ $type == 'role' ? 'roles' : 'campaigns' }} found.
                                     </td>
                                 </tr>
                             @endforelse

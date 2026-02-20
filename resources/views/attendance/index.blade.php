@@ -40,11 +40,11 @@
                                 @if($status['attendance'])
                                     Attendance for {{ $status['attendance']->date->format('l, F d, Y') }}
                                 @else
-                                    Today - {{ now()->format('l, F d, Y') }}
+                                    Today - <span id="currentDay">{{ now()->format('l, F d, Y') }}</span>
                                 @endif
                             </h3>
-                            <p class="text-gray-500">
-                                Current Time: <span id="currentTime" class="font-mono">{{ now()->format('h:i:s A') }}</span>
+                            <p class="text-gray-500 text-sm">
+                                Real Time: <span id="currentRealTime" class="font-mono font-bold">{{ now()->format('l, F d, Y h:i:s A') }}</span>
                             </p>
                         </div>
                         <div class="text-right">
@@ -326,9 +326,28 @@
     <script>
         function updateClock() {
             const now = new Date();
-            const options = { hour: '2-digit', minute: '2-digit', second: '2-digit', hour12: true };
-            document.getElementById('currentTime').textContent = now.toLocaleTimeString('en-US', options);
+            
+            // Format for Real Time (Full Date & Time)
+            const realTimeOptions = { 
+                weekday: 'long', 
+                month: 'long', 
+                day: 'numeric', 
+                year: 'numeric', 
+                hour: '2-digit', 
+                minute: '2-digit', 
+                second: '2-digit', 
+                hour12: true 
+            };
+            document.getElementById('currentRealTime').textContent = now.toLocaleDateString('en-US', realTimeOptions);
+            
+            // Update the day badge if it's currently the "Today" header
+            const dayEl = document.getElementById('currentDay');
+            if (dayEl) {
+                const dayOptions = { weekday: 'long', month: 'long', day: 'numeric', year: 'numeric' };
+                dayEl.textContent = now.toLocaleDateString('en-US', dayOptions);
+            }
         }
         setInterval(updateClock, 1000);
+        updateClock(); // Run immediately
     </script>
 </x-app-layout>

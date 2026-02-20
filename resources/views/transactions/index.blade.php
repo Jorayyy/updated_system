@@ -110,11 +110,44 @@
                     @php
                         $recentTransactions = \App\Models\EmployeeTransaction::where('user_id', auth()->id())
                             ->orderBy('created_at', 'desc')
+                            ->limit(10)
+                            ->get()
+                            ->map(function($txn) {
+                                return [
+                                    'id' => $txn->id,
+                                    'number' => $txn->transaction_number,
+                                    'type' => $txn->type_name,
+                                    'created_at' => $txn->created_at,
+                                    'status' => $txn->status,
+                                    'status_label' => $txn->status_label,
+                                    'url' => route('transactions.show', $txn)
+                                ];
+                            });
+                        
+                        // Also include TK Concerns
+                        $recentConcerns = \App\Models\Concern::where('reported_by', auth()->id())
+                            ->where('category', 'timekeeping')
+                            ->orderBy('created_at', 'desc')
                             ->limit(5)
-                            ->get();
+                            ->get()
+                            ->map(function($con) {
+                                return [
+                                    'id' => $con->id,
+                                    'number' => $con->ticket_number,
+                                    'type' => 'Timekeeping (TK) Complaint',
+                                    'created_at' => $con->created_at,
+                                    'status' => $con->status,
+                                    'status_label' => ucfirst(str_replace('_', ' ', $con->status)),
+                                    'url' => route('concerns.show', $con)
+                                ];
+                            });
+                            
+                        $unifiedTransactions = $recentTransactions->concat($recentConcerns)
+                            ->sortByDesc('created_at')
+                            ->take(5);
                     @endphp
                     
-                    @if($recentTransactions->isEmpty())
+                    @if($unifiedTransactions->isEmpty())
                         <div class="p-8 text-center text-gray-500">
                             <svg class="w-12 h-12 mx-auto mb-3 text-gray-300" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                                 <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"></path>
@@ -123,24 +156,24 @@
                         </div>
                     @else
                         <div class="divide-y divide-gray-200">
-                            @foreach($recentTransactions as $txn)
-                                <a href="{{ route('transactions.show', $txn) }}" class="block hover:bg-gray-50 transition">
+                            @foreach($unifiedTransactions as $txn)
+                                <a href="{{ $txn['url'] }}" class="block hover:bg-gray-50 transition">
                                     <div class="px-4 py-4 flex items-center justify-between">
                                         <div class="flex items-center">
-                                            <span class="font-mono text-sm text-blue-600">{{ $txn->transaction_number }}</span>
+                                            <span class="font-mono text-sm text-blue-600">{{ $txn['number'] }}</span>
                                             <span class="mx-2 text-gray-300">|</span>
-                                            <span class="text-sm text-gray-900">{{ $txn->type_name }}</span>
+                                            <span class="text-sm text-gray-900">{{ $txn['type'] }}</span>
                                         </div>
                                         <div class="flex items-center space-x-3">
-                                            <span class="text-xs text-gray-500">{{ $txn->created_at->diffForHumans() }}</span>
+                                            <span class="text-xs text-gray-500">{{ $txn['created_at']->diffForHumans() }}</span>
                                             <span class="px-2 py-1 text-xs rounded-full 
-                                                @if($txn->status === 'pending') bg-yellow-100 text-yellow-800
-                                                @elseif($txn->status === 'hr_approved') bg-blue-100 text-blue-800
-                                                @elseif($txn->status === 'approved') bg-green-100 text-green-800
-                                                @elseif($txn->status === 'rejected') bg-red-100 text-red-800
+                                                @if($txn['status'] === 'pending' || $txn['status'] === 'open') bg-yellow-100 text-yellow-800
+                                                @elseif($txn['status'] === 'hr_approved' || $txn['status'] === 'in_progress') bg-blue-100 text-blue-800
+                                                @elseif($txn['status'] === 'approved' || $txn['status'] === 'resolved') bg-green-100 text-green-800
+                                                @elseif($txn['status'] === 'rejected' || $txn['status'] === 'cancelled') bg-red-100 text-red-800
                                                 @else bg-gray-100 text-gray-800
                                                 @endif">
-                                                {{ $txn->status_label }}
+                                                {{ $txn['status_label'] }}
                                             </span>
                                         </div>
                                     </div>

@@ -191,10 +191,11 @@ class PayrollController extends Controller
     /**
      * Admin/HR: Create payroll period form
      */
-    public function createPeriod()
+    public function createPeriod(Request $request)
     {
         $groups = PayrollGroup::where('is_active', true)->get();
-        return view('payroll.create-period', compact('groups'));
+        $selectedGroupId = $request->query('payroll_group_id');
+        return view('payroll.create-period', compact('groups', 'selectedGroupId'));
     }
 
     /**
