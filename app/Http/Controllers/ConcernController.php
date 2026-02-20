@@ -75,7 +75,7 @@ class ConcernController extends Controller
         ];
 
         // Get assignees for filter
-        $assignees = User::whereIn('role', ['admin', 'hr'])
+        $assignees = User::whereIn('role', ['admin', 'hr', 'super_admin'])
             ->orderBy('name')
             ->get(['id', 'name']);
 
@@ -90,7 +90,7 @@ class ConcernController extends Controller
         $categories = Concern::CATEGORIES;
         $priorities = Concern::PRIORITIES;
         
-        $assignees = User::whereIn('role', ['admin', 'hr'])
+        $assignees = User::whereIn('role', ['admin', 'hr', 'super_admin'])
             ->orderBy('name')
             ->get(['id', 'name']);
 
@@ -187,7 +187,7 @@ class ConcernController extends Controller
         $priorities = Concern::PRIORITIES;
         $statuses = Concern::STATUSES;
         
-        $assignees = User::whereIn('role', ['admin', 'hr'])
+        $assignees = User::whereIn('role', ['admin', 'hr', 'super_admin'])
             ->orderBy('name')
             ->get(['id', 'name']);
 
@@ -203,7 +203,7 @@ class ConcernController extends Controller
         $priorities = Concern::PRIORITIES;
         $statuses = Concern::STATUSES;
         
-        $assignees = User::whereIn('role', ['admin', 'hr'])
+        $assignees = User::whereIn('role', ['admin', 'hr', 'super_admin'])
             ->orderBy('name')
             ->get(['id', 'name']);
 
@@ -620,7 +620,7 @@ class ConcernController extends Controller
             ]);
 
             // Send notification to all admins
-            $admins = User::whereIn('role', ['admin', 'hr'])->where('is_active', true)->get();
+            $admins = User::whereIn('role', ['admin', 'hr', 'super_admin'])->where('is_active', true)->get();
             foreach ($admins as $admin) {
                 Notification::send(
                     $admin->id,
