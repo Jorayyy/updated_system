@@ -29,7 +29,15 @@
             <!-- Transaction Types Grid -->
             <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
                 @foreach($types as $key => $type)
-                    <a href="{{ route('transactions.create', $key) }}" 
+                    @php
+                        $url = route('transactions.create', $key);
+                        if ($key === 'timekeeping_complaint') {
+                            $url = route('concerns.user-create', ['category' => 'timekeeping']);
+                        } elseif ($key === 'payroll_complaint') {
+                            $url = route('concerns.user-create', ['category' => 'payroll']);
+                        }
+                    @endphp
+                    <a href="{{ $url }}" 
                        class="block bg-white rounded-lg shadow-sm hover:shadow-md transition border-2 border-transparent hover:border-{{ $type['color'] }}-500 overflow-hidden">
                         <div class="p-5">
                             <div class="flex items-center">

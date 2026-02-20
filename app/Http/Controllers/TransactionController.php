@@ -67,6 +67,15 @@ class TransactionController extends Controller
      */
     public function create(string $type)
     {
+        // Unify Timekeeping and Payroll complaints into the new Concern module
+        if ($type === 'timekeeping_complaint') {
+            return redirect()->route('concerns.user-create', ['category' => 'timekeeping', 'title' => 'DTR Discrepancy - ' . now()->format('F Y')]);
+        }
+
+        if ($type === 'payroll_complaint') {
+            return redirect()->route('concerns.user-create', ['category' => 'payroll', 'title' => 'Payroll Inquiry - ' . now()->format('F Y')]);
+        }
+
         if (!isset(EmployeeTransaction::TYPES[$type])) {
             abort(404, 'Transaction type not found');
         }

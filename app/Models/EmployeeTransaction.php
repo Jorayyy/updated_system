@@ -94,7 +94,7 @@ class EmployeeTransaction extends Model
         ],
         'timekeeping_complaint' => [
             'name' => 'Timekeeping (TK) Complaint',
-            'icon' => 'clock',
+            'icon' => 'exclamation',
             'color' => 'rose',
             'requires_dates' => true,
         ],
