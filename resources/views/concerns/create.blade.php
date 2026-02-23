@@ -108,12 +108,8 @@
                                 <select name="affected_punch" id="affected_punch" 
                                         class="w-full border-gray-300 rounded-md shadow-sm focus:ring-indigo-500 focus:border-indigo-500 @error('affected_punch') border-red-500 @enderror">
                                     <option value="">Select Punch</option>
-                                    @php
-                                        $punches = ['IN', '1st BREAK OUT', '1st BREAK IN', 'LUNCH BREAK OUT', 'LUNCH BREAK IN', '2nd BREAK OUT', '2nd BREAK IN', 'OUT'];
-                                    @endphp
-                                    @foreach($punches as $punch)
-                                        <option value="{{ $punch }}" {{ old('affected_punch') == $punch ? 'selected' : '' }}>{{ $punch }}</option>
-                                    @endforeach
+                                    <option value="TIME IN" {{ old('affected_punch') == 'TIME IN' ? 'selected' : '' }}>TIME IN</option>
+                                    <option value="TIME OUT" {{ old('affected_punch') == 'TIME OUT' ? 'selected' : '' }}>TIME OUT</option>
                                 </select>
                                 @error('affected_punch')
                                     <p class="mt-1 text-sm text-red-500">{{ $message }}</p>

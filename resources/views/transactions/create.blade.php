@@ -132,12 +132,8 @@
                                         <select name="affected_punch" id="affected_punch" required
                                                 class="mt-1 block w-full rounded-md border-gray-300 shadow-sm">
                                             <option value="">Select Punch</option>
-                                            @php
-                                                $punches = ['IN', '1st BREAK OUT', '1st BREAK IN', 'LUNCH BREAK OUT', 'LUNCH BREAK IN', '2nd BREAK OUT', '2nd BREAK IN', 'OUT'];
-                                            @endphp
-                                            @foreach($punches as $punch)
-                                                <option value="{{ $punch }}" {{ old('affected_punch') == $punch ? 'selected' : '' }}>{{ $punch }}</option>
-                                            @endforeach
+                                            <option value="TIME IN" {{ old('affected_punch') == 'TIME IN' ? 'selected' : '' }}>TIME IN</option>
+                                            <option value="TIME OUT" {{ old('affected_punch') == 'TIME OUT' ? 'selected' : '' }}>TIME OUT</option>
                                         </select>
                                         @error('affected_punch')
                                             <span class="text-red-500 text-sm">{{ $message }}</span>
