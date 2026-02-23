@@ -79,6 +79,11 @@ class LeaveController extends Controller
      */
     private function hasMinimumTenure(User $user): bool
     {
+        // Master accounts bypass tenure check for their own leaves
+        if ($user->isAdmin() || $user->isHr() || $user->isAccounting()) {
+            return true;
+        }
+
         if (!$user->date_hired) {
             return false;
         }
