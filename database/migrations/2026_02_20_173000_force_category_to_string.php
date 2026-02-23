@@ -12,9 +12,11 @@ return new class extends Migration
      */
     public function up(): void
     {
-        // Force the category column to be a VARCHAR(255) using raw SQL
-        // This bypasses any ENUM restriction issues on the server
-        DB::statement("ALTER TABLE concerns MODIFY COLUMN category VARCHAR(255) NULL");
+        // Use the native schema builder to change the column type
+        // This handles SQLite's lack of MODIFY COLUMN automatically
+        Schema::table('concerns', function (Blueprint $table) {
+            $table->string('category', 255)->nullable()->change();
+        });
     }
 
     /**
@@ -22,6 +24,6 @@ return new class extends Migration
      */
     public function down(): void
     {
-        // No need to revert specifically as string is more flexible
+        // Handled by change()
     }
 };

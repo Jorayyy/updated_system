@@ -144,6 +144,12 @@
                                     <div class="block px-4 py-2 text-xs text-gray-400">
                                         {{ __('Management') }}
                                     </div>
+                                    <x-dropdown-link :href="route('leaves.manage', ['tab' => 'types'])">
+                                        {{ __('Leave Category Policies') }}
+                                    </x-dropdown-link>
+                                    <x-dropdown-link :href="route('leaves.manage', ['tab' => 'credits'])">
+                                        {{ __('Leave Credit Balances') }}
+                                    </x-dropdown-link>
                                     <x-dropdown-link :href="route('departments.index')">
                                         {{ __('Departments') }}
                                     </x-dropdown-link>
@@ -197,9 +203,6 @@
                                     <div class="block px-4 py-2 text-xs text-gray-400">
                                         {{ __('Settings') }}
                                     </div>
-                                    <x-dropdown-link :href="route('leave-types.index')">
-                                        {{ __('Leave Types') }}
-                                    </x-dropdown-link>
                                     <x-dropdown-link :href="route('settings.index')">
                                         {{ __('Payroll Settings') }}
                                     </x-dropdown-link>

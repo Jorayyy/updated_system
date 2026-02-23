@@ -1,8 +1,15 @@
 <x-app-layout>
     <x-slot name="header">
-        <h2 class="font-semibold text-xl text-gray-800 leading-tight">
-            {{ __('Submit a Concern') }}
-        </h2>
+        <div class="flex items-center gap-4">
+            <button onclick="window.history.back()" class="bg-white p-2 rounded-full border border-gray-200 shadow-sm hover:bg-gray-50 transition-colors" title="Go Back">
+                <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4 text-gray-600" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10 19l-7-7m0 0l7-7m-7 7h18" />
+                </svg>
+            </button>
+            <h2 class="font-semibold text-xl text-gray-800 leading-tight">
+                {{ __('Submit a Concern') }}
+            </h2>
+        </div>
     </x-slot>
 
     <div class="py-4">

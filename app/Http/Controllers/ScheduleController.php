@@ -81,7 +81,26 @@ class ScheduleController extends Controller
             $query->where('payroll_group_id', $request->payroll_group_id);
         }
 
-        $users = $query->orderBy('name')->get();
+        if ($request->filled('search')) {
+            $search = $request->search;
+            $query->where(function($q) use ($search) {
+                $q->where('name', 'like', "%{$search}%")
+                  ->orWhere('employee_id', 'like', "%{$search}%");
+            });
+        }
+
+        $users = $query->with(['site', 'payrollGroup'])->orderBy('name')->get();
+
+        if ($request->ajax()) {
+            return response()->json($users->map(fn($u) => [
+                'id' => $u->id,
+                'name' => $u->name,
+                'employee_id' => $u->employee_id,
+                'site_name' => $u->site->name ?? 'NO SITE',
+                'group_name' => $u->payrollGroup->name ?? 'NO GROUP'
+            ]));
+        }
+
         $accounts = Account::all();
         $departments = Department::all();
         $sites = Site::all();

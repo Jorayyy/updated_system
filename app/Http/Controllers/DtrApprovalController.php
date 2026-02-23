@@ -99,10 +99,14 @@ class DtrApprovalController extends Controller
         $payrollGroups = \App\Models\PayrollGroup::orderBy('name')->get();
 
         $employees = $user->role !== 'employee' 
-            ? User::where('is_active', true)->orderBy('name')->get()
+            ? User::where('is_active', true)->where('role', 'employee')->orderBy('name')->get()
             : collect();
 
         $stats = $this->approvalService->getApprovalStats($request->payroll_period_id);
+
+        if ($request->filled('payroll_group_id') && $dtrs->total() === 0) {
+            session()->flash('info', 'No records found matching your current filter. Try changing status or period.');
+        }
 
         return view('dtr-approval.index', compact('dtrs', 'payrollPeriods', 'employees', 'stats', 'sites', 'accounts', 'payrollGroups'));
     }
@@ -185,6 +189,11 @@ class DtrApprovalController extends Controller
     public function approve(Request $request, DailyTimeRecord $dailyTimeRecord)
     {
         $user = Auth::user();
+
+        if (!$user->canApproveMajorDecisions()) {
+            abort(403, 'Unauthorized. Only Super Admins are permitted to finalize approvals unless otherwise delegated in System Settings.');
+        }
+
         $level = $request->get('level', 'supervisor');
         $remarks = $request->get('remarks');
 
@@ -203,11 +212,14 @@ class DtrApprovalController extends Controller
      */
     public function reject(Request $request, DailyTimeRecord $dailyTimeRecord)
     {
+        $user = Auth::user();
+        if (!$user->canApproveMajorDecisions()) {
+            abort(403, 'Unauthorized. Only Super Admins are permitted to perform major status changes.');
+        }
+
         $request->validate([
             'reason' => 'required|string|max:500',
         ]);
-
-        $user = Auth::user();
         $result = $this->approvalService->rejectDtr($dailyTimeRecord, $user->id, $request->reason);
 
         if ($request->expectsJson()) {
@@ -223,13 +235,16 @@ class DtrApprovalController extends Controller
      */
     public function bulkApprove(Request $request)
     {
+        $user = Auth::user();
+        if (!$user->canApproveMajorDecisions()) {
+            abort(403, 'Unauthorized. Only Super Admins are permitted to perform bulk approvals.');
+        }
+
         $request->validate([
             'dtr_ids' => 'required|array',
             'dtr_ids.*' => 'exists:daily_time_records,id',
             'level' => 'nullable|in:supervisor,hr,final',
         ]);
-
-        $user = Auth::user();
         $level = $request->get('level', 'supervisor');
 
         $result = $this->approvalService->bulkApproveDtrs(
@@ -264,8 +279,8 @@ class DtrApprovalController extends Controller
     {
         $user = Auth::user();
 
-        if (!in_array($user->role, ['admin', 'hr', 'super_admin'])) {
-            abort(403, 'Only Admin/HR can approve all DTRs');
+        if (!$user->canApproveMajorDecisions()) {
+            abort(403, 'Unauthorized. Only Super Admins are permitted to approve whole periods.');
         }
 
         $result = $this->approvalService->approveAllDtrsForPeriod(

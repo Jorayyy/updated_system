@@ -49,18 +49,32 @@
                             <div class="space-y-4">
                                 @foreach($days as $day)
                                     <div>
-                                        <label class="block text-[11px] font-black text-gray-400 uppercase tracking-widest mb-1">{{ $day }}</label>
-                                        <select name="{{ $day }}_schedule" class="w-full border-gray-200 rounded text-sm focus:ring-red-500 focus:border-red-500">
-                                            <option value="Rest day" {{ $user->{$day.'_schedule'} == 'Rest day' ? 'selected' : '' }}>Rest day</option>
-                                            @foreach($schedules as $shift)
-                                                @php
-                                                    $shiftTime = \Carbon\Carbon::parse($shift->work_start_time)->format('H:i') . ' to ' . \Carbon\Carbon::parse($shift->work_end_time)->format('H:i');
-                                                @endphp
-                                                <option value="{{ $shiftTime }}" {{ $user->{$day.'_schedule'} == $shiftTime ? 'selected' : '' }}>
-                                                    {{ $shiftTime }}
-                                                </option>
-                                            @endforeach
-                                        </select>
+                                        <div class="flex justify-between items-center mb-1">
+                                            <label class="block text-[11px] font-black text-gray-400 uppercase tracking-widest">{{ $day }}</label>
+                                            <button type="button" onclick="toggleManualInput('{{ $day }}')" class="text-[9px] font-bold text-blue-600 hover:text-blue-800 uppercase tracking-tighter">
+                                                Manual Entry
+                                            </button>
+                                        </div>
+                                        <div id="{{ $day }}_select_container">
+                                            <select name="{{ $day }}_schedule" id="{{ $day }}_select" class="w-full border-gray-200 rounded text-sm focus:ring-red-500 focus:border-red-500">
+                                                <option value="Rest day" {{ $user->{$day.'_schedule'} == 'Rest day' ? 'selected' : '' }}>Rest day</option>
+                                                @foreach($schedules as $shift)
+                                                    @php
+                                                        $shiftTime = \Carbon\Carbon::parse($shift->work_start_time)->format('H:i') . ' to ' . \Carbon\Carbon::parse($shift->work_end_time)->format('H:i');
+                                                    @endphp
+                                                    <option value="{{ $shiftTime }}" {{ $user->{$day.'_schedule'} == $shiftTime ? 'selected' : '' }}>
+                                                        {{ $shiftTime }}
+                                                    </option>
+                                                @endforeach
+                                            </select>
+                                        </div>
+                                        <div id="{{ $day }}_manual_container" class="hidden flex gap-2">
+                                            <div class="flex-1">
+                                                <input type="time" id="{{ $day }}_start" class="w-full text-xs border-gray-200 rounded p-1 mb-1" placeholder="Start">
+                                                <input type="time" id="{{ $day }}_end" class="w-full text-xs border-gray-200 rounded p-1" placeholder="End">
+                                            </div>
+                                            <button type="button" onclick="applyManualTime('{{ $day }}')" class="bg-blue-50 text-blue-700 px-2 rounded text-[10px] font-bold uppercase border border-blue-200">Set</button>
+                                        </div>
                                     </div>
                                 @endforeach
                             </div>
@@ -112,4 +126,51 @@
             </div>
         </div>
     </div>
+
+    <script>
+        function toggleManualInput(day) {
+            const selectContainer = document.getElementById(`${day}_select_container`);
+            const manualContainer = document.getElementById(`${day}_manual_container`);
+            
+            if (selectContainer.classList.contains('hidden')) {
+                selectContainer.classList.remove('hidden');
+                manualContainer.classList.add('hidden');
+            } else {
+                selectContainer.classList.add('hidden');
+                manualContainer.classList.remove('hidden');
+            }
+        }
+
+        function applyManualTime(day) {
+            const start = document.getElementById(`${day}_start`).value;
+            const end = document.getElementById(`${day}_end`).value;
+            const select = document.getElementById(`${day}_select`);
+            
+            if (!start || !end) {
+                alert('Please provide both start and end times');
+                return;
+            }
+
+            const formattedTime = `${start} to ${end}`;
+            
+            // Add custom option to select and select it
+            let exists = false;
+            for (let i = 0; i < select.options.length; i++) {
+                if (select.options[i].value === formattedTime) {
+                    select.selectedIndex = i;
+                    exists = true;
+                    break;
+                }
+            }
+            
+            if (!exists) {
+                const option = new Option(formattedTime, formattedTime);
+                select.add(option);
+                select.value = formattedTime;
+            }
+
+            // Switch back to select view
+            toggleManualInput(day);
+        }
+    </script>
 </x-app-layout>

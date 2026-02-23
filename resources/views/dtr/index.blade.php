@@ -11,13 +11,11 @@
             <!-- Breadcrumb style title -->
             <div class="mb-4 bg-white p-3 border border-slate-200 rounded text-sm font-bold text-slate-600 shadow-sm flex items-center justify-between">
                 <div class="flex items-center gap-2">
-                    @if(auth()->user()->id !== $user->id)
-                        <a href="{{ route('dtr.admin-index') }}" class="text-slate-400 hover:text-slate-600 transition-colors mr-1" title="Back to DTR Center">
-                            <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10 19l-7-7m0 0l7-7m-7 7h18" />
-                            </svg>
-                        </a>
-                    @endif
+                    <button onclick="window.history.back()" class="text-slate-400 hover:text-slate-600 transition-colors mr-1" title="Go Back">
+                        <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10 19l-7-7m0 0l7-7m-7 7h18" />
+                        </svg>
+                    </button>
                     <div>View DTR</div>
                 </div>
                 <div class="flex gap-4">
@@ -54,182 +52,110 @@
                 </div>
             </div>
 
-            <!-- Header Info: High Contrast Reconstruction -->
-            <div class="mb-6 overflow-hidden rounded-sm border-2 border-slate-800 shadow-md">
-                <div class="bg-slate-900 p-2.5 flex justify-between items-center border-b border-slate-700">
-                    <div class="flex items-center gap-2">
-                        <span class="bg-slate-700 px-2 py-0.5 rounded text-[10px] font-bold text-white border border-slate-600 uppercase">count</span>
-                        <span class="bg-white text-slate-900 w-5 h-5 flex items-center justify-center rounded-full text-[10px] font-black shadow-inner">1</span>
+            <!-- Header Section -->
+            <div class="mb-6 bg-white rounded-xl shadow-sm border border-slate-200 overflow-hidden">
+                <div class="bg-indigo-600 px-6 py-4 flex justify-between items-center bg-gradient-to-r from-indigo-700 to-indigo-600">
+                    <div>
+                        <h1 class="text-white text-xl font-bold tracking-tight uppercase">{{ $user->name }}</h1>
+                        <p class="text-indigo-100 text-xs font-semibold uppercase tracking-wider">{{ $user->position ?? 'STAFF' }} • {{ $user->employee_id }}</p>
                     </div>
-                    <div class="flex gap-10 text-[10px] font-black uppercase tracking-tight pr-4">
-                        <div class="flex gap-2 text-white">
-                            <span class="text-slate-400">Salary Rate:</span>
-                            <span class="font-bold">--</span>
-                        </div>
-                        <div class="flex gap-2 text-white">
-                            <span class="text-slate-400 tracking-tighter">Date Employed:</span>
-                            <span class="font-bold">{{ $user->date_hired ?? $user->created_at->format('Y-m-d') }}</span>
-                        </div>
+                    <div class="text-right">
+                        <p class="text-indigo-100 text-[10px] uppercase font-black">Payroll Period</p>
+                        <p class="text-white text-sm font-bold">{{ $startDate->format('M d, Y') }} - {{ $endDate->format('M d, Y') }}</p>
                     </div>
                 </div>
                 
-                <div class="bg-slate-800 text-white divide-y divide-slate-700 text-[10px] font-bold uppercase">
-                    <!-- Row 1 -->
-                    <div class="grid grid-cols-4 divide-x divide-slate-700">
-                        <div class="p-2.5 flex justify-between px-4">
-                            <span class="text-slate-400">Payroll Period</span>
-                            <span class="text-white font-black truncate">{{ $startDate->format('Y-m-d') }} to {{ $endDate->format('Y-m-d') }}</span>
-                        </div>
-                        <div class="p-2.5 opacity-0">...</div>
-                        <div class="p-2.5 flex justify-between px-4">
-                            <span class="text-slate-400">Employment</span>
-                            <span class="text-white font-black">{{ $user->employment_type ?? 'Contractual' }}</span>
-                        </div>
-                        <div class="p-2.5 flex justify-between px-4">
-                            <span class="text-slate-400">Classification</span>
-                            <span class="text-white font-black">{{ $user->classification ?? 'STAFF' }}</span>
-                        </div>
+                <div class="grid grid-cols-2 md:grid-cols-4 divide-x divide-slate-100 p-4 bg-white">
+                    <div class="px-4 py-2">
+                        <span class="block text-[10px] text-slate-400 font-bold uppercase mb-1">Department</span>
+                        <span class="text-xs font-bold text-slate-700 uppercase">{{ $user->department ?? 'N/A' }}</span>
                     </div>
-                    <!-- Row 2 -->
-                    <div class="grid grid-cols-4 divide-x divide-slate-700">
-                        <div class="p-2.5 flex justify-between px-4">
-                            <span class="text-slate-400">Employee ID</span>
-                            <span class="text-cyan-400 font-black select-all tracking-wider">{{ $user->employee_id }}</span>
-                        </div>
-                        <div class="p-2.5 flex justify-between px-4">
-                            <span class="text-slate-400">Department</span>
-                            <span class="text-white font-black uppercase">{{ $user->department ?? 'BPO OPERATIONS' }}</span>
-                        </div>
-                        <div class="p-2.5 opacity-0">...</div>
-                        <div class="p-2.5 flex justify-between px-4">
-                            <span class="text-slate-400">Pay Type</span>
-                            <span class="text-white font-black uppercase text-amber-400">{{ $user->pay_type ?? 'Weekly' }}</span>
-                        </div>
+                    <div class="px-4 py-2">
+                        <span class="block text-[10px] text-slate-400 font-bold uppercase mb-1">Employment</span>
+                        <span class="text-xs font-bold text-slate-700 uppercase">{{ $user->employment_type ?? 'Contractual' }}</span>
                     </div>
-                    <!-- Row 3 -->
-                    <div class="grid grid-cols-4 divide-x divide-slate-700">
-                        <div class="p-2.5 flex justify-between px-4">
-                            <span class="text-slate-400">Name</span>
-                            <span class="text-white font-black uppercase whitespace-nowrap">{{ $user->name }}</span>
-                        </div>
-                        <div class="p-2.5 flex justify-between px-4">
-                            <span class="text-slate-400 font-black">Section</span>
-                            <span class="text-white font-black uppercase">{{ $user->section ?? 'TACLOBAN ADMIN' }}</span>
-                        </div>
-                        <div class="p-2.5 opacity-0">...</div>
-                        <div class="p-2.5 flex justify-between px-4">
-                            <span class="text-slate-400 font-black">Location</span>
-                            <span class="text-white font-black uppercase text-[9px]">{{ $user->location ?? 'TACLOBAN MAIN OFFICE' }}</span>
-                        </div>
+                    <div class="px-4 py-2">
+                        <span class="block text-[10px] text-slate-400 font-bold uppercase mb-1">Pay Type</span>
+                        <span class="text-xs font-bold text-slate-700 uppercase">{{ $user->pay_type ?? 'Weekly' }}</span>
                     </div>
-                    <!-- Row 4 -->
-                    <div class="grid grid-cols-4 divide-x divide-slate-700">
-                        <div class="p-2.5 flex justify-between px-4 border-b border-slate-700">
-                            <span class="text-slate-400">Position</span>
-                            <span class="text-white font-black uppercase italic">{{ $user->position ?? 'CUSTOMER SUPPORT' }}</span>
-                        </div>
+                    <div class="px-4 py-2 border-r-0">
+                        <span class="block text-[10px] text-slate-400 font-bold uppercase mb-1">Classification</span>
+                        <span class="text-xs font-bold text-slate-700 uppercase">{{ $user->classification ?? 'STAFF' }}</span>
                     </div>
                 </div>
             </div>
 
-            <!-- Big Main Table -->
-            <div class="bg-white border border-slate-300 rounded shadow-md overflow-hidden mb-6">
+            <!-- Main DTR Table -->
+            <div class="bg-white border border-slate-200 rounded-xl shadow-sm overflow-hidden mb-6">
                 <div class="overflow-x-auto">
-                    <table class="w-full text-[10px] border-collapse min-w-[1500px]">
-                        <!-- Nested Headers for Complex Layout -->
-                        <thead class="bg-slate-900 text-white sticky top-0 z-20">
-                            <tr class="h-10">
-                                <th colspan="2" class="border-r border-slate-700 py-2.5 text-center px-4">DATE INFORMATION</th>
-                                <th colspan="2" class="border-r border-slate-700 bg-pink-600 text-white shadow-inner uppercase tracking-widest">Shift Schedule</th>
-                                <th colspan="2" class="border-r border-slate-700 bg-emerald-700 text-white shadow-inner uppercase tracking-widest">Actual Attendance</th>
-                                <th colspan="5" class="border-r border-slate-700 text-slate-300">CALCULATED HOURS</th>
-                                <th colspan="2" class="border-r border-slate-700 text-slate-300">OVERTIME</th>
-                                <th colspan="2" class="border-r border-slate-700 text-slate-300 border-b border-slate-700">HOLIDAY</th>
-                                <th colspan="2" class="border-r border-slate-700 text-slate-300">RESTDAY</th>
-                                <th rowspan="2" class="border-r border-slate-700 border-b border-slate-700">ND</th>
-                                <th rowspan="2" class="border-r border-slate-700 border-b border-slate-700 bg-slate-800">ATRO</th>
-                                <th colspan="6" class="bg-slate-800 border-b border-slate-700">REQUESTED / FILED FORMS</th>
-                            </tr>
-                            <tr class="bg-slate-700 text-[8px] uppercase font-black tracking-tight border-t border-slate-600 h-8">
-                                <th class="border-r border-slate-600 py-1.5 w-12 text-slate-300">{{ $startDate->format('M') }}</th>
-                                <th class="border-r border-slate-600 w-10 text-center text-slate-300">Day</th>
-                                <th class="border-r border-slate-600 bg-pink-500 w-20 text-center text-white italic">IN</th>
-                                <th class="border-r border-slate-600 bg-pink-500 w-20 text-center text-white italic">OUT</th>
-                                <th class="border-r border-slate-600 bg-emerald-600 w-20 text-center text-white">IN</th>
-                                <th class="border-r border-slate-600 bg-emerald-600 w-20 text-center text-white">OUT</th>
-                                <th class="border-r border-slate-600 w-12 text-rose-300">Late</th>
-                                <th class="border-r border-slate-600 w-12 text-[7px] leading-3 uppercase px-1 text-orange-300">Over break</th>
-                                <th class="border-r border-slate-600 w-12 text-red-300">Undertime</th>
-                                <th class="border-r border-slate-600 w-12 text-blue-300 font-bold">REGULAR</th>
-                                <th class="border-r border-slate-600 w-12">ND</th>
-                                <th class="border-r border-slate-600 w-10 text-xs">Reg</th>
-                                <th class="border-r border-slate-600 w-10 text-xs">RD</th>
-                                <th class="border-r border-slate-600 w-10 text-yellow-300">PH-Reg</th>
-                                <th class="border-r border-slate-600 w-10">PH-RD</th>
-                                <th class="border-r border-slate-600 w-10 text-indigo-300">SH-Reg</th>
-                                <th class="border-r border-slate-600 w-10">SH-RD</th>
-                                <th class="border-r border-slate-600 w-14 leading-3 uppercase px-1 text-teal-300">COS / ADJ</th>
-                                <th class="border-r border-slate-600 w-10 text-blue-300">Leave</th>
-                                <th class="border-r border-slate-600 w-12 leading-3">OB</th>
-                                <th class="border-r border-slate-600 w-14 leading-3 uppercase px-1">TK Form</th>
-                                <th class="border-r border-slate-600 w-12">UT Form</th>
-                                <th class="w-10">OTH</th>
+                    <table class="w-full text-xs border-collapse">
+                        <thead>
+                            <tr class="bg-slate-50 border-b border-slate-200">
+                                <th class="px-4 py-3 text-left font-bold text-slate-700 border-r border-slate-100 w-24">DATE</th>
+                                <th class="px-4 py-3 text-center font-bold text-slate-700 border-r border-slate-100">SCHEDULE</th>
+                                <th class="px-4 py-3 text-center font-bold text-indigo-700 border-r border-slate-100 bg-indigo-50/30">TIME IN</th>
+                                <th class="px-4 py-3 text-center font-bold text-indigo-700 border-r border-slate-100 bg-indigo-50/30">TIME OUT</th>
+                                <th class="px-4 py-3 text-center font-bold text-emerald-700 border-r border-slate-100 bg-emerald-50/30">WORK HRS</th>
+                                <th class="px-4 py-3 text-center font-bold text-rose-700 border-r border-slate-100 bg-rose-50/30">LATE/UT</th>
+                                <th class="px-4 py-3 text-center font-bold text-slate-700">STATUS / REMARKS</th>
                             </tr>
                         </thead>
-                        <tbody class="bg-white">
+                        <tbody class="divide-y divide-slate-100">
                             @for($date = $startDate->copy(); $date <= $endDate; $date->addDay())
                                 @php
                                     $attendance = $attendanceByDate->get($date->format('Y-m-d'));
                                     $shift = $user->getShiftForDate($date);
                                     $isRestDay = $shift['is_rest_day'];
+                                    
+                                    $status = '';
+                                    if ($isRestDay) {
+                                        $status = 'Rest Day';
+                                    } elseif ($attendance && $attendance->status == 'on_leave') {
+                                        $status = 'On Leave';
+                                    } elseif (!$date->isFuture() && !$date->isToday()) {
+                                        if (!$attendance || !$attendance->time_in) {
+                                            $status = 'Absent';
+                                        }
+                                    }
                                 @endphp
-                                <tr class="border-b border-slate-100 hover:bg-slate-50 h-8 font-medium text-slate-700">
-                                    <td class="px-2 border-r border-slate-100 text-slate-500 text-center">{{ $date->format('m-d') }}</td>
-                                    <td class="px-2 border-r border-slate-100 text-slate-500 text-center">{{ $date->format('D') }}</td>
-                                    <td class="px-2 border-r border-slate-100 bg-pink-100/50 text-pink-900 font-black text-center italic">{{ !$isRestDay ? $shift['in'] : '' }}</td>
-                                    <td class="px-2 border-r border-slate-100 bg-pink-100/50 text-pink-900 font-black text-center italic">{{ !$isRestDay ? $shift['out'] : '' }}</td>
-                                    <td class="px-2 border-r border-slate-100 bg-emerald-100/50 text-emerald-900 font-black text-center">{{ $attendance && $attendance->time_in ? $attendance->time_in->format('H:i') : '--:--' }}</td>
-                                    <td class="px-2 border-r border-slate-100 bg-emerald-100/50 text-emerald-900 font-black text-center">{{ $attendance && $attendance->time_out ? $attendance->time_out->format('H:i') : '--:--' }}</td>
-                                    
-                                    <td class="px-1 border-r border-slate-100 text-blue-800 font-bold text-center">
-                                        {{ $attendance && $attendance->late_minutes > 0 ? number_format($attendance->late_minutes/60, 2) : '' }}
+                                <tr class="hover:bg-slate-50/80 transition-colors {{ $date->isToday() ? 'bg-amber-50/30' : '' }}">
+                                    <td class="px-4 py-2.5 border-r border-slate-100 font-medium whitespace-nowrap">
+                                        <span class="{{ $date->isWeekend() ? 'text-slate-400' : 'text-slate-700' }}">{{ $date->format('M d') }}</span>
+                                        <span class="text-[10px] uppercase ml-1 {{ $date->isWeekend() ? 'text-slate-300' : 'text-slate-500' }}">{{ $date->format('D') }}</span>
                                     </td>
-                                    <td class="px-1 border-r border-slate-100 text-center italic font-bold text-amber-600">
-                                        {{ $attendance && $attendance->total_break_minutes > 60 ? number_format(($attendance->total_break_minutes-60)/60, 2) : '' }}
+                                    <td class="px-4 py-2.5 border-r border-slate-100 text-center text-slate-500 font-medium">
+                                        {{ !$isRestDay ? $shift['in'] . ' - ' . $shift['out'] : '' }}
                                     </td>
-                                    <td class="px-1 border-r border-slate-100 text-red-600 font-bold text-center">
-                                        {{ $attendance && $attendance->undertime_minutes > 0 ? number_format($attendance->undertime_minutes/60, 2) : '' }}
+                                    <td class="px-4 py-2.5 border-r border-slate-100 text-center font-bold text-slate-900 bg-indigo-50/10">
+                                        {{ $attendance && $attendance->time_in ? $attendance->time_in->format('h:i A') : '--' }}
                                     </td>
-                                    <td class="px-1 border-r border-slate-100 text-center">
-                                        @if(!$isRestDay && (!$attendance || !$attendance->time_in) && !$date->isFuture() && !$date->isToday())
-                                            <span class="text-rose-600 font-black italic">absent</span>
-                                        @elseif($attendance && $attendance->total_work_minutes > 0)
-                                            <span class="text-blue-700 font-black">{{ round($attendance->total_work_minutes/60) }}</span>
+                                    <td class="px-4 py-2.5 border-r border-slate-100 text-center font-bold text-slate-900 bg-indigo-50/10">
+                                        {{ $attendance && $attendance->time_out ? $attendance->time_out->format('h:i A') : '--' }}
+                                    </td>
+                                    <td class="px-4 py-2.5 border-r border-slate-100 text-center font-black text-slate-800 bg-emerald-50/10">
+                                        @if($attendance && $attendance->total_work_minutes > 0)
+                                            {{ number_format($attendance->total_work_minutes/60, 2) }}
                                         @endif
                                     </td>
-                                    <td class="px-1 border-r border-slate-100 text-center"></td>
-                                    <td class="px-1 border-r border-slate-100 text-center">
-                                        @if(!$isRestDay && $attendance && $attendance->time_in) <span class="text-blue-900 font-black">✓</span> @endif
-                                    </td>
-                                    <td class="px-1 border-r border-slate-100 text-center">
-                                        @if($isRestDay) <span class="text-blue-900 font-black">✓</span> @endif
-                                    </td>
-                                    
-                                    <td class="px-1 border-r border-slate-100 text-center whitespace-nowrap overflow-hidden"></td>
-                                    <td class="px-1 border-r border-slate-100 text-center whitespace-nowrap overflow-hidden"></td>
-                                    <td class="px-1 border-r border-slate-100 text-center whitespace-nowrap overflow-hidden"></td>
-                                    <td class="px-1 border-r border-slate-100 text-center whitespace-nowrap overflow-hidden"></td>
-                                    <td class="px-1 border-r border-slate-100 text-center whitespace-nowrap overflow-hidden"></td>
-                                    <td class="px-1 border-r border-slate-100 text-center whitespace-nowrap overflow-hidden"></td>
-                                    <td class="px-1 border-r border-slate-100 text-center whitespace-nowrap overflow-hidden">
-                                         @if($attendance && $attendance->status == 'on_leave') 
-                                            <span class="text-[8px] bg-blue-100 text-blue-800 px-1 font-black">LEAVE</span>
+                                    <td class="px-4 py-2.5 border-r border-slate-100 text-center font-medium bg-rose-50/10">
+                                        @php
+                                            $late = $attendance ? $attendance->late_minutes : 0;
+                                            $ut = $attendance ? $attendance->undertime_minutes : 0;
+                                            $totalLost = $late + $ut;
+                                        @endphp
+                                        @if($totalLost > 0)
+                                            <span class="text-rose-600">{{ $totalLost }}m</span>
                                         @endif
                                     </td>
-                                    <td class="px-1 border-r border-slate-100 text-center whitespace-nowrap overflow-hidden"></td>
-                                    <td class="px-1 border-r border-slate-100 text-center whitespace-nowrap overflow-hidden"></td>
-                                    <td class="px-1 border-r border-slate-100 text-center whitespace-nowrap overflow-hidden"></td>
-                                    <td class="px-1 text-center whitespace-nowrap overflow-hidden"></td>
+                                    <td class="px-4 py-2.5 text-center">
+                                        @if($status == 'Absent')
+                                            <span class="px-2 py-0.5 rounded bg-rose-100 text-rose-700 text-[10px] font-bold uppercase tracking-wider">Absent</span>
+                                        @elseif($status == 'On Leave')
+                                            <span class="px-2 py-0.5 rounded bg-blue-100 text-blue-700 text-[10px] font-bold uppercase tracking-wider">Leave</span>
+                                        @elseif($status == 'Rest Day')
+                                            <span class="text-[10px] text-slate-400 font-bold uppercase tracking-wider">Rest Day</span>
+                                        @endif
+                                    </td>
                                 </tr>
                             @endfor
                         </tbody>
@@ -237,103 +163,57 @@
                 </div>
             </div>
 
-            <!-- Footer Summary Table -->
-            <div class="mt-8 mb-12">
-                <div class="border border-slate-200 rounded overflow-hidden bg-white shadow-xl">
-                    <table class="w-full text-[10.5px] border-collapse bg-white">
-                        <thead>
-                            <tr class="bg-slate-900 text-white divide-x divide-white/10 uppercase tracking-tighter">
-                                <th class="p-3 text-left font-black w-64">Summary Metrics</th>
-                                <th class="p-3 text-center font-black w-24">Regular</th>
-                                <th class="p-3 text-center font-black w-24">Restday</th>
-                                <th class="p-3 text-center font-black w-24">Holiday</th>
-                                <th colspan="2" class="p-1 text-center font-black bg-white/5 border-b border-white/10">Type 1 / Type 2</th>
-                                <th class="p-3 text-center font-black w-24">Spec-H</th>
-                                <th class="p-3 text-center font-black w-24">Spec-R</th>
-                                <th class="p-3 text-left font-black w-48 pl-6 border-l border-white/20">Occurrence Tracker</th>
-                                <th class="p-3 text-right font-black w-24">Value</th>
-                                <th class="p-3 text-right font-black w-24">Count</th>
-                            </tr>
-                            <tr class="bg-slate-800 text-[9px] text-white/70 divide-x divide-white/5 uppercase italic font-bold">
-                                <th class="p-1"></th>
-                                <th class="p-1"></th>
-                                <th class="p-1"></th>
-                                <th class="p-1"></th>
-                                <th class="p-1 text-center bg-white/10">Type 1</th>
-                                <th class="p-1 text-center bg-white/10">Type 2</th>
-                                <th class="p-1"></th>
-                                <th class="p-1"></th>
-                                <th class="p-1 pl-6"></th>
-                                <th class="p-1"></th>
-                                <th class="p-1"></th>
-                            </tr>
-                        </thead>
-                        <tbody class="divide-y divide-slate-100 text-slate-800">
-                            <tr class="h-10 hover:bg-slate-50 transition-colors">
-                                <td class="p-2 border-r border-slate-100 font-bold uppercase pl-3">Total Worked Hours</td>
-                                <td class="p-2 border-r border-slate-100 text-center font-black text-slate-900">{{ number_format($m['regular']['worked'] ?? 0, 2) }}</td>
-                                <td class="p-2 border-r border-slate-100 text-center font-bold text-slate-500">{{ number_format($m['restday']['worked'] ?? 0, 2) }}</td>
-                                <td class="p-2 border-r border-slate-100 text-center text-slate-400">0.00</td>
-                                <td class="p-2 border-r border-slate-100 text-center italic font-bold bg-slate-50/30">0.00</td>
-                                <td class="p-2 border-r border-slate-100 text-center italic font-bold bg-slate-50/30">0.00</td>
-                                <td class="p-2 border-r border-slate-100 text-center text-slate-400">0.00</td>
-                                <td class="p-2 border-r border-slate-100 text-center text-slate-400">0.00</td>
-                                <td class="p-2 border-r border-slate-100 uppercase text-slate-400 font-black italic pl-6">Absenteeism</td>
-                                <td class="p-2 border-r border-slate-100 text-right text-rose-600 font-black">{{ $m['counts']['absences'] ?? 0 }}</td>
-                                <td class="p-2 text-right text-rose-600 font-black">{{ $m['counts']['absences_occ'] ?? 0 }}</td>
-                            </tr>
-                            <tr class="h-10 hover:bg-slate-50 transition-colors">
-                                <td class="p-2 border-r border-slate-100 font-bold uppercase pl-3">Night Differential</td>
-                                <td class="p-2 border-r border-slate-100 text-center font-black text-indigo-700">{{ number_format($m['regular']['nd'] ?? 0, 2) }}</td>
-                                <td class="p-2 border-r border-slate-100 text-center text-slate-400">0.00</td>
-                                <td class="p-2 border-r border-slate-100 text-center text-slate-400">0.00</td>
-                                <td class="p-2 border-r border-slate-100 text-center italic font-bold bg-slate-50/30">0.00</td>
-                                <td class="p-2 border-r border-slate-100 text-center italic font-bold bg-slate-50/30">--</td>
-                                <td class="p-2 border-r border-slate-100 text-center text-slate-400">0.00</td>
-                                <td class="p-2 border-r border-slate-100 text-center text-slate-400">0.00</td>
-                                <td class="p-2 border-r border-slate-100 uppercase text-slate-400 font-black italic pl-6">Undertime</td>
-                                <td class="p-2 border-r border-slate-100 text-right font-black text-slate-900">{{ number_format($m['counts']['undertime'] ?? 0, 2) }}</td>
-                                <td class="p-2 text-right font-black text-slate-900">{{ $m['counts']['undertime_occ'] ?? 0 }}</td>
-                            </tr>
-                            <tr class="h-10 hover:bg-slate-50 transition-colors">
-                                <td class="p-2 border-r border-slate-100 font-bold uppercase pl-3">Overtime (Summary)</td>
-                                <td class="p-2 border-r border-slate-100 text-center font-black text-emerald-700">{{ number_format($m['regular']['ot'] ?? 0, 2) }}</td>
-                                <td class="p-2 border-r border-slate-100 text-center font-black text-emerald-700">{{ number_format($m['restday']['ot'] ?? 0, 2) }}</td>
-                                <td class="p-2 border-r border-slate-100 text-center text-slate-400">0.00</td>
-                                <td class="p-2 border-r border-slate-100 text-center italic font-bold bg-slate-50/30">0.00</td>
-                                <td class="p-2 border-r border-slate-100 text-center italic font-bold bg-slate-50/30">--</td>
-                                <td class="p-2 border-r border-slate-100 text-center text-slate-400">0.00</td>
-                                <td class="p-2 border-r border-slate-100 text-center text-slate-400">0.00</td>
-                                <td class="p-2 border-r border-slate-100 uppercase text-slate-400 font-black italic pl-6">Tardiness</td>
-                                <td class="p-2 border-r border-slate-100 text-right font-black text-blue-700">{{ number_format($m['counts']['tardiness'] ?? 0, 2) }}</td>
-                                <td class="p-2 text-right font-black text-blue-700">{{ $m['counts']['tardiness_occ'] ?? 0 }}</td>
-                            </tr>
-                            <tr class="h-10 hover:bg-slate-50 transition-colors">
-                                <td class="p-2 border-r border-slate-100 font-bold uppercase pl-3 text-slate-500 italic">Misc Deductions</td>
-                                <td class="p-2 border-r border-slate-100 text-center text-slate-300">0.00</td>
-                                <td class="p-2 border-r border-slate-100 text-center text-slate-300">0.00</td>
-                                <td class="p-2 border-r border-slate-100 text-center text-slate-300">0.00</td>
-                                <td class="p-2 border-r border-slate-100 text-center italic font-bold bg-slate-50/30">0.00</td>
-                                <td class="p-2 border-r border-slate-100 text-center italic font-bold bg-slate-50/30">--</td>
-                                <td class="p-2 border-r border-slate-100 text-center text-slate-300">0.00</td>
-                                <td class="p-2 border-r border-slate-100 text-center text-slate-300">0.00</td>
-                                <td class="p-2 border-r border-slate-100 uppercase text-slate-400 font-black italic pl-6">Overbreak</td>
-                                <td class="p-2 border-r border-slate-100 text-right font-black text-rose-800">{{ number_format($m['counts']['overbreak'] ?? 0, 2) }}</td>
-                                <td class="p-2 text-right font-black text-rose-800">{{ $m['counts']['overbreak_occ'] ?? 0 }}</td>
-                            </tr>
-                        </tbody>
-                    </table>
+            <!-- Summary Section -->
+            <div class="mb-12">
+                <h2 class="text-sm font-black text-slate-800 uppercase tracking-tighter mb-4 flex items-center gap-2">
+                    <span class="w-2 h-4 bg-indigo-600 rounded-full"></span>
+                    Attendance Summary
+                </h2>
+                
+                <div class="grid grid-cols-1 md:grid-cols-4 gap-4">
+                    <!-- Work Hours Card -->
+                    <div class="bg-white p-5 rounded-xl border border-slate-200 shadow-sm">
+                        <span class="block text-[10px] font-bold text-slate-400 uppercase mb-2">Total Worked Hours</span>
+                        <div class="flex items-end justify-between">
+                            <span class="text-2xl font-black text-slate-900 leading-none">{{ number_format($m['regular']['worked'] ?? 0, 2) }}</span>
+                            <span class="text-[10px] font-bold text-emerald-600 bg-emerald-50 px-2 py-0.5 rounded">REGULAR</span>
+                        </div>
+                    </div>
+
+                    <!-- OT Card -->
+                    <div class="bg-white p-5 rounded-xl border border-slate-200 shadow-sm">
+                        <span class="block text-[10px] font-bold text-slate-400 uppercase mb-2">Overtime Hours</span>
+                        <div class="flex items-end justify-between">
+                            <span class="text-2xl font-black text-slate-900 leading-none">{{ number_format(($m['regular']['ot'] ?? 0) + ($m['restday']['ot'] ?? 0), 2) }}</span>
+                            <span class="text-[10px] font-bold text-indigo-600 bg-indigo-50 px-2 py-0.5 rounded">TOTAL OT</span>
+                        </div>
+                    </div>
+
+                    <!-- Tardiness Card -->
+                    <div class="bg-white p-5 rounded-xl border border-slate-200 shadow-sm">
+                        <span class="block text-[10px] font-bold text-slate-400 uppercase mb-2">Late & Undertime</span>
+                        <div class="flex items-end justify-between">
+                            <span class="text-2xl font-black text-rose-600 leading-none">{{ number_format(($m['counts']['tardiness'] ?? 0) + ($m['counts']['undertime'] ?? 0), 0) }}m</span>
+                            <span class="text-[10px] font-bold text-rose-600 bg-rose-50 px-2 py-0.5 rounded">DEDUCTIONS</span>
+                        </div>
+                    </div>
+
+                    <!-- Absenteeism Card -->
+                    <div class="bg-white p-5 rounded-xl border border-slate-200 shadow-sm">
+                        <span class="block text-[10px] font-bold text-slate-400 uppercase mb-2">Absences</span>
+                        <div class="flex items-end justify-between">
+                            <span class="text-2xl font-black text-slate-900 leading-none">{{ $m['counts']['absences'] ?? 0 }}</span>
+                            <span class="text-[10px] font-bold text-slate-500 bg-slate-50 px-2 py-0.5 rounded">DAYS</span>
+                        </div>
+                    </div>
                 </div>
 
-                <div class="mt-8 flex gap-4">
-                    <button class="bg-slate-900 border border-white/10 hover:bg-black text-white px-8 py-4 rounded shadow-2xl text-[11px] font-black uppercase flex items-center gap-3 transition-all transform hover:-translate-y-1 active:translate-y-0">
-                        <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 17h2a2 2 0 002-2v-4a2 2 0 00-2-2H5a2 2 0 00-2 2v4a2 2 0 002 2h2m2 4h6a2 2 0 002-2v-4a2 2 0 00-2-2H9a2 2 0 00-2 2v4a2 2 0 002 2zm8-12V5a2 2 0 00-2-2H9a2 2 0 00-2 2v4h10z"></path></svg>
+                <div class="mt-8 flex flex-wrap gap-4">
+                    <a href="{{ route('dtr.pdf', ['month' => $month, 'year' => $year]) }}" 
+                       class="bg-slate-900 hover:bg-black text-white px-8 py-3 rounded-lg shadow-lg text-xs font-bold uppercase flex items-center gap-3 transition-all hover:-translate-y-0.5">
+                        <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 17h2a2 2 0 002-2v-4a2 2 0 00-2-2H5a2 2 0 00-2 2v4a2 2 0 002 2h2m2 4h6a2 2 0 002-2v-4a2 2 0 00-2-2H9a2 2 0 00-2 2v4a2 2 0 002 2zm8-12V5a2 2 0 00-2-2H9a2 2 0 00-2 2v4h10z"></path></svg>
                         Print Professional DTR
-                    </button>
-                    <button class="bg-indigo-900 border border-white/10 hover:bg-indigo-950 text-white px-8 py-4 rounded shadow-2xl text-[11px] font-black uppercase flex items-center gap-3 transition-all transform hover:-translate-y-1 active:translate-y-0">
-                        <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"></path></svg>
-                        Export Log Analysis
-                    </button>
+                    </a>
                 </div>
             </div>
         </div>

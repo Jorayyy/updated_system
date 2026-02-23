@@ -51,11 +51,14 @@ class PayrollGroupController extends Controller
      */
     public function show(PayrollGroup $payrollGroup)
     {
-        $payrollGroup->load(['users', 'periods' => function($q) {
+        $payrollGroup->load(['users' => function($q) {
+            $q->where('role', 'employee');
+        }, 'periods' => function($q) {
             $q->latest()->limit(5);
         }]);
         
-        $availableUsers = User::whereNull('payroll_group_id')
+        $availableUsers = User::where('role', 'employee')
+            ->whereNull('payroll_group_id')
             ->orderByRaw('COALESCE(last_name, name)')
             ->get();
 

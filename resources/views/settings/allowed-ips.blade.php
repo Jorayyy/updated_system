@@ -87,9 +87,10 @@
                         <form action="{{ route('settings.allowed-ips.store') }}" method="POST" class="space-y-6">
                             @csrf
                             <div>
-                                <label class="block text-xs font-black text-slate-500 uppercase tracking-widest mb-2 ml-1">IP Address</label>
-                                <input type="text" name="ip_address" required placeholder="0.0.0.0"
+                                <label class="block text-xs font-black text-slate-500 uppercase tracking-widest mb-2 ml-1">IP Address (IPv4 or IPv6)</label>
+                                <input type="text" name="ip_address" required placeholder="e.g. 192.168.1.1 or 2001:db8::1"
                                     class="w-full bg-white/50 border-white/60 rounded-2xl px-5 py-4 text-base font-black text-slate-900 focus:ring-4 focus:ring-blue-500/10 focus:border-blue-500 transition-all font-mono uppercase">
+                                <p class="text-[9px] font-bold text-slate-400 uppercase tracking-widest mt-2 ml-1">Supports both standard and compressed formats</p>
                                 @error('ip_address') <span class="text-red-500 text-xs font-bold uppercase mt-1 ml-1">{{ $message }}</span> @enderror
                             </div>
                             <div>
@@ -235,7 +236,7 @@
                         @csrf
                         @method("PUT")
                         <div>
-                            <label class="block text-[10px] font-black text-slate-500 uppercase tracking-[0.2em] mb-2 ml-1">IP Address</label>
+                            <label class="block text-[10px] font-black text-slate-500 uppercase tracking-[0.2em] mb-2 ml-1">Address Vector (IPv4/IPv6)</label>
                             <input type="text" name="ip_address" id="edit_ip_address" required class="w-full bg-white/50 border-white/60 rounded-2xl px-5 py-4 text-sm font-black text-slate-900 focus:ring-4 focus:ring-blue-500/10 focus:border-blue-500 transition-all font-mono uppercase">
                         </div>
                         <div>

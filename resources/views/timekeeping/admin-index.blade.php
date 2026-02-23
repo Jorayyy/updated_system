@@ -43,14 +43,10 @@
             <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-5 gap-6 mb-8">
                 <!-- Transactions Today -->
                 <div class="bg-white rounded-2xl p-6 shadow-sm border border-gray-100 hover:shadow-md transition-all group relative overflow-hidden">
-                    <div class="absolute top-0 right-0 p-4 opacity-[0.05] group-hover:scale-110 transition-transform">
-                        <svg class="w-16 h-16 text-blue-600" fill="currentColor" viewBox="0 0 24 24"><path d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm0 18c-4.41 0-8-3.59-8-8s3.59-8 8-8 8 3.59 8 8-3.59 8-8 8zm.5-13H11v6l5.25 3.15.75-1.23-4.5-2.67z"/></svg>
-                    </div>
                     <p class="text-xs font-bold text-gray-400 uppercase tracking-wider mb-1">New Logs Today</p>
                     <div class="flex items-end gap-2">
                         <span class="text-3xl font-black text-blue-600">{{ $stats['total_today'] }}</span>
                         <span class="text-xs font-bold text-emerald-500 mb-1 flex items-center">
-                            <svg class="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 7h8m0 0v8m0-8l-8 8-4-4-6 6"></path></svg>
                             Tracked
                         </span>
                     </div>
@@ -58,9 +54,6 @@
 
                 <!-- Active Employees -->
                 <div class="bg-white rounded-2xl p-6 shadow-sm border border-gray-100 hover:shadow-md transition-all group relative overflow-hidden">
-                    <div class="absolute top-0 right-0 p-4 opacity-[0.05] group-hover:scale-110 transition-transform">
-                        <svg class="w-16 h-16 text-emerald-600" fill="currentColor" viewBox="0 0 24 24"><path d="M12 12c2.21 0 4-1.79 4-4s-1.79-4-4-4-4 1.79-4 4 1.79 4 4 4zm0 2c-2.67 0-8 1.34-8 4v2h16v-2c0-2.66-5.33-4-8-4z"/></svg>
-                    </div>
                     <p class="text-xs font-bold text-gray-400 uppercase tracking-wider mb-1">Active Now</p>
                     <div class="flex items-end gap-2">
                         <span class="text-3xl font-black text-emerald-600">{{ $stats['active_employees'] }}</span>
@@ -70,9 +63,6 @@
 
                 <!-- On Break -->
                 <div class="bg-white rounded-2xl p-6 shadow-sm border border-gray-100 hover:shadow-md transition-all group relative overflow-hidden">
-                    <div class="absolute top-0 right-0 p-4 opacity-[0.05] group-hover:scale-110 transition-transform">
-                        <svg class="w-16 h-16 text-amber-600" fill="currentColor" viewBox="0 0 24 24"><path d="M20 3H4v10c0 2.21 1.79 4 4 4h6c2.21 0 4-1.79 4-4v-3h2c1.11 0 2-.89 2-2V5c0-1.11-.89-2-2-2zm0 5h-2V5h2v3zM4 19h16v2H4z"/></svg>
-                    </div>
                     <p class="text-xs font-bold text-gray-400 uppercase tracking-wider mb-1">On Break</p>
                     <div class="flex items-end gap-2">
                         <span class="text-3xl font-black text-amber-600">{{ $stats['on_break'] }}</span>
@@ -84,9 +74,6 @@
 
                 <!-- In Meeting -->
                 <div class="bg-white rounded-2xl p-6 shadow-sm border border-gray-100 hover:shadow-md transition-all group relative overflow-hidden">
-                    <div class="absolute top-0 right-0 p-4 opacity-[0.05] group-hover:scale-110 transition-transform">
-                        <svg class="w-16 h-16 text-indigo-600" fill="currentColor" viewBox="0 0 24 24"><path d="M15 12c2.21 0 4-1.79 4-4s-1.79-4-4-4-4 1.79-4 4 1.79 4 4 4zm-9-2V7H4v3H1v2h3v3h2v-3h3v-2H6zm9 4c-2.67 0-8 1.34-8 4v2h16v-2c0-2.66-5.33-4-8-4z"/></svg>
-                    </div>
                     <p class="text-xs font-bold text-gray-400 uppercase tracking-wider mb-1">In Meeting</p>
                     <div class="flex items-end gap-2">
                         <span class="text-3xl font-black text-indigo-600">{{ $stats['in_meeting'] }}</span>
@@ -96,9 +83,6 @@
 
                 <!-- TK Complaints -->
                 <a href="{{ request()->fullUrlWithQuery(['tab' => 'tickets', 'ticket_status' => 'open']) }}" class="bg-white rounded-2xl p-6 shadow-sm border border-gray-100 hover:shadow-md transition-all group relative overflow-hidden ring-2 ring-red-50 block">
-                    <div class="absolute top-0 right-0 p-4 opacity-[0.05] group-hover:scale-110 transition-transform">
-                        <svg class="w-16 h-16 text-red-600" fill="currentColor" viewBox="0 0 24 24"><path d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm1 15h-2v-2h2v2zm0-4h-2V7h2v6z"/></svg>
-                    </div>
                     <p class="text-xs font-bold text-gray-400 uppercase tracking-wider mb-1">Pending Complaints</p>
                     <div class="flex items-end gap-2">
                         <span class="text-3xl font-black {{ $stats['pending_complaints'] > 0 ? 'text-red-600' : 'text-gray-300' }}">{{ $stats['pending_complaints'] }}</span>
@@ -115,14 +99,10 @@
                     <div class="lg:col-span-3 space-y-6">
                         <!-- Quick Actions -->
                         <div class="bg-gradient-to-br from-indigo-600 to-blue-700 rounded-2xl shadow-lg p-6 text-white overflow-hidden relative">
-                            <div class="absolute top-0 right-0 p-4 opacity-10">
-                                <svg class="w-24 h-24" fill="currentColor" viewBox="0 0 24 24"><path d="M11.99 2C6.47 2 2 6.48 2 12s4.47 10 9.99 10C17.52 22 22 17.52 22 12S17.52 2 11.99 2zM12 20c-4.42 0-8-3.58-8-8s3.58-8 8-8 8 3.58 8 8-3.58 8-8 8zm.5-13H11v6l5.25 3.15.75-1.23-4.5-2.67z"/></svg>
-                            </div>
                             <h3 class="text-lg font-black uppercase tracking-wider mb-1 relative z-10">Timekeeping</h3>
                             <p class="text-indigo-100 text-sm mb-6 relative z-10">Manage employee logs and corrections.</p>
                             
                             <button onclick="openManualEntryModal()" class="w-full bg-white text-indigo-700 font-bold py-3 px-4 rounded-xl hover:bg-indigo-50 transition-all shadow-md flex items-center justify-center gap-2 relative z-10">
-                                <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 6v6m0 0v6m0-6h6m-6 0H6"></path></svg>
                                 Log Manual Entry
                             </button>
                         </div>
@@ -131,7 +111,6 @@
                         <div class="bg-white rounded-2xl shadow-sm border border-gray-100 overflow-hidden">
                             <div class="bg-gray-50/50 px-5 py-3 border-b border-gray-100 flex items-center justify-between">
                                 <h3 class="text-xs font-black text-gray-500 uppercase tracking-wider flex items-center gap-2">
-                                    <span class="w-2 h-2 rounded-full bg-amber-500 animate-pulse"></span>
                                     Flagged Anomalies
                                 </h3>
                                 @if(isset($anomalies) && $anomalies->count() > 0)
@@ -166,10 +145,7 @@
                                     </div>
                                 @empty
                                     <div class="p-8 text-center">
-                                        <div class="inline-flex p-3 bg-emerald-50 rounded-full mb-3">
-                                            <svg class="w-5 h-5 text-emerald-500" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"></path></svg>
-                                        </div>
-                                        <p class="text-xs font-bold text-gray-400">All clean! No anomalies found.</p>
+                                        <p class="text-xs font-bold text-gray-400 uppercase tracking-widest">All clean! No anomalies found.</p>
                                     </div>
                                 @endforelse
                             </div>
@@ -326,41 +302,45 @@
                                                         <div class="text-[10px] font-bold text-red-500 uppercase mt-1">Void Reason: {{ $transaction->void_reason }}</div>
                                                     @endif
                                                 </td>
-                                                <td class="px-6 py-4 whitespace-nowrap text-center space-x-1">
-                                                    @if($transaction->isVoided())
-                                                        <span class="text-xs font-bold text-red-400 italic">Transaction Voided</span>
-                                                    @else
-                                                        <button type="button" 
-                                                                onclick="openEditLogModal({{ json_encode([
-                                                                    'id' => $transaction->id,
-                                                                    'employee' => $transaction->user->name,
-                                                                    'time' => $transaction->transaction_time->format('Y-m-d\TH:i'),
-                                                                    'type' => $transaction->transaction_type,
-                                                                    'notes' => $transaction->notes
-                                                                ]) }})"
-                                                                class="inline-flex items-center px-3 py-1.5 bg-white text-emerald-600 hover:bg-emerald-600 hover:text-white rounded-lg text-xs font-bold transition-all border border-emerald-100 hover:border-emerald-600 shadow-sm">
-                                                            <svg class="w-3.5 h-3.5 mr-1" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z"></path></svg>
-                                                            Edit
-                                                        </button>
-                                                        
-                                                        <button type="button" onclick="openVoidModal({{ $transaction->id }})" 
-                                                                class="inline-flex items-center px-3 py-1.5 bg-white text-rose-600 hover:bg-rose-600 hover:text-white rounded-lg text-xs font-bold transition-all border border-rose-100 hover:border-rose-600 shadow-sm">
-                                                            <svg class="w-3.5 h-3.5 mr-1" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M18.364 18.364A9 9 0 005.636 5.636m12.728 12.728L5.636 5.636"></path></svg>
-                                                            Void
-                                                        </button>
-                                                    @endif
+                                                <td class="px-6 py-4 whitespace-nowrap text-right">
+                                                    <div class="flex items-center justify-end gap-1">
+                                                        @if($transaction->isVoided())
+                                                            <span class="text-[10px] font-black text-rose-500 bg-rose-50 px-2 py-1 rounded-md border border-rose-100 uppercase tracking-tighter">Voided</span>
+                                                        @else
+                                                            <div class="flex items-center bg-gray-50 rounded-lg p-0.5 border border-gray-100 shadow-sm">
+                                                                <button type="button" 
+                                                                        onclick="openEditLogModal({{ json_encode([
+                                                                            'id' => $transaction->id,
+                                                                            'employee' => $transaction->user->name,
+                                                                            'time' => $transaction->transaction_time->format('Y-m-d\TH:i'),
+                                                                            'type' => $transaction->transaction_type,
+                                                                            'notes' => $transaction->notes
+                                                                        ]) }})"
+                                                                        title="Edit Log"
+                                                                        class="p-1.5 text-emerald-600 hover:bg-emerald-600 hover:text-white rounded-md transition-all">
+                                                                    <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z"></path></svg>
+                                                                </button>
+                                                                
+                                                                <button type="button" onclick="openVoidModal({{ $transaction->id }})" 
+                                                                        title="Void Log"
+                                                                        class="p-1.5 text-rose-600 hover:bg-rose-600 hover:text-white rounded-md transition-all">
+                                                                    <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M18.364 18.364A9 9 0 005.636 5.636m12.728 12.728L5.636 5.636"></path></svg>
+                                                                </button>
 
-                                                    @if(auth()->user()->isAdmin())
-                                                        <form action="{{ route('timekeeping.destroy', $transaction) }}" method="POST" class="inline" onsubmit="return confirm('Are you sure you want to PERMANENTLY delete this log? This cannot be undone.')">
-                                                            @csrf
-                                                            @method('DELETE')
-                                                            <button type="submit" 
-                                                                    class="inline-flex items-center px-3 py-1.5 bg-white text-red-600 hover:bg-red-600 hover:text-white rounded-lg text-xs font-bold transition-all border border-red-100 hover:border-red-600 shadow-sm">
-                                                                <svg class="w-3.5 h-3.5 mr-1" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"></path></svg>
-                                                                Delete
-                                                            </button>
-                                                        </form>
-                                                    @endif
+                                                                @if(auth()->user()->isAdmin())
+                                                                    <div class="w-px h-4 bg-gray-200 mx-0.5"></div>
+                                                                    <form action="{{ route('timekeeping.destroy', $transaction) }}" method="POST" class="inline" onsubmit="return confirm('Are you sure you want to PERMANENTLY delete this log? This cannot be undone.')">
+                                                                        @csrf
+                                                                        @method('DELETE')
+                                                                        <button type="submit" title="Delete Permanently"
+                                                                                class="p-1.5 text-red-600 hover:bg-red-600 hover:text-white rounded-md transition-all">
+                                                                            <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"></path></svg>
+                                                                        </button>
+                                                                    </form>
+                                                                @endif
+                                                            </div>
+                                                        @endif
+                                                    </div>
                                                 </td>
                                             </tr>
                                         @empty

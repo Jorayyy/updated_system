@@ -120,8 +120,10 @@ class DtrService
         ];
 
         // Get employees based on scope
+        // User Request: Only the employee account of an admin/staff can have DTR.
+        // System/Admin accounts should not have DTR records generated.
         $query = User::where('is_active', true)
-            ->whereIn('role', ['employee', 'hr', 'admin', 'super_admin']);
+            ->where('role', 'employee');
 
         // If specific user IDs are provided, use them
         if (!empty($userIds)) {

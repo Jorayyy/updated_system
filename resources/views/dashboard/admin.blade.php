@@ -31,11 +31,6 @@
                                 <p class="mt-1 text-3xl font-black text-slate-900 leading-none">{{ $totalEmployees }}</p>
                                 <p class="mt-2 text-[10px] font-black text-slate-400 uppercase">Active staff</p>
                             </div>
-                            <div class="p-3 bg-blue-50 rounded-2xl">
-                                <svg class="w-8 h-8 text-blue-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 20h5v-2a3 3 0 00-5.356-1.857M17 20H7m10 0v-2c0-.656-.126-1.283-.356-1.857M7 20H2v-2a3 3 0 015.356-1.857M7 20v-2c0-.656.126-1.283.356-1.857m0 0a5.002 5.002 0 019.288 0M15 7a3 3 0 11-6 0 3 3 0 016 0zm6 3a2 2 0 11-4 0 2 2 0 014 0zM7 10a2 2 0 11-4 0 2 2 0 014 0z"/>
-                                </svg>
-                            </div>
                         </div>
                     </div>
                 </div>
@@ -48,11 +43,6 @@
                                 <p class="text-[11px] font-black text-slate-500 uppercase tracking-widest">Present</p>
                                 <p class="mt-1 text-3xl font-black text-emerald-600 leading-none">{{ $presentToday }}</p>
                                 <p class="mt-2 text-[10px] font-black text-slate-400 uppercase">Checked in today</p>
-                            </div>
-                            <div class="p-3 bg-emerald-50 rounded-2xl">
-                                <svg class="w-8 h-8 text-emerald-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z"/>
-                                </svg>
                             </div>
                         </div>
                         <!-- Progress bar -->
@@ -73,11 +63,6 @@
                                 <p class="mt-1 text-3xl font-black text-blue-600 leading-none">{{ $onLeaveToday }}</p>
                                 <p class="mt-2 text-[10px] font-black text-slate-400 uppercase">Approved leaves</p>
                             </div>
-                            <div class="p-3 bg-blue-50 rounded-2xl">
-                                <svg class="w-8 h-8 text-blue-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z"/>
-                                </svg>
-                            </div>
                         </div>
                     </div>
                 </div>
@@ -90,11 +75,6 @@
                                 <p class="text-[11px] font-black text-slate-500 uppercase tracking-widest">Absent</p>
                                 <p class="mt-1 text-3xl font-black text-rose-600 leading-none">{{ $absentToday }}</p>
                                 <p class="mt-2 text-[10px] font-black text-slate-400 uppercase">Not checked in</p>
-                            </div>
-                            <div class="p-3 bg-rose-50 rounded-2xl">
-                                <svg class="w-8 h-8 text-rose-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v4m0 4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"/>
-                                </svg>
                             </div>
                         </div>
                     </div>

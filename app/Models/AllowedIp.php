@@ -53,11 +53,15 @@ class AllowedIp extends Model
 
         // Check if there are any allowed IPs configured
         // If restriction is enabled but no IPs are registered, we block everything for security
-        if (!self::active()->exists()) {
+        $allowedIps = self::active()->pluck('ip_address')->toArray();
+
+        if (empty($allowedIps)) {
             return false;
         }
-        
-        return self::active()->where('ip_address', $ipAddress)->exists();
+
+        // Use Symfony's IpUtils to check if IP matches exactly or within a CIDR range
+        // This also handles IPv4 vs IPv6 normalization automatically
+        return \Symfony\Component\HttpFoundation\IpUtils::checkIp($ipAddress, $allowedIps);
     }
 
     /**

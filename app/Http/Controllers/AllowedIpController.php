@@ -19,7 +19,10 @@ class AllowedIpController extends Controller
             ->paginate(15);
 
         $currentIp = request()->ip();
-        $isCurrentIpAllowed = AllowedIp::active()->where('ip_address', $currentIp)->exists();
+        $isCurrentIpAllowed = \Symfony\Component\HttpFoundation\IpUtils::checkIp(
+            $currentIp, 
+            AllowedIp::active()->pluck('ip_address')->toArray()
+        );
 
         return view('settings.allowed-ips', compact('allowedIps', 'currentIp', 'isCurrentIpAllowed'));
     }
@@ -90,19 +93,24 @@ class AllowedIpController extends Controller
     {
         $currentIp = $request->ip();
         
-        if (AllowedIp::where('ip_address', $currentIp)->exists()) {
-            return redirect()->back()->with('error', 'This IP address is already in the list.');
+        $alreadyInList = \Symfony\Component\HttpFoundation\IpUtils::checkIp(
+            $currentIp, 
+            AllowedIp::pluck('ip_address')->toArray()
+        );
+
+        if ($alreadyInList) {
+            return redirect()->back()->with('error', 'This IP address is already tracked in the gateway registry.');
         }
 
         AllowedIp::create([
             'ip_address' => $currentIp,
             'label' => 'Auto-added',
-            'location' => 'Current Location',
-            'description' => 'Added via "Add My Current IP" button',
+            'location' => 'Current Vector',
+            'description' => 'Added via "Authorize" button',
             'is_active' => true,
             'created_by' => Auth::id(),
         ]);
 
-        return redirect()->back()->with('success', 'Your current IP address has been added.');
+        return redirect()->back()->with('success', 'Current Origin Vector successfully authorized.');
     }
 }

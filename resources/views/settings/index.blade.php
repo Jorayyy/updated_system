@@ -135,6 +135,7 @@
                 </a>
 
                 <!-- System Settings Card -->
+                @if(auth()->user()->isSuperAdmin())
                 <a href="{{ route('settings.system') }}" class="block">
                     <div class="bg-white overflow-hidden shadow-sm sm:rounded-lg hover:shadow-md transition border border-transparent hover:border-gray-500">
                         <div class="p-6">
@@ -172,6 +173,7 @@
                         </div>
                     </div>
                 </a>
+                @endif
             </div>
         </div>
     </div>

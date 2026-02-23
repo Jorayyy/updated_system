@@ -12,9 +12,7 @@ class LeaveTypeController extends Controller
      */
     public function index()
     {
-        $leaveTypes = LeaveType::orderBy('name')->paginate(15);
-        
-        return view('leave-types.index', compact('leaveTypes'));
+        return redirect()->route('leaves.manage', ['tab' => 'types']);
     }
 
     /**
@@ -51,7 +49,7 @@ class LeaveTypeController extends Controller
             'is_active' => true,
         ]);
 
-        return redirect()->route('leave-types.index')
+        return redirect()->route('leaves.manage', ['tab' => 'types'])
             ->with('success', 'Leave type created successfully.');
     }
 
@@ -90,7 +88,7 @@ class LeaveTypeController extends Controller
             'is_active' => $request->boolean('is_active', true),
         ]);
 
-        return redirect()->route('leave-types.index')
+        return redirect()->route('leaves.manage', ['tab' => 'types'])
             ->with('success', 'Leave type updated successfully.');
     }
 
@@ -101,7 +99,7 @@ class LeaveTypeController extends Controller
     {
         $leaveType->update(['is_active' => !$leaveType->is_active]);
 
-        return redirect()->route('leave-types.index')
+        return redirect()->route('leaves.manage', ['tab' => 'types'])
             ->with('success', 'Leave type status updated.');
     }
 }

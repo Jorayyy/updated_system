@@ -97,6 +97,24 @@ class User extends Authenticatable
     ];
 
     /**
+     * Check if user can approve major decisions like DTRs and Payroll.
+     */
+    public function canApproveMajorDecisions(): bool
+    {
+        // Super admin always can
+        if ($this->role === 'super_admin') {
+            return true;
+        }
+
+        // Other roles (admin, hr, etc.) depend on the system setting
+        $allowAdmins = CompanySetting::getValue('allow_admin_major_decisions', false);
+        
+        // If delegation is enabled, any role above 'employee' might be considered (admin, hr, accounting)
+        // Usually 'admin' is the target here.
+        return $allowAdmins && in_array($this->role, ['admin', 'hr', 'accounting']);
+    }
+
+    /**
      * Get the full name for display.
      */
     public function getFullNameAttribute(): string

@@ -24,6 +24,14 @@ class AttendanceController extends Controller
     public function index()
     {
         $user = auth()->user();
+
+        // Security Checklist: Restrict Attendance to 'employee' role only.
+        // System/Admin accounts (admin, super_admin, hr, accounting) should use their 
+        // dedicated employee account for attendance/DTR.
+        if ($user->role !== 'employee') {
+            return view('attendance.restricted', compact('user'));
+        }
+
         $status = $this->attendanceService->getTodayStatus($user);
 
         // Get this week's attendance

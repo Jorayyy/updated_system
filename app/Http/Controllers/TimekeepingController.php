@@ -282,8 +282,8 @@ class TimekeepingController extends Controller
      */
     public function adminStore(Request $request)
     {
-        if (!Auth::user()->isAdmin()) {
-            abort(403, 'Unauthorized access to record transactions.');
+        if (!Auth::user()->canApproveMajorDecisions()) {
+            abort(403, 'Unauthorized. Only Super Admins can manually record transactions.');
         }
 
         $validated = $request->validate([
@@ -321,6 +321,10 @@ class TimekeepingController extends Controller
      */
     public function void(Request $request, TimekeepingTransaction $transaction)
     {
+        if (!Auth::user()->canApproveMajorDecisions()) {
+            abort(403, 'Unauthorized. Only Super Admins can void transactions.');
+        }
+
         $validated = $request->validate([
             'void_reason' => 'required|string|max:255',
         ]);
@@ -335,6 +339,10 @@ class TimekeepingController extends Controller
      */
     public function update(Request $request, TimekeepingTransaction $transaction)
     {
+        if (!Auth::user()->canApproveMajorDecisions()) {
+            abort(403, 'Unauthorized. Only Super Admins can update transactions.');
+        }
+
         $validated = $request->validate([
             'transaction_time' => 'required|date',
             'transaction_type' => ['required', 'string', \Illuminate\Validation\Rule::in(array_keys(TimekeepingTransaction::TRANSACTION_TYPES))],
@@ -355,8 +363,8 @@ class TimekeepingController extends Controller
      */
     public function destroy(TimekeepingTransaction $transaction)
     {
-        if (!auth()->user()->isAdmin()) {
-            abort(403, 'Only admins can delete transactions.');
+        if (!Auth::user()->canApproveMajorDecisions()) {
+            abort(403, 'Unauthorized. Only Super Admins are permitted to delete transactions.');
         }
 
         $transaction->delete();

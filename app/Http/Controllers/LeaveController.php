@@ -300,133 +300,194 @@ class LeaveController extends Controller
     }
 
     /**
-     * Admin/HR: View all leave requests
+     * Admin/HR: Universal Leave Hub (Requests, Types, Credits)
      */
     public function manage(Request $request)
     {
-        // 1. Fetch from LeaveRequest model
-        $query = LeaveRequest::with(['user', 'leaveType']);
-
-        if ($request->filled('search')) {
-            $query->whereHas('user', function($q) use ($request) {
-                $q->where('name', 'like', '%' . $request->search . '%')
-                    ->orWhere('employee_id', 'like', '%' . $request->search . '%');
-            });
-        }
-
-        if ($request->filled('status')) {
-            $query->where('status', $request->status);
-        }
-
-        if ($request->filled('leave_type')) {
-            $query->where('leave_type_id', $request->leave_type);
-        }
-
-        if ($request->filled('department')) {
-            $query->whereHas('user', function($q) use ($request) {
-                $q->where('department', $request->department);
-            });
-        }
-
-        if ($request->filled('date_from')) {
-            $query->where('start_date', '>=', $request->date_from);
-        }
-        if ($request->filled('date_to')) {
-            $query->where('end_date', '<=', $request->date_to);
-        }
-
-        $leaves = $query->orderBy('created_at', 'desc')->get()->map(function($item) {
-            $item->is_transaction = false;
-            return $item;
-        });
-
-        // 2. Fetch from EmployeeTransaction model (type=leave)
-        $tQuery = \App\Models\EmployeeTransaction::where('transaction_type', 'leave')->with(['user', 'leaveType']);
-
-        if ($request->filled('search')) {
-            $tQuery->whereHas('user', function($q) use ($request) {
-                $q->where('name', 'like', '%' . $request->search . '%')
-                    ->orWhere('employee_id', 'like', '%' . $request->search . '%');
-            });
-        }
-
-        if ($request->filled('status')) {
-            // Map statuses if necessary
-            if ($request->status == 'pending') {
-                $tQuery->whereIn('status', ['pending', 'hr_approved']);
-            } else {
-                $tQuery->where('status', $request->status);
-            }
-        }
-
-        if ($request->filled('leave_type')) {
-            $tQuery->where('leave_type_id', $request->leave_type);
-        }
-
-        if ($request->filled('department')) {
-            $tQuery->whereHas('user', function($q) use ($request) {
-                $q->where('department', $request->department);
-            });
-        }
-
-        if ($request->filled('date_from')) {
-            $tQuery->where('effective_date', '>=', $request->date_from);
-        }
-        if ($request->filled('date_to')) {
-            $tQuery->where('effective_date_end', '<=', $request->date_to);
-        }
-
-        $transactions = $tQuery->orderBy('created_at', 'desc')->get()->map(function($item) {
-            $item->is_transaction = true;
-            // Map fields to match LeaveRequest structure for the view
-            $item->start_date = $item->effective_date;
-            $item->end_date = $item->effective_date_end;
-            $item->total_days = $item->days_count;
-            
-            // Map statuses for columns
-            if ($item->status === 'hr_approved') {
-                $item->hr_status = 'approved';
-                $item->admin_status = 'pending';
-                $item->status = 'pending';
-            } elseif ($item->status === 'approved') {
-                $item->hr_status = 'approved';
-                $item->admin_status = 'approved';
-            } elseif ($item->status === 'rejected') {
-                $item->hr_status = 'rejected';
-                $item->admin_status = 'rejected';
-            } else {
-                $item->hr_status = 'pending';
-                $item->admin_status = 'pending';
-            }
-            
-            return $item;
-        });
-
-        // 3. Merge and combine
-        $leaveRequests = $leaves->concat($transactions)->sortByDesc('created_at');
-
+        $activeTab = $request->get('tab', 'requests');
         $leaveTypes = LeaveType::all();
         $departments = \App\Models\User::distinct()->pluck('department')->filter();
 
-        // Stats - combining both
-        $pendingLeaves = LeaveRequest::where('status', 'pending')->count();
-        $pendingTrans = \App\Models\EmployeeTransaction::where('transaction_type', 'leave')->whereIn('status', ['pending', 'hr_approved'])->count();
-        
-        $approvedLeaves = LeaveRequest::where('status', 'approved')->count();
-        $approvedTrans = \App\Models\EmployeeTransaction::where('transaction_type', 'leave')->where('status', 'approved')->count();
+        // 1. DATA FOR REQUESTS TAB
+        if ($activeTab === 'requests') {
+            $query = LeaveRequest::with(['user', 'leaveType']);
 
-        $rejectedLeaves = LeaveRequest::where('status', 'rejected')->count();
-        $rejectedTrans = \App\Models\EmployeeTransaction::where('transaction_type', 'leave')->where('status', 'rejected')->count();
+            if ($request->filled('search')) {
+                $query->whereHas('user', function($q) use ($request) {
+                    $q->where('name', 'like', '%' . $request->search . '%')
+                        ->orWhere('employee_id', 'like', '%' . $request->search . '%');
+                });
+            }
 
-        $stats = [
-            'pending' => $pendingLeaves + $pendingTrans,
-            'approved' => $approvedLeaves + $approvedTrans,
-            'rejected' => $rejectedLeaves + $rejectedTrans,
-            'total_month' => LeaveRequest::whereMonth('created_at', now()->month)->count() + 
-                           \App\Models\EmployeeTransaction::where('transaction_type', 'leave')->whereMonth('created_at', now()->month)->count(),
-        ];
+            if ($request->filled('status')) {
+                $query->where('status', $request->status);
+            }
 
-        return view('leaves.admin-index', compact('leaveRequests', 'leaveTypes', 'departments', 'stats'));
+            if ($request->filled('leave_type')) {
+                $query->where('leave_type_id', $request->leave_type);
+            }
+
+            if ($request->filled('department')) {
+                $query->whereHas('user', function($q) use ($request) {
+                    $q->where('department', $request->department);
+                });
+            }
+
+            if ($request->filled('date_from')) {
+                $query->where('start_date', '>=', $request->date_from);
+            }
+            if ($request->filled('date_to')) {
+                $query->where('end_date', '<=', $request->date_to);
+            }
+
+            $leaves = $query->orderBy('created_at', 'desc')->get()->map(function($item) {
+                $item->is_transaction = false;
+                return $item;
+            });
+
+            // Fetch from EmployeeTransaction model (type=leave)
+            $tQuery = \App\Models\EmployeeTransaction::where('transaction_type', 'leave')->with(['user', 'leaveType']);
+
+            if ($request->filled('search')) {
+                $tQuery->whereHas('user', function($q) use ($request) {
+                    $q->where('name', 'like', '%' . $request->search . '%')
+                        ->orWhere('employee_id', 'like', '%' . $request->search . '%');
+                });
+            }
+
+            if ($request->filled('status')) {
+                if ($request->status == 'pending') {
+                    $tQuery->whereIn('status', ['pending', 'hr_approved']);
+                } else {
+                    $tQuery->where('status', $request->status);
+                }
+            }
+
+            if ($request->filled('leave_type')) {
+                $tQuery->where('leave_type_id', $request->leave_type);
+            }
+
+            if ($request->filled('department')) {
+                $tQuery->whereHas('user', function($q) use ($request) {
+                    $q->where('department', $request->department);
+                });
+            }
+
+            if ($request->filled('date_from')) {
+                $tQuery->where('effective_date', '>=', $request->date_from);
+            }
+            if ($request->filled('date_to')) {
+                $tQuery->where('effective_date_end', '<=', $request->date_to);
+            }
+
+            $transactions = $tQuery->orderBy('created_at', 'desc')->get()->map(function($item) {
+                $item->is_transaction = true;
+                $item->start_date = $item->effective_date;
+                $item->end_date = $item->effective_date_end;
+                $item->total_days = $item->days_count;
+                
+                if ($item->status === 'hr_approved') {
+                    $item->hr_status = 'approved';
+                    $item->admin_status = 'pending';
+                    $item->status = 'pending';
+                } elseif ($item->status === 'approved') {
+                    $item->hr_status = 'approved';
+                    $item->admin_status = 'approved';
+                } elseif ($item->status === 'rejected') {
+                    $item->hr_status = 'rejected';
+                    $item->admin_status = 'rejected';
+                } else {
+                    $item->hr_status = 'pending';
+                    $item->admin_status = 'pending';
+                }
+                
+                return $item;
+            });
+
+            $mergedCollection = $leaves->concat($transactions)->sortByDesc('created_at');
+
+            // Paginate the merged collection manually for the view's ->links() call
+            $perPage = 15;
+            $currentPage = \Illuminate\Pagination\Paginator::resolveCurrentPage() ?: 1;
+            $leaveRequests = new \Illuminate\Pagination\LengthAwarePaginator(
+                $mergedCollection->forPage($currentPage, $perPage)->values(),
+                $mergedCollection->count(),
+                $perPage,
+                $currentPage,
+                ['path' => \Illuminate\Pagination\Paginator::resolveCurrentPath(), 'query' => $request->query()]
+            );
+
+            // Stats
+            $pendingLeaves = LeaveRequest::where('status', 'pending')->count();
+            $pendingTrans = \App\Models\EmployeeTransaction::where('transaction_type', 'leave')->whereIn('status', ['pending', 'hr_approved'])->count();
+            $approvedLeaves = LeaveRequest::where('status', 'approved')->count();
+            $approvedTrans = \App\Models\EmployeeTransaction::where('transaction_type', 'leave')->where('status', 'approved')->count();
+            $rejectedLeaves = LeaveRequest::where('status', 'rejected')->count();
+            $rejectedTrans = \App\Models\EmployeeTransaction::where('transaction_type', 'leave')->where('status', 'rejected')->count();
+
+            $stats = [
+                'pending' => $pendingLeaves + $pendingTrans,
+                'approved' => $approvedLeaves + $approvedTrans,
+                'rejected' => $rejectedLeaves + $rejectedTrans,
+                'total_month' => LeaveRequest::whereMonth('created_at', now()->month)->count() + 
+                               \App\Models\EmployeeTransaction::where('transaction_type', 'leave')->whereMonth('created_at', now()->month)->count(),
+            ];
+
+            return view('leaves.admin-index', compact('leaveRequests', 'leaveTypes', 'departments', 'stats', 'activeTab'));
+        }
+
+        // 2. DATA FOR TYPES TAB
+        if ($activeTab === 'types') {
+            $types = LeaveType::orderBy('name')->paginate(15)->withQueryString();
+            return view('leaves.admin-index', compact('types', 'leaveTypes', 'departments', 'activeTab'));
+        }
+
+        // 3. DATA FOR CREDITS TAB
+        if ($activeTab === 'credits') {
+            if (!auth()->user()->isSuperAdmin()) {
+                abort(403, 'Unauthorized access to Leave Credits tab.');
+            }
+
+            $year = $request->input('year', date('Y'));
+            $departmentFilter = $request->input('department');
+            $searchQuery = $request->input('search');
+
+            $query = User::where('role', 'employee')
+                ->where('is_active', true)
+                ->with(['leaveBalances' => function ($q) use ($year) {
+                    $q->where('year', $year)->with('leaveType');
+                }]);
+
+            if ($departmentFilter) {
+                $query->where('department', $departmentFilter);
+            }
+
+            if ($searchQuery) {
+                $query->where(function ($q) use ($searchQuery) {
+                    $q->where('name', 'like', "%{$searchQuery}%")
+                        ->orWhere('employee_id', 'like', "%{$searchQuery}%")
+                        ->orWhere('email', 'like', "%{$searchQuery}%");
+                });
+            }
+
+            $employees = $query->orderBy('name')->paginate(15)->withQueryString();
+            $allCreditsLeaveTypes = LeaveType::where('is_active', true)->orderBy('name')->get();
+
+            // Summary statistics
+            $totalEmployees = User::where('role', 'employee')->where('is_active', true)->count();
+            $employeesWithCredits = \App\Models\LeaveBalance::where('year', $year)
+                ->distinct('user_id')
+                ->count('user_id');
+            $employeesWithoutCredits = $totalEmployees - $employeesWithCredits;
+
+            return view('leaves.admin-index', compact(
+                'employees', 'allCreditsLeaveTypes', 'departments', 'year',
+                'totalEmployees', 'employeesWithCredits', 'employeesWithoutCredits',
+                'activeTab', 'leaveTypes'
+            ));
+        }
+
+        return abort(404);
     }
 
     /**
@@ -445,8 +506,8 @@ class LeaveController extends Controller
     {
         $user = auth()->user();
         
-        if (!$user->isSuperAdmin()) {
-            abort(403, 'Only SuperAdmin can approve leaves.');
+        if (!$user->canApproveMajorDecisions()) {
+            abort(403, 'Unauthorized. Only Super Admins can approve leaves.');
         }
 
         if ($leave->status !== 'pending') {
@@ -463,7 +524,7 @@ class LeaveController extends Controller
                 'hr_status' => 'approved',
             ]);
 
-            // For SuperAdmin, we can auto-approve admin status too or just finalize
+            // For SuperAdmin/Delegated, we can auto-approve admin status too or just finalize
             if ($leave->admin_status !== 'approved') {
                 $leave->update([
                     'admin_approved_by' => auth()->id(),
@@ -475,12 +536,12 @@ class LeaveController extends Controller
             $this->finalizeApproval($leave);
 
             AuditLog::log(
-                'superadmin_approved',
+                'approved',
                 LeaveRequest::class,
                 $leave->id,
                 ['status' => 'pending'],
                 ['status' => 'approved', 'approved_by' => auth()->id()],
-                'Leave request approved by SuperAdmin'
+                'Leave request approved by ' . ($user->isSuperAdmin() ? 'SuperAdmin' : 'Admin/HR')
             );
 
             // Notify the employee
@@ -488,7 +549,7 @@ class LeaveController extends Controller
                 $leave->user_id,
                 'leave_approved',
                 'Leave Request Approved',
-                "Your {$leave->leaveType->name} request has been approved by SuperAdmin.",
+                "Your {$leave->leaveType->name} request has been approved by " . ($user->isSuperAdmin() ? 'SuperAdmin' : 'Admin/HR') . ".",
                 route('leaves.show', $leave),
                 'check-circle',
                 'green'
@@ -573,8 +634,8 @@ class LeaveController extends Controller
     {
         $user = auth()->user();
 
-        if (!$user->isSuperAdmin()) {
-            abort(403, 'Only SuperAdmin can reject leaves.');
+        if (!$user->canApproveMajorDecisions()) {
+            abort(403, 'Unauthorized. Only Super Admins can reject leaves.');
         }
 
         $request->validate([
@@ -605,7 +666,7 @@ class LeaveController extends Controller
             $leave->id,
             ['status' => 'pending'],
             ['status' => 'rejected', 'rejection_reason' => $request->rejection_reason],
-            "Leave request rejected by SuperAdmin"
+            "Leave request rejected by " . ($user->isSuperAdmin() ? 'SuperAdmin' : 'Admin/HR')
         );
 
         // Notify the employee
@@ -613,7 +674,7 @@ class LeaveController extends Controller
             $leave->user_id,
             Notification::TYPE_LEAVE_REJECTED,
             'Leave Request Rejected',
-            "Your {$leave->leaveType->name} request ({$leave->start_date->format('M d')} - {$leave->end_date->format('M d, Y')}) has been rejected by SuperAdmin. Reason: {$request->rejection_reason}",
+            "Your {$leave->leaveType->name} request ({$leave->start_date->format('M d')} - {$leave->end_date->format('M d, Y')}) has been rejected by " . ($user->isSuperAdmin() ? 'SuperAdmin' : 'Admin/HR') . ". Reason: {$request->rejection_reason}",
             route('leaves.show', $leave),
             'x-circle',
             'red'

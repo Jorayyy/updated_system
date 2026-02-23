@@ -691,46 +691,23 @@
                         </div>
                         @endif
 
-                        <!-- Leave Management -->
+                        <!-- Leave Management HUB (Unified) -->
                         @if(!auth()->user()->isAccounting() || auth()->user()->isSuperAdmin())
-                        <div x-data="{ leavesOpen: {{ (request()->routeIs('leaves.manage') || request()->routeIs('leave-types.*') || request()->routeIs('leave-credits.*')) ? 'true' : 'false' }} }" class="relative nav-item mb-1">
-                            <button @click="leavesOpen = !leavesOpen" class="w-full flex items-center justify-between gap-3 px-3 py-2.5 mx-2 rounded-xl transition-all duration-200 group {{ (request()->routeIs('leaves.manage') || request()->routeIs('leave-types.*') || request()->routeIs('leave-credits.*')) ? 'bg-blue-600 text-white shadow-lg ring-1 ring-white/20' : 'text-gray-400 hover:bg-white/5 hover:text-white' }}">
-                                <div class="flex items-center gap-3">
-                                    <div class="w-8 h-8 flex items-center justify-center flex-shrink-0 relative transition-transform group-hover:scale-110">
-                                        <svg class="w-5 h-5 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"/>
-                                        </svg>
-                                        @if(!auth()->user()->isAccounting() && isset($pendingLeaveCount) && $pendingLeaveCount > 0)
-                                            <span class="absolute -top-1 -right-1 flex h-4 w-4 items-center justify-center rounded-full bg-red-500 text-[10px] font-bold text-white shadow-sm ring-1 ring-white" :class="(request()->routeIs('leaves.manage') || request()->routeIs('leave-types.*') || request()->routeIs('leave-credits.*')) ? 'animate-pulse' : ''">
-                                                {{ $pendingLeaveCount > 99 ? '99+' : $pendingLeaveCount }}
-                                            </span>
-                                        @endif
-                                    </div>
-                                    <span x-show="sidebarOpen" x-cloak class="sidebar-text font-black text-[15px] uppercase tracking-wide" :class="sidebarOpen ? 'sidebar-text-visible' : 'sidebar-text-hidden'">Leaves</span>
+                        <div class="relative nav-item mb-1">
+                            <a href="{{ route('leaves.manage') }}" class="flex items-center gap-3 px-3 py-2.5 mx-2 rounded-xl transition-all duration-200 group {{ (request()->routeIs('leaves.manage') || request()->routeIs('leave-types.*') || request()->routeIs('leave-credits.*')) ? 'bg-blue-600 text-white shadow-lg ring-1 ring-white/20' : 'text-gray-400 hover:bg-white/5 hover:text-white' }}">
+                                <div class="w-8 h-8 flex items-center justify-center flex-shrink-0 relative transition-transform group-hover:scale-110">
+                                    <svg class="w-5 h-5 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"/>
+                                    </svg>
+                                    @if(!auth()->user()->isAccounting() && isset($pendingLeaveCount) && $pendingLeaveCount > 0)
+                                        <span class="absolute -top-1 -right-1 flex h-4 w-4 items-center justify-center rounded-full bg-red-500 text-[10px] font-bold text-white shadow-sm ring-1 ring-white">
+                                            {{ $pendingLeaveCount > 99 ? '99+' : $pendingLeaveCount }}
+                                        </span>
+                                    @endif
                                 </div>
-                                <svg x-show="sidebarOpen" x-cloak class="w-4 h-4 flex-shrink-0 transition-transform duration-200" :class="[leavesOpen ? 'rotate-180' : '', (request()->routeIs('leaves.manage') || request()->routeIs('leave-types.*') || request()->routeIs('leave-credits.*')) ? 'text-white' : 'text-gray-500 group-hover:text-white']" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7"/>
-                                </svg>
-                            </button>
-                            <div x-show="!sidebarOpen" class="tooltip">Leaves</div>
-
-                            <div x-show="leavesOpen && sidebarOpen" x-cloak x-transition:enter="transition ease-out duration-100" x-transition:enter-start="transform opacity-0 scale-95" x-transition:enter-end="transform opacity-100 scale-100" class="mt-1 pb-1 mx-2 space-y-1">
-                                @if(!auth()->user()->isAccounting())
-                                    <a href="{{ route('leaves.manage') }}" class="flex items-center gap-3 px-10 py-2 rounded-lg transition-all duration-200 group {{ request()->routeIs('leaves.manage') ? 'bg-blue-600/20 text-blue-400' : 'text-gray-400 hover:bg-white/10 hover:text-white' }}">
-                                        <span class="text-[13px] font-black uppercase tracking-wide">Leave Requests</span>
-                                    </a>
-
-                                    <a href="{{ route('leave-types.index') }}" class="flex items-center gap-3 px-10 py-2 rounded-lg transition-all duration-200 group {{ request()->routeIs('leave-types.*') ? 'bg-blue-600/20 text-blue-400' : 'text-gray-400 hover:bg-white/10 hover:text-white' }}">
-                                        <span class="text-[13px] font-black uppercase tracking-wide">Leave Types</span>
-                                    </a>
-                                @endif
-
-                                @if(auth()->user()->isSuperAdmin())
-                                    <a href="{{ route('leave-credits.index') }}" class="flex items-center gap-3 px-10 py-2 rounded-lg transition-all duration-200 group {{ request()->routeIs('leave-credits.*') ? 'bg-blue-600/20 text-blue-400' : 'text-gray-400 hover:bg-white/10 hover:text-white' }}">
-                                        <span class="text-[13px] font-black uppercase tracking-wide">Leave Credits</span>
-                                    </a>
-                                @endif
-                            </div>
+                                <span x-show="sidebarOpen" x-cloak class="sidebar-text font-black text-[15px] uppercase tracking-wide" :class="sidebarOpen ? 'sidebar-text-visible' : 'sidebar-text-hidden'">Leave Hub</span>
+                            </a>
+                            <div x-show="!sidebarOpen" class="tooltip">Leave Management Hub</div>
                         </div>
                         @endif
                         @endif
@@ -827,7 +804,7 @@
 
                             <!-- Concerns & Tickets (Merged into Timekeeping Hub) -->
                             <div class="relative nav-item mb-1">
-                                <a href="{{ route('timekeeping.admin-index', ['tab' => 'logs']) }}" class="flex items-center gap-3 px-3 py-2.5 mx-2 rounded-xl transition-all duration-200 group {{ (request()->routeIs('timekeeping.admin-index') && request('tab') === 'logs') || request()->routeIs('concerns.*') ? 'bg-blue-600 text-white shadow-lg ring-1 ring-white/20' : 'text-gray-400 hover:bg-white/5 hover:text-white' }}">
+                                <a href="{{ route('timekeeping.admin-index', ['tab' => 'tickets']) }}" class="flex items-center gap-3 px-3 py-2.5 mx-2 rounded-xl transition-all duration-200 group {{ (request()->routeIs('timekeeping.admin-index') && request('tab') === 'tickets') || request()->routeIs('concerns.*') ? 'bg-blue-600 text-white shadow-lg ring-1 ring-white/20' : 'text-gray-400 hover:bg-white/5 hover:text-white' }}">
                                     <div class="w-8 h-8 flex items-center justify-center flex-shrink-0 transition-transform group-hover:scale-110">
                                         <svg class="w-5 h-5 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                                             <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M18.364 5.636l-3.536 3.536m0 5.656l3.536 3.536M9.172 9.172L5.636 5.636m3.536 9.192l-3.536 3.536M21 12a9 9 0 11-18 0 9 9 0 0118 0zm-5 0a4 4 0 11-8 0 4 4 0 018 0z"/>

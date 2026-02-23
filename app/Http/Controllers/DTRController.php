@@ -76,7 +76,7 @@ class DTRController extends Controller
         $endDate = $startDate->copy()->endOfMonth();
 
         $query = User::where('is_active', true)
-            ->whereIn('role', ['employee', 'hr']);
+            ->where('role', 'employee');
 
         if ($employeeFilter) {
             $query->where('id', $employeeFilter);
@@ -87,7 +87,7 @@ class DTRController extends Controller
         }
 
         $employees = User::where('is_active', true)
-            ->whereIn('role', ['employee', 'hr'])
+            ->where('role', 'employee')
             ->orderBy('name')
             ->get();
 

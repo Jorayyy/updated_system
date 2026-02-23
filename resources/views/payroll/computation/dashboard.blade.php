@@ -284,7 +284,7 @@
                                             @endif
                                         </td>
                                         <td class="px-6 py-4 whitespace-nowrap text-right text-sm font-medium space-x-3">
-                                            <a href="{{ route('dtr-approval.index', ['payroll_period_id' => $period->id]) }}" class="inline-flex items-center px-4 py-2 bg-indigo-50 text-indigo-700 border border-indigo-200 rounded-md font-semibold text-xs uppercase tracking-widest hover:bg-indigo-100 transition ease-in-out duration-150">
+                                            <a href="{{ route('dtr-approval.index', ['payroll_period_id' => $period->id, 'payroll_group_id' => $period->payroll_group_id]) }}" class="inline-flex items-center px-4 py-2 bg-indigo-50 text-indigo-700 border border-indigo-200 rounded-md font-semibold text-xs uppercase tracking-widest hover:bg-indigo-100 transition ease-in-out duration-150">
                                                 Review DTRs
                                             </a>
                                             <a href="{{ route('payroll.computation.show', $period) }}" class="inline-flex items-center px-4 py-2 bg-yellow-600 border border-transparent rounded-md font-semibold text-xs text-white uppercase tracking-widest hover:bg-yellow-700 active:bg-yellow-900 focus:outline-none focus:border-yellow-900 focus:ring ring-yellow-300 disabled:opacity-25 transition ease-in-out duration-150">

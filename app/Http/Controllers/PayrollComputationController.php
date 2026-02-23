@@ -113,6 +113,10 @@ class PayrollComputationController extends Controller
      */
     public function post(Payroll $payroll)
     {
+        if (!auth()->user()->canApproveMajorDecisions()) {
+            abort(403, 'Unauthorized. Only Super Admins can post payroll results.');
+        }
+
         if ($payroll->status !== 'approved' && $payroll->status !== 'completed') {
             return redirect()->back()->with('error', 'Only approved or completed payrolls can be posted.');
         }
@@ -130,6 +134,10 @@ class PayrollComputationController extends Controller
      */
     public function bulkPost(Request $request, PayrollPeriod $period)
     {
+        if (!auth()->user()->canApproveMajorDecisions()) {
+            abort(403, 'Unauthorized. Only Super Admins can perform bulk posting.');
+        }
+
         $payrollIds = $request->get('payroll_ids', []);
         
         $query = Payroll::where('payroll_period_id', $period->id)
@@ -213,7 +221,7 @@ class PayrollComputationController extends Controller
             'ready_count' => $readyPeriods->count(),
             'pending_count' => $pendingPeriods->count(),
             'processing_count' => $processingPeriods->count(),
-            'total_employees' => User::where('is_active', true)->count(),
+            'total_employees' => User::where('is_active', true)->where('role', 'employee')->count(),
         ];
 
         return view('payroll.computation.dashboard', compact(
@@ -245,12 +253,13 @@ class PayrollComputationController extends Controller
         }
 
         // Get employees with approved DTRs for this period
-        // MODIFICATION: Include all employees in the group to fix "handful of employees" issue
-        $query = User::where('is_active', true);
+        // MODIFICATION: Only include the 'employee' role. Admin accounts that need payroll
+        // must use a separate employee account for computations.
+        $query = User::where('is_active', true)->where('role', 'employee');
         if ($period->payroll_group_id) {
             $query->where('payroll_group_id', $period->payroll_group_id);
         } else {
-            // If global period, only those not in any group
+            // If global period (unassigned to group), only those not in any group
             $query->whereNull('payroll_group_id');
         }
 
@@ -288,6 +297,10 @@ class PayrollComputationController extends Controller
      */
     public function compute(Request $request, PayrollPeriod $period)
     {
+        if (!auth()->user()->canApproveMajorDecisions()) {
+            abort(403, 'Unauthorized. Only Super Admins are permitted to perform payroll computations.');
+        }
+
         $manualMode = $request->boolean('manual_mode', false);
 
         // Validate period status
@@ -439,6 +452,10 @@ class PayrollComputationController extends Controller
      */
     public function edit(Payroll $payroll)
     {
+        if (!auth()->user()->canApproveMajorDecisions()) {
+            abort(403, 'Unauthorized. Only Super Admins can manually adjust payroll results.');
+        }
+
         $payroll->load(['user', 'payrollPeriod']);
         $adjustmentTypes = \App\Models\PayrollAdjustmentType::all();
         
@@ -464,6 +481,10 @@ class PayrollComputationController extends Controller
      */
     public function update(Request $request, Payroll $payroll)
     {
+        if (!auth()->user()->canApproveMajorDecisions()) {
+            abort(403, 'Unauthorized. Only Super Admins can manually adjust payroll results.');
+        }
+
         $validated = $request->validate([
             // Standard Payroll Adjustment Fields
             'basic_pay' => 'required|numeric|min:0',
@@ -579,6 +600,10 @@ class PayrollComputationController extends Controller
      */
     public function recompute(Payroll $payroll)
     {
+        if (!auth()->user()->canApproveMajorDecisions()) {
+            abort(403, 'Unauthorized. Only Super Admins can recompute individual records.');
+        }
+
         // Hierarchy Check
         if (!auth()->user()->isSuperAdmin() && !auth()->user()->canManage($payroll->user)) {
             return redirect()->back()->with('error', 'Hierarchy Restriction: You cannot recompute payroll for users with equal or higher rank.');
@@ -611,6 +636,10 @@ class PayrollComputationController extends Controller
      */
     public function approve(Payroll $payroll)
     {
+        if (!auth()->user()->canApproveMajorDecisions()) {
+            abort(403, 'Unauthorized. Only Super Admins can approve payroll results.');
+        }
+
         // Hierarchy Check
         if (!auth()->user()->isSuperAdmin() && !auth()->user()->canManage($payroll->user)) {
             return redirect()->back()->with('error', 'Hierarchy Restriction: You cannot approve payroll for users with equal or higher rank.');
@@ -637,6 +666,10 @@ class PayrollComputationController extends Controller
      */
     public function bulkApprove(Request $request, PayrollPeriod $period)
     {
+        if (!auth()->user()->canApproveMajorDecisions()) {
+            abort(403, 'Unauthorized. Only Super Admins can approve payroll results.');
+        }
+
         $payrollIds = $request->get('payroll_ids', []);
         
         if (empty($payrollIds)) {
@@ -668,6 +701,10 @@ class PayrollComputationController extends Controller
      */
     public function release(Payroll $payroll)
     {
+        if (!auth()->user()->canApproveMajorDecisions()) {
+            abort(403, 'Unauthorized. Only Super Admins can release payroll.');
+        }
+
         if ($payroll->status !== 'approved') {
             return redirect()->back()
                 ->with('error', 'Only approved payrolls can be released.');
@@ -689,6 +726,10 @@ class PayrollComputationController extends Controller
      */
     public function bulkRelease(Request $request, PayrollPeriod $period)
     {
+        if (!auth()->user()->canApproveMajorDecisions()) {
+            abort(403, 'Unauthorized. Only Super Admins can release payroll.');
+        }
+
         $payrollIds = $request->get('payroll_ids', []);
         
         if (empty($payrollIds)) {

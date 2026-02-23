@@ -144,6 +144,19 @@
                                 <input type="checkbox" name="require_2fa" value="1" {{ ($settings['require_2fa'] ?? false) ? 'checked' : '' }} class="rounded border-gray-300 text-gray-600 shadow-sm focus:ring-gray-500">
                                 <span class="ml-2 text-sm text-gray-700">Require Two-Factor Authentication for Admins</span>
                             </label>
+
+                            {{-- Role & Permission Delegation Section --}}
+                            <div class="pt-4 border-t border-gray-100">
+                                <h4 class="text-xs font-bold text-gray-400 uppercase tracking-widest mb-4">Permission Delegation</h4>
+                                <label class="flex items-start">
+                                    <input type="checkbox" name="allow_admin_major_decisions" value="1" {{ ($settings['allow_admin_major_decisions'] ?? false) ? 'checked' : '' }} class="mt-1 rounded border-gray-300 text-red-600 shadow-sm focus:ring-red-500">
+                                    <div class="ml-3">
+                                        <span class="block text-sm font-bold text-gray-900">Allow Admins to Approve Major Decisions</span>
+                                        <span class="block text-xs text-gray-500 italic">When enabled, users with 'admin', 'hr', or 'accounting' roles can approve/finalize DTRs, Payroll, and Timekeeping edits. When disabled, only Super Admins can perform these actions.</span>
+                                    </div>
+                                </label>
+                            </div>
+
                             <label class="flex items-center">
                                 <input type="checkbox" name="log_all_activities" value="1" {{ ($settings['log_all_activities'] ?? true) ? 'checked' : '' }} class="rounded border-gray-300 text-gray-600 shadow-sm focus:ring-gray-500">
                                 <span class="ml-2 text-sm text-gray-700">Log All User Activities (Audit Trail)</span>

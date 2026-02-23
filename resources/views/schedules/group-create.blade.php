@@ -25,37 +25,47 @@
                                 <h3 class="text-sm font-black text-gray-800 uppercase tracking-widest border-b pb-2">1. Select Employees</h3>
                                 
                                 <div class="bg-slate-50 p-4 rounded-md space-y-3">
-                                    <div class="text-xs font-bold text-slate-500 uppercase">Filters:</div>
-                                    <form id="filterForm" method="GET" action="{{ route('schedules.group-create') }}" class="space-y-2">
-                                        <select name="site_id" class="w-full text-xs rounded border-gray-200" onchange="this.form.submit()">
+                                    <div class="text-xs font-bold text-slate-500 uppercase">Filters & Search:</div>
+                                    <div class="space-y-2">
+                                        {{-- Search Input --}}
+                                        <div class="relative">
+                                            <input type="text" id="employeeSearch" 
+                                                   class="w-full text-xs rounded border-gray-200 pl-8 pr-4 py-2 focus:ring-red-500 shadow-sm" 
+                                                   placeholder="Search name or ID...">
+                                            <svg class="w-4 h-4 absolute left-2.5 top-2.5 text-slate-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"></path>
+                                            </svg>
+                                        </div>
+
+                                        <select name="site_id" id="siteFilter" class="w-full text-xs rounded border-gray-200">
                                             <option value="">Filter by Site...</option>
                                             @foreach($sites as $site)
-                                                <option value="{{ $site->id }}" {{ request('site_id') == $site->id ? 'selected' : '' }}>{{ $site->name }}</option>
+                                                <option value="{{ $site->id }}">{{ $site->name }}</option>
                                             @endforeach
                                         </select>
 
-                                        <select name="account_id" class="w-full text-xs rounded border-gray-200" onchange="this.form.submit()">
+                                        <select name="account_id" id="accountFilter" class="w-full text-xs rounded border-gray-200">
                                             <option value="">Filter by Account...</option>
                                             @foreach($accounts as $acc)
-                                                <option value="{{ $acc->id }}" {{ request('account_id') == $acc->id ? 'selected' : '' }}>{{ $acc->name }}</option>
+                                                <option value="{{ $acc->id }}">{{ $acc->name }}</option>
                                             @endforeach
                                         </select>
                                         
-                                        <select name="payroll_group_id" class="w-full text-xs rounded border-gray-200" onchange="this.form.submit()">
+                                        <select name="payroll_group_id" id="groupFilter" class="w-full text-xs rounded border-gray-200">
                                             <option value="">Filter by Group...</option>
                                             @foreach($payrollGroups as $group)
-                                                <option value="{{ $group->id }}" {{ request('payroll_group_id') == $group->id ? 'selected' : '' }}>{{ $group->name }}</option>
+                                                <option value="{{ $group->id }}">{{ $group->name }}</option>
                                             @endforeach
                                         </select>
-
-                                        @if(request()->anyFilled(['site_id', 'account_id', 'payroll_group_id']))
-                                            <a href="{{ route('schedules.group-create') }}" class="block text-center text-[10px] text-red-600 font-bold uppercase hover:underline">Clear Filters</a>
-                                        @endif
-                                    </form>
+                                    </div>
                                 </div>
 
                                 <div class="max-h-[500px] overflow-y-auto border border-gray-100 rounded bg-gray-50/30">
-                                    <table class="min-w-full divide-y divide-gray-100">
+                                    <div id="loadingIndicator" class="hidden p-8 text-center">
+                                        <div class="animate-spin rounded-full h-8 w-8 border-b-2 border-red-600 mx-auto"></div>
+                                        <p class="text-[10px] text-slate-400 mt-2 font-bold uppercase">Fetching Employees...</p>
+                                    </div>
+                                    <table class="min-w-full divide-y divide-gray-100" id="employeeTable">
                                         <thead class="bg-gray-100 sticky top-0">
                                             <tr>
                                                 <th class="px-3 py-2 text-left">
@@ -64,20 +74,8 @@
                                                 <th class="px-3 py-2 text-left text-[10px] font-black uppercase text-gray-500">Employee</th>
                                             </tr>
                                         </thead>
-                                        <tbody class="divide-y divide-gray-50 bg-white">
-                                            @forelse($users as $user)
-                                                <tr class="hover:bg-red-50/30">
-                                                    <td class="px-3 py-2">
-                                                        <input type="checkbox" name="user_ids[]" value="{{ $user->id }}" class="employee-cb rounded border-gray-300 text-red-600 focus:ring-red-500">
-                                                    </td>
-                                                    <td class="px-3 py-2">
-                                                        <div class="text-[11px] font-bold text-gray-800 uppercase">{{ $user->name }}</div>
-                                                        <div class="text-[10px] text-gray-500">{{ $user->employee_id }} | {{ $user->site->name ?? 'NO SITE' }} {{ $user->payrollGroup ? '| ' . $user->payrollGroup->name : '' }}</div>
-                                                    </td>
-                                                </tr>
-                                            @empty
-                                                <tr><td colspan="2" class="p-4 text-center text-xs text-gray-400 italic">No employees found.</td></tr>
-                                            @endforelse
+                                        <tbody class="divide-y divide-gray-50 bg-white" id="employeeListBody">
+                                            <tr><td colspan="2" class="p-8 text-center text-[10px] text-gray-400 italic">Please use the filters or search bar above to find employees.</td></tr>
                                         </tbody>
                                     </table>
                                 </div>
@@ -90,16 +88,30 @@
                                 <div class="grid grid-cols-1 md:grid-cols-2 gap-x-12 gap-y-6">
                                     @foreach(['monday', 'tuesday', 'wednesday', 'thursday', 'friday', 'saturday', 'sunday'] as $day)
                                         <div>
-                                            <label class="block text-[11px] font-black text-gray-400 uppercase tracking-widest mb-1">{{ $day }}</label>
-                                            <select name="{{ $day }}_schedule" class="w-full border-gray-200 rounded text-sm focus:ring-red-500 focus:border-red-500">
-                                                <option value="Rest day">Rest day</option>
-                                                @foreach($schedules as $shift)
-                                                    @php
-                                                        $shiftTime = \Carbon\Carbon::parse($shift->work_start_time)->format('H:i') . ' to ' . \Carbon\Carbon::parse($shift->work_end_time)->format('H:i');
-                                                    @endphp
-                                                    <option value="{{ $shiftTime }}">{{ $shiftTime }}</option>
-                                                @endforeach
-                                            </select>
+                                            <div class="flex justify-between items-center mb-1">
+                                                <label class="block text-[11px] font-black text-gray-400 uppercase tracking-widest">{{ $day }}</label>
+                                                <button type="button" onclick="toggleManualInput('{{ $day }}')" class="text-[9px] font-bold text-blue-600 hover:text-blue-800 uppercase tracking-tighter">
+                                                    Manual Entry
+                                                </button>
+                                            </div>
+                                            <div id="{{ $day }}_select_container">
+                                                <select name="{{ $day }}_schedule" id="{{ $day }}_select" class="w-full border-gray-200 rounded text-sm focus:ring-red-500 focus:border-red-500">
+                                                    <option value="Rest day">Rest day</option>
+                                                    @foreach($schedules as $shift)
+                                                        @php
+                                                            $shiftTime = \Carbon\Carbon::parse($shift->work_start_time)->format('H:i') . ' to ' . \Carbon\Carbon::parse($shift->work_end_time)->format('H:i');
+                                                        @endphp
+                                                        <option value="{{ $shiftTime }}">{{ $shiftTime }}</option>
+                                                    @endforeach
+                                                </select>
+                                            </div>
+                                            <div id="{{ $day }}_manual_container" class="hidden flex gap-2">
+                                                <div class="flex-1">
+                                                    <input type="time" id="{{ $day }}_start" class="w-full text-xs border-gray-200 rounded p-1 mb-1" placeholder="Start">
+                                                    <input type="time" id="{{ $day }}_end" class="w-full text-xs border-gray-200 rounded p-1" placeholder="End">
+                                                </div>
+                                                <button type="button" onclick="applyManualTime('{{ $day }}')" class="bg-blue-50 text-blue-700 px-2 rounded text-[10px] font-bold uppercase border border-blue-200">Set</button>
+                                            </div>
                                         </div>
                                     @endforeach
 
@@ -143,6 +155,129 @@
 
     @push('scripts')
     <script>
+        const employeeListBody = document.getElementById('employeeListBody');
+        const loadingIndicator = document.getElementById('loadingIndicator');
+        const employeeTable = document.getElementById('employeeTable');
+        const selectAllCb = document.getElementById('select-all');
+
+        function fetchEmployees() {
+            const search = document.getElementById('employeeSearch').value;
+            const siteId = document.getElementById('siteFilter').value;
+            const accountId = document.getElementById('accountFilter').value;
+            const groupId = document.getElementById('groupFilter').value;
+
+            // Only fetch if at least one filter has a value (search or selects)
+            if (!search && !siteId && !accountId && !groupId) {
+                employeeListBody.innerHTML = '<tr><td colspan="2" class="p-8 text-center text-[10px] text-gray-400 italic uppercase">Please use the filters or search bar above to find employees.</td></tr>';
+                return;
+            }
+
+            loadingIndicator.classList.remove('hidden');
+            employeeTable.classList.add('opacity-50');
+
+            const params = new URLSearchParams({
+                search: search,
+                site_id: siteId,
+                account_id: accountId,
+                payroll_group_id: groupId
+            });
+
+            fetch(`{{ route('schedules.group-create') }}?${params.toString()}`, {
+                headers: {
+                    'X-Requested-With': 'XMLHttpRequest'
+                }
+            })
+            .then(response => response.json())
+            .then(data => {
+                loadingIndicator.classList.add('hidden');
+                employeeTable.classList.remove('opacity-50');
+                
+                if (data.length === 0) {
+                    employeeListBody.innerHTML = '<tr><td colspan="2" class="p-8 text-center text-[10px] text-gray-400 italic uppercase">No employees found matching your criteria.</td></tr>';
+                    return;
+                }
+
+                let html = '';
+                data.forEach(user => {
+                    html += `
+                        <tr class="hover:bg-red-50/30">
+                            <td class="px-3 py-2">
+                                <input type="checkbox" name="user_ids[]" value="${user.id}" class="employee-cb rounded border-gray-300 text-red-600 focus:ring-red-500">
+                            </td>
+                            <td class="px-3 py-2">
+                                <div class="text-[11px] font-bold text-gray-800 uppercase">${user.name}</div>
+                                <div class="text-[10px] text-gray-500">${user.employee_id} | ${user.site_name} | ${user.group_name}</div>
+                            </td>
+                        </tr>
+                    `;
+                });
+                employeeListBody.innerHTML = html;
+                selectAllCb.checked = false; // Reset select all
+            })
+            .catch(error => {
+                console.error('Error fetching employees:', error);
+                loadingIndicator.classList.add('hidden');
+                employeeTable.classList.remove('opacity-50');
+            });
+        }
+
+        // Attach listeners
+        document.getElementById('siteFilter').addEventListener('change', fetchEmployees);
+        document.getElementById('accountFilter').addEventListener('change', fetchEmployees);
+        document.getElementById('groupFilter').addEventListener('change', fetchEmployees);
+        
+        // Debounce search
+        let searchTimeout;
+        document.getElementById('employeeSearch').addEventListener('input', () => {
+            clearTimeout(searchTimeout);
+            searchTimeout = setTimeout(fetchEmployees, 300);
+        });
+
+        function toggleManualInput(day) {
+            const selectContainer = document.getElementById(`${day}_select_container`);
+            const manualContainer = document.getElementById(`${day}_manual_container`);
+            
+            if (manualContainer.classList.contains('hidden')) {
+                manualContainer.classList.remove('hidden');
+                selectContainer.classList.add('hidden');
+            } else {
+                manualContainer.classList.add('hidden');
+                selectContainer.classList.remove('hidden');
+            }
+        }
+
+        function applyManualTime(day) {
+            const start = document.getElementById(`${day}_start`).value;
+            const end = document.getElementById(`${day}_end`).value;
+            const select = document.getElementById(`${day}_select`);
+            
+            if (!start || !end) {
+                alert('Please provide both start and end times');
+                return;
+            }
+
+            const formattedTime = `${start} to ${end}`;
+            
+            // Add custom option to select and select it
+            let exists = false;
+            for (let i = 0; i < select.options.length; i++) {
+                if (select.options[i].value === formattedTime) {
+                    select.selectedIndex = i;
+                    exists = true;
+                    break;
+                }
+            }
+            
+            if (!exists) {
+                const option = new Option(formattedTime, formattedTime);
+                select.add(option);
+                select.value = formattedTime;
+            }
+
+            // Switch back to select view
+            toggleManualInput(day);
+        }
+
         document.getElementById('select-all').addEventListener('change', function() {
             document.querySelectorAll('.employee-cb').forEach(cb => {
                 cb.checked = this.checked;

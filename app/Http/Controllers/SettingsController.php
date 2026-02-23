@@ -401,6 +401,7 @@ class SettingsController extends Controller
             'max_login_attempts' => 'required|integer|min:3|max:10',
             'require_2fa' => 'nullable',
             'log_all_activities' => 'nullable',
+            'allow_admin_major_decisions' => 'nullable',
             'audit_log_retention_days' => 'required|integer|min:30|max:730',
             'notification_retention_days' => 'required|integer|min:7|max:90',
             'maintenance_mode' => 'nullable',
@@ -418,6 +419,7 @@ class SettingsController extends Controller
         CompanySetting::setValue('max_login_attempts', $request->max_login_attempts, 'integer', 'system');
         CompanySetting::setValue('require_2fa', $request->has('require_2fa'), 'boolean', 'system');
         CompanySetting::setValue('log_all_activities', $request->has('log_all_activities'), 'boolean', 'system');
+        CompanySetting::setValue('allow_admin_major_decisions', $request->has('allow_admin_major_decisions'), 'boolean', 'system');
         CompanySetting::setValue('audit_log_retention_days', $request->audit_log_retention_days, 'integer', 'system');
         CompanySetting::setValue('notification_retention_days', $request->notification_retention_days, 'integer', 'system');
         CompanySetting::setValue('maintenance_mode', $request->has('maintenance_mode'), 'boolean', 'system');

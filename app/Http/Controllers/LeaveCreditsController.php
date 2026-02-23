@@ -21,50 +21,7 @@ class LeaveCreditsController extends Controller
      */
     public function index(Request $request)
     {
-        $year = $request->input('year', date('Y'));
-        $departmentFilter = $request->input('department');
-        $searchQuery = $request->input('search');
-
-        $query = User::where('is_active', true)
-            ->with(['leaveBalances' => function ($q) use ($year) {
-                $q->where('year', $year)->with('leaveType');
-            }]);
-
-        if ($departmentFilter) {
-            $query->where('department', $departmentFilter);
-        }
-
-        if ($searchQuery) {
-            $query->where(function ($q) use ($searchQuery) {
-                $q->where('name', 'like', "%{$searchQuery}%")
-                    ->orWhere('employee_id', 'like', "%{$searchQuery}%")
-                    ->orWhere('email', 'like', "%{$searchQuery}%");
-            });
-        }
-
-        $employees = $query->orderBy('name')->paginate(15);
-        $leaveTypes = LeaveType::where('is_active', true)->orderBy('name')->get();
-        $departments = User::whereNotNull('department')
-            ->where('is_active', true)
-            ->distinct()
-            ->pluck('department');
-
-        // Summary statistics
-        $totalEmployees = User::where('is_active', true)->count();
-        $employeesWithCredits = LeaveBalance::where('year', $year)
-            ->distinct('user_id')
-            ->count('user_id');
-        $employeesWithoutCredits = $totalEmployees - $employeesWithCredits;
-
-        return view('leave-credits.index', compact(
-            'employees',
-            'leaveTypes',
-            'departments',
-            'year',
-            'totalEmployees',
-            'employeesWithCredits',
-            'employeesWithoutCredits'
-        ));
+        return redirect()->route('leaves.manage', array_merge($request->all(), ['tab' => 'credits']));
     }
 
     /**
@@ -144,7 +101,7 @@ class LeaveCreditsController extends Controller
             }
         });
 
-        return redirect()->route('leave-credits.index', ['year' => $year])
+        return redirect()->route('leaves.manage', ['tab' => 'credits', 'year' => $year])
             ->with('success', "Leave credits updated for {$employee->name}");
     }
 
@@ -213,7 +170,7 @@ class LeaveCreditsController extends Controller
             $message .= ", {$updatedCount} records reset";
         }
 
-        return redirect()->route('leave-credits.index', ['year' => $year])
+        return redirect()->route('leaves.manage', ['tab' => 'credits', 'year' => $year])
             ->with('success', $message);
     }
 
@@ -285,7 +242,7 @@ class LeaveCreditsController extends Controller
             "Carried over {$leaveType->name} credits from {$fromYear} to {$toYear} (max {$maxCarryover} days) for {$carriedOverCount} employees"
         );
 
-        return redirect()->route('leave-credits.index', ['year' => $toYear])
+        return redirect()->route('leaves.manage', ['tab' => 'credits', 'year' => $toYear])
             ->with('success', "Carried over leave credits for {$carriedOverCount} employees (max {$maxCarryover} days per employee)");
     }
 
