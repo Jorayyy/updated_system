@@ -163,10 +163,13 @@ class BackupController extends Controller
             escapeshellarg($path)
         );
 
-        // Execute backup
-        $result = null;
-        $output = null;
-        exec($command . ' 2>&1', $output, $result);
+        // Execute backup command safely (handles cases where exec is disabled on hosting)
+        $result = 1;
+        $output = [];
+        
+        if (function_exists('exec')) {
+            @\exec($command . ' 2>&1', $output, $result);
+        }
 
         if ($result !== 0 || !file_exists($path)) {
             // If mysqldump fails, create a PHP-based backup
