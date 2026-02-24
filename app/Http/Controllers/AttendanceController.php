@@ -267,15 +267,32 @@ class AttendanceController extends Controller
 
         // Calculate work minutes and OT/UT using schedule logic
         if ($timeOut) {
-            $attendance->total_work_minutes = $attendance->calculateWorkMinutes();
+            $attendance->total_break_minutes = $attendance->calculateBreakMinutes();
+            $actualWorkMinutes = $attendance->calculateWorkMinutes();
             
+            // 8 hours = 480 minutes
             $standardWorkMinutes = 480;
-            if ($attendance->total_work_minutes > $standardWorkMinutes) {
-                $attendance->overtime_minutes = $attendance->total_work_minutes - $standardWorkMinutes;
+            if ($actualWorkMinutes > $standardWorkMinutes) {
+                $potentialOvertime = $actualWorkMinutes - $standardWorkMinutes;
+                
+                // Only set overtime if there's an APPROVED overtime request for this date
+                $approvedOTRequest = \App\Models\OvertimeRequest::where('user_id', $attendance->user_id)
+                    ->whereDate('date', $attendance->date)
+                    ->where('status', 'approved')
+                    ->first();
+                
+                if ($approvedOTRequest) {
+                    $attendance->overtime_minutes = $potentialOvertime;
+                    $attendance->total_work_minutes = $actualWorkMinutes;
+                } else {
+                    $attendance->overtime_minutes = 0;
+                    $attendance->total_work_minutes = $standardWorkMinutes; // Cap at 8.0
+                }
                 $attendance->undertime_minutes = 0;
             } else {
-                $attendance->undertime_minutes = $standardWorkMinutes - $attendance->total_work_minutes;
+                $attendance->undertime_minutes = $standardWorkMinutes - $actualWorkMinutes;
                 $attendance->overtime_minutes = 0;
+                $attendance->total_work_minutes = $actualWorkMinutes;
             }
         }
 
@@ -349,14 +366,39 @@ class AttendanceController extends Controller
         if ($request->has('overtime_minutes') && $request->has('undertime_minutes')) {
             $attendance->overtime_minutes = $request->overtime_minutes;
             $attendance->undertime_minutes = $request->undertime_minutes;
+            // Ensure hours worked reflects the sum of regular and OT
+            $actualWork = $attendance->calculateWorkMinutes();
+            $standard = 480;
+            if ($attendance->overtime_minutes > 0) {
+                $attendance->total_work_minutes = $standard + $attendance->overtime_minutes;
+            } else {
+                $attendance->total_work_minutes = min($actualWork, $standard);
+            }
         } else {
             $standardWorkMinutes = 480;
-            if ($attendance->total_work_minutes > $standardWorkMinutes) {
-                $attendance->overtime_minutes = $attendance->total_work_minutes - $standardWorkMinutes;
+            $actualWorkMinutes = $attendance->calculateWorkMinutes();
+            
+            if ($actualWorkMinutes > $standardWorkMinutes) {
+                $potentialOvertime = $actualWorkMinutes - $standardWorkMinutes;
+                
+                // Only set overtime if there's an APPROVED overtime request for this date
+                $approvedOTRequest = \App\Models\OvertimeRequest::where('user_id', $attendance->user_id)
+                    ->whereDate('date', $attendance->date)
+                    ->where('status', 'approved')
+                    ->first();
+                    
+                if ($approvedOTRequest) {
+                    $attendance->overtime_minutes = $potentialOvertime;
+                    $attendance->total_work_minutes = $actualWorkMinutes;
+                } else {
+                    $attendance->overtime_minutes = 0;
+                    $attendance->total_work_minutes = $standardWorkMinutes; // Cap at 8.0
+                }
                 $attendance->undertime_minutes = 0;
             } else {
-                $attendance->undertime_minutes = $standardWorkMinutes - $attendance->total_work_minutes;
+                $attendance->undertime_minutes = $standardWorkMinutes - $actualWorkMinutes;
                 $attendance->overtime_minutes = 0;
+                $attendance->total_work_minutes = $actualWorkMinutes;
             }
         }
 

@@ -67,6 +67,17 @@ class Attendance extends Model
     }
 
     /**
+     * Get the approved overtime request for this attendance record
+     * Based on user_id and date.
+     */
+    public function overtimeRequest()
+    {
+        return $this->hasOne(OvertimeRequest::class, 'user_id', 'user_id')
+                    ->whereColumn('date', 'date')
+                    ->where('status', 'approved');
+    }
+
+    /**
      * Get the breaks for this attendance (legacy support)
      */
     public function breaks(): HasMany

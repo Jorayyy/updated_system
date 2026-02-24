@@ -169,9 +169,7 @@
                                         </td>
                                         <td class="px-4 py-4 whitespace-nowrap text-sm text-center">
                                             @if($attendance->overtime_minutes > 0)
-                                                <span class="text-green-600">+{{ number_format($attendance->overtime_minutes / 60, 1) }}</span>
-                                            @elseif($attendance->undertime_minutes > 0)
-                                                <span class="text-red-600">-{{ number_format($attendance->undertime_minutes / 60, 1) }}</span>
+                                                <span class="text-green-600 font-bold">+{{ number_format($attendance->overtime_minutes / 60, 1) }}</span>
                                             @else
                                                 <span class="text-gray-400">-</span>
                                             @endif

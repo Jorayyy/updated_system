@@ -9,6 +9,7 @@ use App\Models\AuditLog;
 use App\Models\AllowedIp;
 use App\Models\CompanySetting;
 use App\Models\Schedule;
+use App\Models\OvertimeRequest;
 use Carbon\Carbon;
 use Illuminate\Support\Facades\DB;
 
@@ -141,18 +142,38 @@ class AttendanceService
             if ($step === 'time_out') {
                 $attendance->current_step = 'completed';
                 $attendance->total_break_minutes = $attendance->calculateBreakMinutes();
-                $attendance->total_work_minutes = $attendance->calculateWorkMinutes();
-                $attendance->night_diff_minutes = $attendance->calculateNightDiffMinutes();
+                $actualWorkMinutes = $attendance->calculateWorkMinutes();
                 
-                // Calculate overtime/undertime (8 hours = 480 minutes)
-                $standardWorkMinutes = 480;
-                if ($attendance->total_work_minutes > $standardWorkMinutes) {
-                    $attendance->overtime_minutes = $attendance->total_work_minutes - $standardWorkMinutes;
+                // Get standard work minutes from user's schedule or fallback to 8 hours (480 mins)
+                $schedule = $this->getScheduleForUser($user);
+                $standardWorkMinutes = $schedule['standard_minutes'] ?? 480;
+
+                // Calculate overtime/undertime
+                if ($actualWorkMinutes > $standardWorkMinutes) {
+                    $potentialOvertime = $actualWorkMinutes - $standardWorkMinutes;
+                    
+                    // Check for approved OT request
+                    $approvedOTRequest = OvertimeRequest::where('user_id', $user->id)
+                        ->whereDate('date', $attendance->date)
+                        ->where('status', 'approved')
+                        ->first();
+                    
+                    if ($approvedOTRequest) {
+                        $attendance->overtime_minutes = $potentialOvertime;
+                        // If approved, Work Hours = Regular (standard) + OT
+                        $attendance->total_work_minutes = $actualWorkMinutes;
+                    } else {
+                        $attendance->overtime_minutes = 0;
+                        // If NOT approved, Work Hours is capped at standard (e.g., 8.0)
+                        $attendance->total_work_minutes = $standardWorkMinutes;
+                    }
                     $attendance->undertime_minutes = 0;
                 } else {
-                    $attendance->undertime_minutes = $standardWorkMinutes - $attendance->total_work_minutes;
+                    $attendance->undertime_minutes = $standardWorkMinutes - $actualWorkMinutes;
                     $attendance->overtime_minutes = 0;
+                    $attendance->total_work_minutes = $actualWorkMinutes;
                 }
+                $attendance->night_diff_minutes = $attendance->calculateNightDiffMinutes();
             } else {
                 $attendance->current_step = $step;
             }
@@ -303,12 +324,29 @@ class AttendanceService
             $attendance->total_break_minutes = $attendance->calculateBreakMinutes();
             $attendance->total_work_minutes = $attendance->calculateWorkMinutes();
             
+            // Get standard work minutes from user's schedule or fallback to 8 hours (480 mins)
+            $schedule = $this->getScheduleForUser($user);
+            $standardWorkMinutes = $schedule['standard_minutes'] ?? 480;
+
             // Calculate overtime/undertime
-            $standardWorkMinutes = 480;
             if ($attendance->total_work_minutes > $standardWorkMinutes) {
-                $attendance->overtime_minutes = $attendance->total_work_minutes - $standardWorkMinutes;
+                $potentialOvertime = $attendance->total_work_minutes - $standardWorkMinutes;
+                
+                // Check if there is an approved OT request for this date
+                $approvedOTRequest = OvertimeRequest::where('user_id', $user->id)
+                    ->whereDate('date', $attendance->date)
+                    ->where('status', 'approved')
+                    ->first();
+                
+                if ($approvedOTRequest) {
+                    $attendance->overtime_minutes = $potentialOvertime;
+                } else {
+                    $attendance->overtime_minutes = 0;
+                }
+                $attendance->undertime_minutes = 0;
             } else {
                 $attendance->undertime_minutes = $standardWorkMinutes - $attendance->total_work_minutes;
+                $attendance->overtime_minutes = 0;
             }
             
             if ($reason) {
@@ -414,8 +452,37 @@ class AttendanceService
     /**
      * Get the effective schedule for a user
      */
-    protected function getScheduleForUser(User $user): array
+    protected function getScheduleForUser(User $user, ?Carbon $date = null): array
     {
+        $date = $date ?? now();
+        $dayName = strtolower($date->format('l')); // e.g. "monday"
+        $scheduleField = "{$dayName}_schedule";
+        
+        // 1. Check user-specific daily schedule
+        if (!empty($user->{$scheduleField})) {
+            // Assume format: "08:00 AM - 05:00 PM"
+            $parts = explode('-', $user->{$scheduleField});
+            if (count($parts) === 2) {
+                try {
+                    $startStr = trim($parts[0]);
+                    $endStr = trim($parts[1]);
+                    
+                    // Parse times
+                    $startTime = Carbon::createFromFormat('h:i A', $startStr)->format('H:i');
+                    $endTime = Carbon::createFromFormat('h:i A', $endStr)->format('H:i');
+                    
+                    return [
+                        'work_start_time' => $startTime,
+                        'work_end_time' => $endTime,
+                        'standard_minutes' => 480, // Default 8 hours
+                    ];
+                } catch (\Exception $e) {
+                    // Fail gracefully to next check
+                }
+            }
+        }
+
+        // 2. Check for Account-level active schedule
         if ($user->account_id) {
             $schedule = Schedule::where('account_id', $user->account_id)
                 ->where('is_active', true)
@@ -425,28 +492,36 @@ class AttendanceService
                 return [
                     'work_start_time' => $schedule->work_start_time,
                     'work_end_time' => $schedule->work_end_time,
+                    'standard_minutes' => 480, // Fallback to 8 hours
                 ];
             }
         }
 
+        // 3. Last fallback: System defaults
         return [
             'work_start_time' => CompanySetting::getValue('work_start_time', '21:00'),
             'work_end_time' => CompanySetting::getValue('work_end_time', '07:00'),
+            'standard_minutes' => 480,
         ];
     }
 
     protected function determineStatus(Carbon $timeIn, User $user): string
     {
-        $schedule = $this->getScheduleForUser($user);
+        $schedule = $this->getScheduleForUser($user, $timeIn);
         $workStartTime = $schedule['work_start_time'];
         $gracePeriod = CompanySetting::getValue('grace_period_minutes', 15);
         
         $workStart = $timeIn->copy()->setTimeFromTimeString($workStartTime);
         
-        // If it's early morning and we are clocking in for a night shift that started yesterday
-        // we need to adjust $workStart to yesterday
-        if ($timeIn->hour < 10 && Carbon::parse($workStartTime)->hour >= 12) {
+        // Night shift logic: If work starts e.g. at 21:00 and they clock in at 00:30,
+        // it means their shift started "yesterday".
+        if ($timeIn->hour < 12 && Carbon::parse($workStartTime)->hour >= 12) {
             $workStart->subDay();
+        } 
+        // Or if work starts at e.g. 05:00 (early morning) and they clock in at 06:15
+        elseif ($timeIn->hour >= 18 && Carbon::parse($workStartTime)->hour < 6) {
+             // Started early morning today, but it is night shift? 
+             // Logic: If they clock in at e.g. 21:00 for a 05:00 AM shift? Probably shouldn't happen.
         }
         
         $lateThreshold = $workStart->copy()->addMinutes($gracePeriod);
