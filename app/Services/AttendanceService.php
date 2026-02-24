@@ -482,7 +482,22 @@ class AttendanceService
             }
         }
 
-        // 2. Check for Account-level active schedule
+        // 2. Check for Shift from Shift Table (Department-based)
+        if ($user->department_id) {
+            $shift = \App\Models\Shift::where('department_id', $user->department_id)
+                ->where('category', 'Regular/Wholeday') // Default to regular
+                ->first();
+
+            if ($shift) {
+                return [
+                    'work_start_time' => Carbon::parse($shift->time_in)->format('H:i'),
+                    'work_end_time' => Carbon::parse($shift->time_out)->format('H:i'),
+                    'standard_minutes' => $shift->registered_hours * 60,
+                ];
+            }
+        }
+
+        // 3. Check for Account-level active schedule
         if ($user->account_id) {
             $schedule = Schedule::where('account_id', $user->account_id)
                 ->where('is_active', true)
@@ -497,7 +512,7 @@ class AttendanceService
             }
         }
 
-        // 3. Last fallback: System defaults
+        // 4. Last fallback: System defaults
         return [
             'work_start_time' => CompanySetting::getValue('work_start_time', '21:00'),
             'work_end_time' => CompanySetting::getValue('work_end_time', '07:00'),
