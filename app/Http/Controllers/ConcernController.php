@@ -619,7 +619,9 @@ class ConcernController extends Controller
                 'description' => 'Created concern ticket by employee',
             ]);
 
-            // Send notification to all admins
+            // Note: Admin notifications via personal feed are disabled 
+            // as they now appear as a red-dot indicator in the management portal.
+            /*
             $admins = User::whereIn('role', ['admin', 'hr', 'super_admin'])->where('is_active', true)->get();
             foreach ($admins as $admin) {
                 Notification::send(
@@ -632,6 +634,7 @@ class ConcernController extends Controller
                     $concern->priority === 'critical' ? 'red' : ($concern->priority === 'high' ? 'orange' : 'blue')
                 );
             }
+            */
 
             DB::commit();
 
