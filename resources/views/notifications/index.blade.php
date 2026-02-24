@@ -128,10 +128,14 @@
                 @endphp
 
                 @forelse($notifications as $notification)
-                    <div class="group bg-white rounded-2xl shadow-sm border {{ $notification->read_at ? 'border-gray-100' : 'border-indigo-100 bg-indigo-50/30' }} transition-all hover:shadow-md overflow-hidden">
+                    <div class="group bg-white rounded-2xl shadow-sm border transition-all hover:shadow-md overflow-hidden relative
+                        {{ $notification->read_at 
+                            ? 'border-gray-100 opacity-75 grayscale-[0.3]' 
+                            : 'border-blue-200 bg-blue-50/30 border-l-4 border-l-blue-600 shadow-blue-50' }}">
+                        
                         <div class="p-5 flex items-start gap-4">
                             <!-- Category Icon -->
-                            <div class="flex-shrink-0">
+                            <div class="flex-shrink-0 relative">
                                 @php
                                     $iconColor = 'gray';
                                     $iconBg = 'gray';
@@ -156,29 +160,36 @@
                                     }
                                 @endphp
 
-                                <div class="p-3 bg-{{ $iconBg }}-100 rounded-xl text-{{ $iconColor }}-600">
+                                <div class="p-3 bg-{{ $iconBg }}-100 rounded-xl text-{{ $iconColor }}-600 transition-transform group-hover:scale-110">
                                     <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                                         {!! $svg !!}
                                     </svg>
                                 </div>
+                                
+                                @if(!$notification->read_at)
+                                    <span class="absolute -top-1 -right-1 flex h-3 w-3">
+                                        <span class="animate-ping absolute inline-flex h-full w-full rounded-full bg-blue-400 opacity-75"></span>
+                                        <span class="relative inline-flex rounded-full h-3 w-3 bg-blue-600 border-2 border-white shadow-sm"></span>
+                                    </span>
+                                @endif
                             </div>
 
                             <!-- Notification Content -->
                             <div class="flex-1 min-w-0">
-                                <div class="flex flex-col md:flex-row md:items-center justify-between mb-1">
-                                    <h4 class="text-base font-bold text-gray-900 flex items-center gap-2">
+                                <div class="flex flex-col md:flex-row md:items-center justify-between mb-1 gap-2">
+                                    <h4 class="text-base font-black flex items-center gap-2 {{ $notification->read_at ? 'text-gray-500 font-bold' : 'text-blue-900 font-black' }}">
                                         {{ $notification->data["title"] ?? ($notification->title ?? "Notification") }}
                                         @if(!$notification->read_at)
-                                            <span class="inline-flex items-center px-2 py-0.5 rounded text-xs font-medium bg-indigo-100 text-indigo-800">
+                                            <span class="inline-flex items-center px-1.5 py-0.5 rounded shadow-sm text-[10px] font-black uppercase tracking-widest bg-blue-600 text-white animate-pulse">
                                                 New
                                             </span>
                                         @endif
                                     </h4>
-                                    <span class="text-xs font-medium text-gray-500 bg-gray-100 px-2 py-1 rounded-lg">
+                                    <span class="text-[10px] font-black uppercase tracking-tighter text-gray-400 bg-gray-100/50 px-2 py-1 rounded-lg border border-gray-100 whitespace-nowrap">
                                         {{ $notification->created_at->diffForHumans() }}
                                     </span>
                                 </div>
-                                <p class="text-gray-600 text-sm leading-relaxed">
+                                <p class="text-sm leading-relaxed {{ $notification->read_at ? 'text-gray-400 font-medium' : 'text-gray-700 font-bold' }}">
                                     {{ $notification->data["message"] ?? ($notification->message ?? "") }}
                                 </p>
                             </div>

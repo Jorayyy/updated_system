@@ -452,15 +452,18 @@
                                     </thead>
                                     <tbody class="divide-y divide-gray-100 bg-white">
                                         @forelse($concerns as $concern)
-                                            <tr class="group hover:bg-indigo-50/30 transition-colors duration-150">
+                                            <tr class="group hover:bg-indigo-50/30 transition-colors duration-150 {{ $concern->status === 'open' ? 'bg-indigo-50/10' : ($concern->status === 'resolved' || $concern->status === 'closed' ? 'opacity-75 bg-gray-50/30' : '') }}">
                                                 <!-- Employee Column -->
-                                                <td class="px-6 py-4 whitespace-nowrap">
+                                                <td class="px-6 py-4 whitespace-nowrap relative">
+                                                    @if($concern->status === 'open' && $concern->created_at->gt(now()->subDay()))
+                                                        <div class="absolute left-0 top-0 bottom-0 w-1 bg-red-500"></div>
+                                                    @endif
                                                     <div class="flex items-center gap-4">
-                                                        <div class="w-10 h-10 rounded-full bg-gradient-to-br from-indigo-500 to-purple-600 flex items-center justify-center text-white font-bold text-sm shadow-md ring-2 ring-white">
+                                                        <div class="w-10 h-10 rounded-full bg-gradient-to-br {{ $concern->status === 'open' ? 'from-indigo-500 to-purple-600' : 'from-gray-400 to-gray-500' }} flex items-center justify-center text-white font-bold text-sm shadow-md ring-2 ring-white">
                                                             {{ substr($concern->reporter->name, 0, 1) }}
                                                         </div>
                                                         <div>
-                                                            <div class="text-sm font-bold text-gray-900">{{ $concern->reporter->name }}</div>
+                                                            <div class="text-sm font-black {{ $concern->status === 'open' ? 'text-gray-900' : 'text-gray-500' }}">{{ $concern->reporter->name }}</div>
                                                             <div class="flex items-center gap-2 mt-0.5">
                                                                 <span class="text-[10px] font-mono font-bold text-gray-400 bg-gray-100 px-1.5 py-0.5 rounded">{{ $concern->reporter->employee_id }}</span>
                                                                 <span class="text-[10px] font-bold text-indigo-400">#{{ $concern->ticket_number }}</span>
@@ -472,12 +475,17 @@
                                                 <!-- Subject Column -->
                                                 <td class="px-6 py-4">
                                                     <div class="flex flex-col gap-1">
-                                                        <span class="text-sm font-bold text-gray-800 group-hover:text-indigo-700 transition-colors line-clamp-1" title="{{ $concern->title }}">{{ $concern->title }}</span>
+                                                        <div class="flex items-center gap-2">
+                                                            <span class="text-sm font-black {{ $concern->status === 'open' ? 'text-gray-800 group-hover:text-indigo-700' : 'text-gray-500' }} transition-colors line-clamp-1" title="{{ $concern->title }}">{{ $concern->title }}</span>
+                                                            @if($concern->status === 'open' && $concern->created_at->gt(now()->subDay()))
+                                                                <span class="inline-flex items-center px-1.5 py-0.5 rounded text-[8px] font-black uppercase tracking-widest bg-red-500 text-white animate-pulse">New</span>
+                                                            @endif
+                                                        </div>
                                                         <div class="flex items-center gap-2">
                                                             <span class="inline-flex items-center px-2 py-0.5 rounded text-[10px] font-medium bg-gray-100 text-gray-600 border border-gray-200 uppercase tracking-tight">
                                                                 {{ $concernCategories[$concern->category] ?? $concern->category }}
                                                             </span>
-                                                            <span class="text-[10px] text-gray-400">{{ $concern->created_at->diffForHumans() }}</span>
+                                                            <span class="text-[10px] font-bold text-gray-400">{{ $concern->created_at->diffForHumans() }}</span>
                                                         </div>
                                                     </div>
                                                 </td>
