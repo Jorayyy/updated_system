@@ -17,73 +17,15 @@ use Illuminate\Validation\Rule;
 class ConcernController extends Controller
 {
     /**
-     * Display a listing of concerns
+     * Display a listing of concerns (Legacy - Redirects to Unified Hub)
      */
     public function index(Request $request)
     {
-        $query = Concern::with(['reporter', 'assignee']);
-
-        // Filter by status
-        if ($request->filled('status')) {
-            $query->where('status', $request->status);
-        }
-
-        // Filter by category
-        if ($request->filled('category')) {
-            $query->where('category', $request->category);
-        }
-
-        // Filter by priority
-        if ($request->filled('priority')) {
-            $query->where('priority', $request->priority);
-        }
-
-        // Filter by assignee
-        if ($request->filled('assignee')) {
-            if ($request->assignee === 'unassigned') {
-                $query->whereNull('assigned_to');
-            } else {
-                $query->where('assigned_to', $request->assignee);
-            }
-        }
-
-        // Search
-        if ($request->filled('search')) {
-            $search = $request->search;
-            $query->where(function ($q) use ($search) {
-                $q->where('ticket_number', 'like', "%{$search}%")
-                    ->orWhere('title', 'like', "%{$search}%")
-                    ->orWhere('description', 'like', "%{$search}%");
-            });
-        }
-
-        // Sort
-        $sortField = $request->get('sort', 'created_at');
-        $sortDirection = $request->get('direction', 'desc');
-        $query->orderBy($sortField, $sortDirection);
-
-        $concerns = $query->paginate(15)->withQueryString();
-
-        // Get stats
-        $stats = [
-            'total' => Concern::count(),
-            'open' => Concern::open()->count(),
-            'in_progress' => Concern::where('status', 'in_progress')->count(),
-            'resolved' => Concern::where('status', 'resolved')->count(),
-            'unassigned' => Concern::unassigned()->count(),
-            'high_priority' => Concern::highPriority()->count(),
-        ];
-
-        // Get assignees for filter
-        $assignees = User::whereIn('role', ['admin', 'hr', 'super_admin'])
-            ->orderBy('name')
-            ->get(['id', 'name']);
-
-        return view('concerns.index', compact('concerns', 'stats', 'assignees'));
+        return redirect()->route('timekeeping.admin-index', ['tab' => 'tickets']);
     }
 
     /**
-     * Show the form for creating a new concern
+     * Show the form for creating a new concern (Legacy - Redirects to Unified Hub)
      */
     public function create()
     {
@@ -481,7 +423,7 @@ class ConcernController extends Controller
             $concern->delete();
 
             return redirect()
-                ->route('concerns.index')
+                ->route('timekeeping.admin-index', ['tab' => 'tickets'])
                 ->with('success', "Concern {$ticketNumber} deleted successfully.");
 
         } catch (\Exception $e) {

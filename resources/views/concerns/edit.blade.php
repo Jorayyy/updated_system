@@ -208,16 +208,12 @@
                             </div>
                         </div>
 
-                        <!-- Submit -->
                         <div class="flex items-center justify-between pt-4 border-t">
-                            <form action="{{ route('concerns.destroy', $concern) }}" method="POST" 
-                                  onsubmit="return confirm('Are you sure you want to delete this concern? This action cannot be undone.')">
-                                @csrf
-                                @method('DELETE')
-                                <button type="submit" class="text-red-600 hover:text-red-800">
-                                    Delete Concern
-                                </button>
-                            </form>
+                            <button type="button" 
+                                    onclick="confirmDelete()"
+                                    class="text-red-600 hover:text-red-800 font-medium">
+                                Delete Concern
+                            </button>
                             <div class="flex items-center gap-4">
                                 <a href="{{ route('concerns.show', $concern) }}" class="text-gray-600 hover:text-gray-800">
                                     Cancel
@@ -229,6 +225,33 @@
                         </div>
                     </div>
                 </form>
+
+                <!-- Hidden Delete Form -->
+                <form id="delete-concern-form" action="{{ route('concerns.destroy', $concern) }}" method="POST" class="hidden">
+                    @csrf
+                    @method('DELETE')
+                    <input type="hidden" name="admin_password" id="delete_admin_password">
+                </form>
+
+                <script>
+                    // Add a prompt for admin password since it's required in the controller
+                    document.getElementById('delete-concern-form').addEventListener('submit', function(e) {
+                        const password = prompt('Please enter your admin password to confirm deletion:');
+                        if (password) {
+                            document.getElementById('delete_admin_password').value = password;
+                        } else {
+                            e.preventDefault();
+                        }
+                    });
+
+                    function confirmDelete() {
+                        const password = prompt('Please enter your admin password to confirm deletion:');
+                        if (password) {
+                            document.getElementById('delete_admin_password').value = password;
+                            document.getElementById('delete-concern-form').submit();
+                        }
+                    }
+                </script>
             </div>
         </div>
     </div>

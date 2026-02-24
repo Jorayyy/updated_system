@@ -1,7 +1,7 @@
 <x-app-layout>
     <x-slot name="header">
         <div class="flex items-center gap-4">
-            <a href="{{ route('concerns.index') }}" class="text-gray-500 hover:text-gray-700">
+            <a href="{{ route('timekeeping.admin-index', ['tab' => 'tickets']) }}" class="text-gray-500 hover:text-gray-700">
                 <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                     <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10 19l-7-7m0 0l7-7m-7 7h18"></path>
                 </svg>
@@ -194,7 +194,7 @@
 
                         <!-- Submit -->
                         <div class="flex items-center justify-end gap-4 pt-4 border-t">
-                            <a href="{{ route('concerns.index') }}" class="text-gray-600 hover:text-gray-800">
+                            <a href="{{ route('timekeeping.admin-index', ['tab' => 'tickets']) }}" class="text-gray-600 hover:text-gray-800">
                                 Cancel
                             </a>
                             <button type="submit" class="bg-indigo-600 text-white px-6 py-2 rounded-md hover:bg-indigo-700">
