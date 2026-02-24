@@ -4,16 +4,24 @@
             <h2 class="font-bold text-xl text-red-800 leading-tight uppercase tracking-tight">
                 {{ App\Models\CompanySetting::getValue('company_name', 'Mancao Electronic Connect Business Solutions OPC') }} SITE ADMINS <span class="ml-2">📅</span>
             </h2>
-            <div class="flex items-center space-x-4">
+            <div class="flex items-center space-x-2">
+                {{-- Shift Table Button --}}
+                <a href="{{ route('shifts.index') }}" class="flex items-center space-x-2 bg-red-600 text-white px-3 py-1.5 rounded text-[10px] font-black uppercase tracking-widest hover:bg-red-700 transition-colors shadow-sm ring-1 ring-white/20">
+                    <svg xmlns="http://www.w3.org/2000/svg" class="h-3.5 w-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z" />
+                    </svg>
+                    <span>Shift Table</span>
+                </a>
+
                 {{-- Group Plotting Button --}}
-                <a href="{{ route('schedules.group-create') }}" class="flex items-center space-x-2 bg-red-600 text-white px-3 py-1.5 rounded text-xs font-bold uppercase tracking-widest hover:bg-red-700 transition-colors">
-                    <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                <a href="{{ route('schedules.group-create') }}" class="flex items-center space-x-2 bg-red-600 text-white px-3 py-1.5 rounded text-[10px] font-black uppercase tracking-widest hover:bg-red-700 transition-colors shadow-sm ring-1 ring-white/20">
+                    <svg xmlns="http://www.w3.org/2000/svg" class="h-3.5 w-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                         <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 20h5v-2a3 3 0 00-5.356-1.857M17 20H7m10 0v-2c0-.656-.126-1.283-.356-1.857M7 20H2v-2a3 3 0 015.356-1.857M7 20v-2c0-.656.126-1.283.356-1.857m0 0a5.002 5.002 0 019.288 0M15 7a3 3 0 11-6 0 3 3 0 016 0zm6 3a2 2 0 11-4 0 2 2 0 014 0zM7 10a2 2 0 11-4 0 2 2 0 014 0z" />
                     </svg>
                     <span>Group Plotting</span>
                 </a>
 
-                <div class="flex items-center space-x-2 border-l pl-4 border-gray-200">
+                <div class="flex items-center space-x-2 border-l pl-2 border-gray-200 ml-2">
                     <a href="{{ route('employees.create', ['from' => 'schedules']) }}" class="text-green-600 hover:text-green-800">
                         <svg xmlns="http://www.w3.org/2000/svg" class="h-8 w-8" viewBox="0 0 20 20" fill="currentColor">
                             <path fill-rule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zm1-11a1 1 0 10-2 0v2H7a1 1 0 100 2h2v2a1 1 0 102 0v-2h2a1 1 0 100-2h-2V7z" clip-rule="evenodd" />

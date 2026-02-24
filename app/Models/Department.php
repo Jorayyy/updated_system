@@ -15,4 +15,9 @@ class Department extends Model
     {
         return $this->hasMany(User::class);
     }
+
+    public function shifts()
+    {
+        return $this->hasMany(Shift::class);
+    }
 }

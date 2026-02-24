@@ -28,6 +28,7 @@ use App\Http\Controllers\AutomationController;
 use App\Http\Controllers\SiteController;
 use App\Http\Controllers\AccountController;
 use App\Http\Controllers\ScheduleController;
+use App\Http\Controllers\ShiftController;
 use App\Http\Controllers\PayrollGroupController;
 use App\Http\Controllers\DepartmentController;
 use App\Http\Controllers\OvertimeRequestController;
@@ -157,6 +158,7 @@ Route::middleware('auth')->group(function () {
         Route::get('schedules/group', [ScheduleController::class, 'groupCreate'])->name('schedules.group-create');
         Route::post('schedules/group', [ScheduleController::class, 'groupStore'])->name('schedules.group-store');
         Route::resource('schedules', ScheduleController::class);
+        Route::resource('shifts', ShiftController::class);
         
         Route::post('/payroll-groups/{payrollGroup}/add-employee', [PayrollGroupController::class, 'addEmployee'])->name('payroll-groups.add-employee');
         Route::delete('/payroll-groups/{payrollGroup}/remove-employee/{user}', [PayrollGroupController::class, 'removeEmployee'])->name('payroll-groups.remove-employee');

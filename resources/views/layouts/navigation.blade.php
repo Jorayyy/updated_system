@@ -153,6 +153,9 @@
                                     <x-dropdown-link :href="route('departments.index')">
                                         {{ __('Departments') }}
                                     </x-dropdown-link>
+                                    <x-dropdown-link :href="route('shifts.index')">
+                                        {{ __('Shift Table') }}
+                                    </x-dropdown-link>
                                     <x-dropdown-link :href="route('dtr.admin-index')">
                                         {{ __('DTR Archive') }}
                                     </x-dropdown-link>
