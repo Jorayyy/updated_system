@@ -38,7 +38,8 @@
                                 @foreach($payrollPeriods as $period)
                                     <option value="{{ $period->id }}" 
                                         {{ $periodId == $period->id ? 'selected' : '' }}>
-                                        📅 &nbsp; {{ $period->start_date->format('M d') }} - {{ $period->end_date->format('M d, Y') }} ({{ ucfirst($period->status) }})
+                                        📅 &nbsp; {{ $period->start_date->format('M d') }} - {{ $period->end_date->format('M d, Y') }} 
+                                        [{{ $period->payrollGroup->name ?? 'Global' }}] - ({{ ucfirst($period->status) }})
                                     </option>
                                 @endforeach
                             </select>

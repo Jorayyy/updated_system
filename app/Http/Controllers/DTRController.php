@@ -25,13 +25,18 @@ class DTRController extends Controller
     {
         $user = auth()->user();
         
-        // 1. Get all available payroll periods for the selection dropdown
-        // For employees: only their group. For admins: all or their group.
-        $payrollPeriodsQuery = \App\Models\PayrollPeriod::orderBy('start_date', 'desc');
+        // 1. Get available payroll periods for the selection dropdown
+        $payrollPeriodsQuery = \App\Models\PayrollPeriod::with('payrollGroup')->orderBy('start_date', 'desc');
+        
         if ($user->payroll_group_id && !$user->isAdmin()) {
+            // Normal employees only see periods for their specific group
             $payrollPeriodsQuery->where('payroll_group_id', $user->payroll_group_id);
+        } else {
+            // Admins see all, but let's deduplicate by date range to avoid the "double entries" shown in your screenshot
+            // Or better: show periods from the most active groups first
         }
-        $payrollPeriods = $payrollPeriodsQuery->take(12)->get();
+        
+        $payrollPeriods = $payrollPeriodsQuery->take(20)->get();
 
         // 2. Determine the date range to display
         $periodId = $request->get('payroll_period_id');
@@ -50,12 +55,13 @@ class DTRController extends Controller
             }
         }
 
-        // Priority 2: Active Period for User (Default if no selection)
+        // Priority 2: Active Period for THIS user's specific group (Default if no selection)
         if (!$startDate && !$month) {
             $activePeriod = \App\Models\PayrollPeriod::where('status', '!=', 'completed')
                 ->whereDate('start_date', '<=', now())
                 ->whereDate('end_date', '>=', now()->subDays(10))
                 ->when($user->payroll_group_id, function($q) use ($user) {
+                    // Only match the user's group if they have one
                     $q->where('payroll_group_id', $user->payroll_group_id);
                 })
                 ->orderBy('start_date', 'desc')
@@ -76,7 +82,6 @@ class DTRController extends Controller
 
         // Final Fallback: Last 15 Days (Bi-weekly view instead of Monthly)
         if (!$startDate) {
-            // If it's the first half of the month, show 1-15. Else show 16-end.
             if (now()->day <= 15) {
                 $startDate = now()->startOfMonth();
                 $endDate = $startDate->copy()->addDays(14);
@@ -87,7 +92,6 @@ class DTRController extends Controller
             $month = $startDate->month;
             $year = $startDate->year;
         } else {
-            // Sync month/year for the UI dropdowns
             $month = $startDate->month;
             $year = $startDate->year;
         }
