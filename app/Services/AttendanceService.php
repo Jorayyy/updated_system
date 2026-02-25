@@ -496,7 +496,6 @@ class AttendanceService
         // 1. Check for Department-based Shift (Primary Source)
         if ($user->department_id) {
             $shifts = \App\Models\Shift::where('department_id', $user->department_id)
-                ->where('category', 'Regular/Wholeday')
                 ->get();
 
             if ($shifts->count() > 0) {

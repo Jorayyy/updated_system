@@ -105,9 +105,27 @@
                                         </td>
                                         <td class="px-4 py-4 whitespace-nowrap text-sm text-center">
                                             @if($attendance->time_in)
-                                                <span class="{{ $attendance->status == 'late' ? 'text-red-600' : 'text-green-600' }}">
-                                                    {{ $attendance->time_in->format('h:i A') }}
-                                                </span>
+                                                <div class="flex flex-col items-center">
+                                                    <span class="{{ $attendance->status == 'late' ? 'text-red-600' : 'text-green-600' }} font-medium">
+                                                        {{ $attendance->time_in->format('h:i A') }}
+                                                    </span>
+                                                    @if($attendance->status == 'late')
+                                                        @php
+                                                            $lateMin = $attendance->late_minutes;
+                                                            // Fallback calculation if database column is empty
+                                                            if (!$lateMin || $lateMin == 0) {
+                                                                $service = app(\App\Services\AttendanceService::class);
+                                                                $statusData = $service->determineStatus($attendance->time_in, $attendance->user);
+                                                                $lateMin = $statusData['late_minutes'];
+                                                            }
+                                                        @endphp
+                                                        @if($lateMin > 0)
+                                                            <span class="text-[10px] text-red-500 font-bold leading-none">
+                                                                ({{ $lateMin }}m late)
+                                                            </span>
+                                                        @endif
+                                                    @endif
+                                                </div>
                                             @else
                                                 <span class="text-gray-400">-</span>
                                             @endif
@@ -199,9 +217,17 @@
                                                     @else bg-gray-100 text-gray-800 @endif">
                                                     {{ ucfirst(str_replace('_', ' ', $attendance->status)) }}
                                                 </span>
-                                                @if($attendance->status == 'late' && $attendance->late_minutes > 0)
+                                                @php
+                                                    $lateMin = $attendance->late_minutes;
+                                                    if ($attendance->status == 'late' && (!$lateMin || $lateMin == 0)) {
+                                                        $service = app(\App\Services\AttendanceService::class);
+                                                        $statusData = $service->determineStatus($attendance->time_in, $attendance->user);
+                                                        $lateMin = $statusData['late_minutes'];
+                                                    }
+                                                @endphp
+                                                @if($attendance->status == 'late' && $lateMin > 0)
                                                     <span class="text-[10px] text-red-600 font-bold mt-1 uppercase tracking-tighter">
-                                                        {{ $attendance->late_minutes }}m LATE
+                                                        {{ $lateMin }}m LATE
                                                     </span>
                                                 @endif
                                             </div>
