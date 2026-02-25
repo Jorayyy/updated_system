@@ -28,15 +28,17 @@ class DTRController extends Controller
         // 1. Get available payroll periods for the selection dropdown
         $payrollPeriodsQuery = \App\Models\PayrollPeriod::with('payrollGroup')->orderBy('start_date', 'desc');
         
-        if ($user->payroll_group_id && !$user->isAdmin()) {
-            // Normal employees only see periods for their specific group
+        if ($user->payroll_group_id && !$user->isAdmin() && !$user->isHr()) {
+            // Normal employees usually only see periods for their specific group
             $payrollPeriodsQuery->where('payroll_group_id', $user->payroll_group_id);
-        } else {
-            // Admins see all, but let's deduplicate by date range to avoid the "double entries" shown in your screenshot
-            // Or better: show periods from the most active groups first
         }
         
         $payrollPeriods = $payrollPeriodsQuery->take(20)->get();
+
+        // Fallback: If no periods found for their group, show ANY recent ones
+        if ($payrollPeriods->isEmpty()) {
+            $payrollPeriods = \App\Models\PayrollPeriod::with('payrollGroup')->orderBy('start_date', 'desc')->take(20)->get();
+        }
 
         // 2. Determine the date range to display
         $periodId = $request->get('payroll_period_id');
@@ -57,15 +59,21 @@ class DTRController extends Controller
 
         // Priority 2: Active Period for THIS user's specific group (Default if no selection)
         if (!$startDate && !$month) {
-            $activePeriod = \App\Models\PayrollPeriod::where('status', '!=', 'completed')
-                ->whereDate('start_date', '<=', now())
+            $activePeriod = \App\Models\PayrollPeriod::whereDate('start_date', '<=', now())
                 ->whereDate('end_date', '>=', now()->subDays(10))
                 ->when($user->payroll_group_id, function($q) use ($user) {
-                    // Only match the user's group if they have one
                     $q->where('payroll_group_id', $user->payroll_group_id);
                 })
                 ->orderBy('start_date', 'desc')
                 ->first();
+
+            // If no active period for their group, just get ANY active one
+            if (!$activePeriod) {
+                $activePeriod = \App\Models\PayrollPeriod::whereDate('start_date', '<=', now())
+                    ->whereDate('end_date', '>=', now()->subDays(10))
+                    ->orderBy('start_date', 'desc')
+                    ->first();
+            }
 
             if ($activePeriod) {
                 $startDate = $activePeriod->start_date;
@@ -228,14 +236,22 @@ class DTRController extends Controller
      */
     public function show(Request $request, User $user)
     {
+        $viewer = auth()->user();
+        
         // 1. Get available payroll periods for the selection dropdown
         $payrollPeriodsQuery = \App\Models\PayrollPeriod::with('payrollGroup')->orderBy('start_date', 'desc');
         
-        if ($user->payroll_group_id) {
+        // If an admin/hr is viewing, always skip the group filter to show all periods
+        if (!$viewer->isAdmin() && !$viewer->isHr() && $user->payroll_group_id) {
             $payrollPeriodsQuery->where('payroll_group_id', $user->payroll_group_id);
         }
         
         $payrollPeriods = $payrollPeriodsQuery->take(20)->get();
+        
+        // Fallback: If no periods found for the specific group, show ANY recent ones
+        if ($payrollPeriods->isEmpty()) {
+            $payrollPeriods = \App\Models\PayrollPeriod::with('payrollGroup')->orderBy('start_date', 'desc')->take(20)->get();
+        }
 
         // 2. Determine the date range to display
         $periodId = $request->get('payroll_period_id');
@@ -256,14 +272,21 @@ class DTRController extends Controller
 
         // Priority 2: Active Period for THIS user (Default if no selection)
         if (!$startDate && !$month) {
-            $activePeriod = \App\Models\PayrollPeriod::where('status', '!=', 'completed')
-                ->whereDate('start_date', '<=', now())
+            $activePeriod = \App\Models\PayrollPeriod::whereDate('start_date', '<=', now())
                 ->whereDate('end_date', '>=', now()->subDays(10))
                 ->when($user->payroll_group_id, function($q) use ($user) {
                     $q->where('payroll_group_id', $user->payroll_group_id);
                 })
                 ->orderBy('start_date', 'desc')
                 ->first();
+
+            // If no active period found for this user's group, just get ANY active one
+            if (!$activePeriod) {
+                $activePeriod = \App\Models\PayrollPeriod::whereDate('start_date', '<=', now())
+                    ->whereDate('end_date', '>=', now()->subDays(10))
+                    ->orderBy('start_date', 'desc')
+                    ->first();
+            }
 
             if ($activePeriod) {
                 $startDate = $activePeriod->start_date;

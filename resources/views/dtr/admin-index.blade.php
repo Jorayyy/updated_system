@@ -143,10 +143,10 @@
                                             {{ $item['summary']['total_overtime_hours'] }}
                                         </td>
                                         <td class="px-4 py-3 whitespace-nowrap text-sm text-center">
-                                            <a href="{{ route('dtr.show', ['user' => $item['employee']->id, 'month' => $month, 'year' => $year]) }}" 
-                                                class="text-indigo-600 hover:text-indigo-900 mr-3 transition-colors duration-200">View</a>
-                                            <a href="{{ route('dtr.employee-pdf', ['user' => $item['employee']->id, 'month' => $month, 'year' => $year]) }}" 
-                                                class="text-green-600 hover:text-green-900 transition-colors duration-200">PDF</a>
+                                            <a href="{{ route('dtr.show', ['user' => $item['employee']->id, 'month' => $month, 'year' => $year, 'payroll_period_id' => $periodId ?? null]) }}" 
+                                                class="text-indigo-600 hover:text-indigo-900 mr-3 transition-colors duration-200 uppercase font-black tracking-tighter text-[10px]">View</a>
+                                            <a href="{{ route('dtr.employee-pdf', ['user' => $item['employee']->id, 'month' => $month, 'year' => $year, 'payroll_period_id' => $periodId ?? null]) }}" 
+                                                class="text-green-600 hover:text-green-900 transition-colors duration-200 uppercase font-black tracking-tighter text-[10px]">PDF</a>
                                         </td>
                                     </tr>
                                 @empty
