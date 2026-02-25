@@ -111,13 +111,15 @@
                                                     </span>
                                                     @if($attendance->status == 'late')
                                                         @php
-                                                            $lateMin = $attendance->late_minutes;
-                                                            // Fallback calculation if database column is empty
-                                                            if (!$lateMin || $lateMin == 0) {
-                                                                $service = app(\App\Services\AttendanceService::class);
-                                                                $statusData = $service->determineStatus($attendance->time_in, $attendance->user);
-                                                                $lateMin = $statusData['late_minutes'];
+                                                            $service = app(\App\Services\AttendanceService::class);
+                                                            $sched = $service->getScheduleForUser($attendance->user, $attendance->time_in);
+                                                            $workStart = $attendance->time_in->copy()->setTimeFromTimeString($sched['work_start_time']);
+                                                            
+                                                            if ($attendance->time_in->hour < 12 && Carbon::parse($sched['work_start_time'])->hour >= 12) {
+                                                                $workStart->subDay();
                                                             }
+                                                            
+                                                            $lateMin = (int) $workStart->diffInMinutes($attendance->time_in);
                                                         @endphp
                                                         @if($lateMin > 0)
                                                             <span class="text-[10px] text-red-500 font-bold leading-none">
@@ -218,16 +220,17 @@
                                                     {{ ucfirst(str_replace('_', ' ', $attendance->status)) }}
                                                 </span>
                                                 @php
-                                                    $lateMin = $attendance->late_minutes;
-                                                    if ($attendance->status == 'late' && (!$lateMin || $lateMin == 0)) {
-                                                        $service = app(\App\Services\AttendanceService::class);
-                                                        $statusData = $service->determineStatus($attendance->time_in, $attendance->user);
-                                                        $lateMin = $statusData['late_minutes'];
+                                                    $service = app(\App\Services\AttendanceService::class);
+                                                    $sched = $service->getScheduleForUser($attendance->user, $attendance->time_in);
+                                                    $workStart = $attendance->time_in->copy()->setTimeFromTimeString($sched['work_start_time']);
+                                                    if ($attendance->time_in->hour < 12 && Carbon::parse($sched['work_start_time'])->hour >= 12) {
+                                                        $workStart->subDay();
                                                     }
+                                                    $lateMinBadge = (int) $workStart->diffInMinutes($attendance->time_in);
                                                 @endphp
-                                                @if($attendance->status == 'late' && $lateMin > 0)
+                                                @if($attendance->status == 'late' && $lateMinBadge > 0)
                                                     <span class="text-[10px] text-red-600 font-bold mt-1 uppercase tracking-tighter">
-                                                        {{ $lateMin }}m LATE
+                                                        {{ $lateMinBadge }}m LATE
                                                     </span>
                                                 @endif
                                             </div>

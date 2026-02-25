@@ -507,9 +507,19 @@ class AttendanceService
                     $minDiff = 9999;
                     foreach ($shifts as $s) {
                         $sTime = Carbon::parse($s->time_in);
-                        // Calculate difference in minutes from current target
-                        $diff = abs(Carbon::parse($targetTime)->diffInMinutes($sTime));
-                        // Since we deal with night shifts, we check wrapping too
+                        
+                        // We want to favor shifts that start BEFORE the clock-in time if the user is late
+                        // but also handle early clock-ins.
+                        // For a clock-in at 20:31, 20:00 (diff 31) should beat 21:00 (diff 29) 
+                        // because you are more likely late for the 20:00 shift than 29 mins early for the 21:00 one.
+                        $diff = Carbon::parse($targetTime)->diffInMinutes($sTime);
+                        
+                        // Favor shifts starting before or close to targetTime
+                        if ($sTime->gt(Carbon::parse($targetTime))) {
+                            $diff += 30; // Add a "penalty" to future shifts to favor the current/past one
+                        }
+                        
+                        $diff = abs($diff);
                         if ($diff > 720) $diff = 1440 - $diff; 
 
                         if ($diff < $minDiff) {
