@@ -28,16 +28,13 @@ class DTRController extends Controller
         // 1. Get available payroll periods for the selection dropdown
         $payrollPeriodsQuery = \App\Models\PayrollPeriod::with('payrollGroup')->orderBy('start_date', 'desc');
         
-        // Always try to show periods for the user's specific group first
+        // Only show periods for their group if they have one
         if ($user->payroll_group_id) {
             $payrollPeriodsQuery->where('payroll_group_id', $user->payroll_group_id);
-        }
-        
-        $payrollPeriods = $payrollPeriodsQuery->take(20)->get();
-
-        // Fallback: If no periods found for their group OR they have no group, show ANY recent ones
-        if ($payrollPeriods->isEmpty()) {
-            $payrollPeriods = \App\Models\PayrollPeriod::with('payrollGroup')->orderBy('start_date', 'desc')->take(20)->get();
+            $payrollPeriods = $payrollPeriodsQuery->take(20)->get();
+        } else {
+            // If they have no group, don't show unrelated periods
+            $payrollPeriods = collect();
         }
 
         // 2. Determine the date range to display
@@ -239,16 +236,13 @@ class DTRController extends Controller
         // 1. Get available payroll periods for the selection dropdown
         $payrollPeriodsQuery = \App\Models\PayrollPeriod::with('payrollGroup')->orderBy('start_date', 'desc');
         
-        // Filter by the specific group of the employee being viewed
+        // Filter strictly by the specific group of the employee being viewed
         if ($user->payroll_group_id) {
             $payrollPeriodsQuery->where('payroll_group_id', $user->payroll_group_id);
-        }
-        
-        $payrollPeriods = $payrollPeriodsQuery->take(20)->get();
-
-        // Fallback: If no periods found for the specific group (e.g. newly created employee with no group assigned), show ANY recent ones
-        if ($payrollPeriods->isEmpty()) {
-            $payrollPeriods = \App\Models\PayrollPeriod::with('payrollGroup')->orderBy('start_date', 'desc')->take(20)->get();
+            $payrollPeriods = $payrollPeriodsQuery->take(20)->get();
+        } else {
+            // No group assigned? Then we don't show unrelated periods
+            $payrollPeriods = collect();
         }
 
         // 2. Determine the date range to display

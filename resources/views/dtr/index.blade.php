@@ -43,6 +43,12 @@
                                     </option>
                                 @endforeach
                             </select>
+                        @else
+                            @if(auth()->user()->isAdmin() || auth()->user()->isHr())
+                                <span class="bg-orange-50 text-orange-600 border border-orange-200 px-3 py-1.5 rounded text-[10px] font-bold uppercase tracking-tighter">
+                                    ⚠️ No Payroll Group Assigned
+                                </span>
+                            @endif
                         @endif
                         
                         <!-- Fallback Selection by Month (if they want historical data) -->
