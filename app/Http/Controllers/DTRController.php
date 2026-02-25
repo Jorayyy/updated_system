@@ -28,14 +28,14 @@ class DTRController extends Controller
         // 1. Get available payroll periods for the selection dropdown
         $payrollPeriodsQuery = \App\Models\PayrollPeriod::with('payrollGroup')->orderBy('start_date', 'desc');
         
-        if ($user->payroll_group_id && !$user->isAdmin() && !$user->isHr()) {
-            // Normal employees usually only see periods for their specific group
+        // Always try to show periods for the user's specific group first
+        if ($user->payroll_group_id) {
             $payrollPeriodsQuery->where('payroll_group_id', $user->payroll_group_id);
         }
         
         $payrollPeriods = $payrollPeriodsQuery->take(20)->get();
 
-        // Fallback: If no periods found for their group, show ANY recent ones
+        // Fallback: If no periods found for their group OR they have no group, show ANY recent ones
         if ($payrollPeriods->isEmpty()) {
             $payrollPeriods = \App\Models\PayrollPeriod::with('payrollGroup')->orderBy('start_date', 'desc')->take(20)->get();
         }
@@ -236,19 +236,17 @@ class DTRController extends Controller
      */
     public function show(Request $request, User $user)
     {
-        $viewer = auth()->user();
-        
         // 1. Get available payroll periods for the selection dropdown
         $payrollPeriodsQuery = \App\Models\PayrollPeriod::with('payrollGroup')->orderBy('start_date', 'desc');
         
-        // If an admin/hr is viewing, always skip the group filter to show all periods
-        if (!$viewer->isAdmin() && !$viewer->isHr() && $user->payroll_group_id) {
+        // Filter by the specific group of the employee being viewed
+        if ($user->payroll_group_id) {
             $payrollPeriodsQuery->where('payroll_group_id', $user->payroll_group_id);
         }
         
         $payrollPeriods = $payrollPeriodsQuery->take(20)->get();
-        
-        // Fallback: If no periods found for the specific group, show ANY recent ones
+
+        // Fallback: If no periods found for the specific group (e.g. newly created employee with no group assigned), show ANY recent ones
         if ($payrollPeriods->isEmpty()) {
             $payrollPeriods = \App\Models\PayrollPeriod::with('payrollGroup')->orderBy('start_date', 'desc')->take(20)->get();
         }
