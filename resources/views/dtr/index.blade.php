@@ -1,6 +1,4 @@
 ﻿@php
-    $startDate = \Carbon\Carbon::create($year, $month, 1);
-    $endDate = $startDate->copy()->endOfMonth();
     $attendanceByDate = $attendances->keyBy(fn($a) => $a->date->format('Y-m-d'));
     $m = $summary['metrics'] ?? null;
 @endphp
@@ -16,52 +14,78 @@
                             <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10 19l-7-7m0 0l7-7m-7 7h18" />
                         </svg>
                     </button>
-                    <div>View DTR</div>
+                    <div>Attendance Report (DTR)</div>
                 </div>
                 <div class="flex gap-4">
-                    <a href="{{ route('concerns.user-create', ['category' => 'timekeeping', 'title' => 'DTR Discrepancy - ' . $startDate->format('F Y')]) }}" 
-                        class="text-[10px] bg-red-50 text-red-700 px-3 py-1 rounded border border-red-200 hover:bg-red-100 transition-colors">
+                    <a href="{{ route('concerns.user-create', ['category' => 'timekeeping', 'title' => 'DTR Discrepancy - ' . $startDate->format('F d, Y')]) }}" 
+                        class="text-[10px] bg-red-50 text-red-700 px-3 py-1 rounded border border-red-200 hover:bg-red-100 transition-colors uppercase font-bold">
                         Report TK Complaint
                     </a>
                 </div>
             </div>
 
             <!-- Payroll Period Selection -->
-            <div class="bg-white p-4 border border-slate-200 rounded mb-4 shadow-sm flex flex-col gap-4">
-                <form method="GET" class="flex flex-wrap items-center gap-6">
-                    <div class="flex items-center gap-3">
-                        <label class="text-[11px] font-black text-slate-800 uppercase tracking-tighter">Payroll Period</label>
-                        <select name="month" class="bg-white border text-[11px] p-2 rounded min-w-[200px] focus:ring-0 focus:border-slate-400">
-                             @for($mo = 1; $mo <= 12; $mo++)
-                                <option value="{{ $mo }}" {{ $month == $mo ? 'selected' : '' }}>
-                                    {{ date('F', mktime(0, 0, 0, $mo, 1)) }}
-                                </option>
-                            @endfor
-                        </select>
-                        <select name="year" class="bg-white border text-[11px] p-2 rounded w-24 focus:ring-0 focus:border-slate-400">
-                            @for($y = date('Y'); $y >= date('Y') - 5; $y--)
-                                <option value="{{ $y }}" {{ $year == $y ? 'selected' : '' }}>{{ $y }}</option>
-                            @endfor
-                        </select>
-                        <button type="submit" class="bg-indigo-600 text-white px-4 py-2 rounded text-[11px] font-bold">Refresh View</button>
+            <div class="bg-white p-4 border border-slate-200 rounded mb-4 shadow-sm flex flex-col md:flex-row items-center justify-between gap-4">
+                <form method="GET" class="flex flex-col md:flex-row items-center gap-4 w-full md:w-auto">
+                    <div class="flex flex-wrap items-center gap-2">
+                        <label class="text-[11px] font-black text-slate-800 uppercase tracking-tighter">View Period</label>
+                        
+                        <!-- NEW PREFERRED VIEW: Selection by Cut-off/Payroll Period -->
+                        @if(!empty($payrollPeriods) && count($payrollPeriods) > 0)
+                            <select name="payroll_period_id" onchange="this.form.submit()" 
+                                class="bg-white border text-[11px] p-2 rounded min-w-[280px] focus:ring-0 focus:border-slate-400 font-bold text-indigo-700">
+                                <option value="">-- ALL RECENT PAYROLL PERIODS --</option>
+                                @foreach($payrollPeriods as $period)
+                                    <option value="{{ $period->id }}" 
+                                        {{ $periodId == $period->id ? 'selected' : '' }}>
+                                        📅 &nbsp; {{ $period->start_date->format('M d') }} - {{ $period->end_date->format('M d, Y') }} ({{ ucfirst($period->status) }})
+                                    </option>
+                                @endforeach
+                            </select>
+                        @endif
+                        
+                        <!-- Fallback Selection by Month (if they want historical data) -->
+                        <div class="flex items-center gap-1 bg-slate-50 px-2 py-1 rounded border border-slate-100">
+                            <label class="text-[9px] text-slate-400 uppercase mr-1">Or Month:</label>
+                            <select name="month" class="bg-white border-0 text-[11px] h-8 p-1 rounded focus:ring-0">
+                                @for($mo = 1; $mo <= 12; $mo++)
+                                    <option value="{{ $mo }}" {{ $month == $mo && !$periodId ? 'selected' : '' }}>
+                                        {{ date('F', mktime(0, 0, 0, $mo, 1)) }}
+                                    </option>
+                                @endfor
+                            </select>
+                            <select name="year" class="bg-white border-0 text-[11px] h-8 p-1 rounded focus:ring-0">
+                                @for($y = date('Y'); $y >= date('Y') - 5; $y--)
+                                    <option value="{{ $y }}" {{ $year == $y && !$periodId ? 'selected' : '' }}>{{ $y }}</option>
+                                @endfor
+                            </select>
+                            <button type="submit" class="bg-slate-700 text-white px-3 py-1.5 rounded text-[10px] font-bold">Go</button>
+                        </div>
                     </div>
                 </form>
-                <div>
-                    <a href="{{ route('dtr.pdf', ['month' => $month, 'year' => $year]) }}" 
-                       class="bg-rose-600 text-white px-8 py-2 rounded text-[11px] font-bold shadow-sm inline-block">Print</a>
+                <div class="flex gap-2">
+                    <a href="{{ route('dtr.pdf', ['month' => $month, 'year' => $year, 'payroll_period_id' => $periodId]) }}" 
+                       class="bg-rose-600 text-white px-8 py-2.5 rounded text-[11px] font-bold shadow-sm inline-block hover:bg-rose-700 transition-colors uppercase tracking-wider">
+                       Print DTR Report
+                    </a>
                 </div>
             </div>
 
             <!-- Header Section -->
             <div class="mb-6 bg-white rounded-xl shadow-sm border border-slate-200 overflow-hidden">
-                <div class="bg-indigo-600 px-6 py-4 flex justify-between items-center bg-gradient-to-r from-indigo-700 to-indigo-600">
+                <div class="bg-indigo-600 px-6 py-4 flex justify-between items-center bg-gradient-to-r from-indigo-800 to-indigo-600 border-b border-indigo-900/10">
                     <div>
-                        <h1 class="text-white text-xl font-bold tracking-tight uppercase">{{ $user->name }}</h1>
-                        <p class="text-indigo-100 text-xs font-semibold uppercase tracking-wider">{{ $user->position ?? 'STAFF' }} • {{ $user->employee_id }}</p>
+                        <h1 class="text-white text-xl font-bold tracking-tight uppercase leading-none">{{ $user->name }}</h1>
+                        <p class="text-indigo-200 text-[10px] font-semibold uppercase tracking-[0.2em] mt-2 flex items-center">
+                            <svg xmlns="http://www.w3.org/2000/svg" class="h-3 w-3 mr-1 opacity-70" viewBox="0 0 20 20" fill="currentColor">
+                                <path fill-rule="evenodd" d="M10 9a3 3 0 100-6 3 3 0 000 6zm-7 9a7 7 0 1114 0H3z" clip-rule="evenodd" />
+                            </svg>
+                            {{ $user->position ?? 'STAFF' }} &nbsp; • &nbsp; ID: {{ $user->employee_id }}
+                        </p>
                     </div>
-                    <div class="text-right">
-                        <p class="text-indigo-100 text-[10px] uppercase font-black">Payroll Period</p>
-                        <p class="text-white text-sm font-bold">{{ $startDate->format('M d, Y') }} - {{ $endDate->format('M d, Y') }}</p>
+                    <div class="text-right bg-white/10 px-4 py-2 rounded-lg border border-white/10">
+                        <p class="text-indigo-100 text-[9px] uppercase font-black opacity-80 tracking-widest">Selected View Period</p>
+                        <p class="text-white text-sm font-bold mt-0.5">{{ $startDate->format('M d, Y') }} — {{ $endDate->format('M d, Y') }}</p>
                     </div>
                 </div>
                 

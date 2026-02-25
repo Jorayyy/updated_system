@@ -25,18 +25,79 @@ class DTRController extends Controller
     {
         $user = auth()->user();
         
-        $month = $request->get('month', now()->month);
-        $year = $request->get('year', now()->year);
+        // 1. Get all available payroll periods for the selection dropdown
+        // For employees: only their group. For admins: all or their group.
+        $payrollPeriodsQuery = \App\Models\PayrollPeriod::orderBy('start_date', 'desc');
+        if ($user->payroll_group_id && !$user->isAdmin()) {
+            $payrollPeriodsQuery->where('payroll_group_id', $user->payroll_group_id);
+        }
+        $payrollPeriods = $payrollPeriodsQuery->take(12)->get();
 
-        $startDate = Carbon::create($year, $month, 1)->startOfMonth();
-        $endDate = $startDate->copy()->endOfMonth();
+        // 2. Determine the date range to display
+        $periodId = $request->get('payroll_period_id');
+        $month = $request->get('month');
+        $year = $request->get('year');
+        
+        $startDate = null;
+        $endDate = null;
+
+        // Priority 1: Specifically selected Period
+        if ($periodId) {
+            $period = \App\Models\PayrollPeriod::find($periodId);
+            if ($period) {
+                $startDate = $period->start_date;
+                $endDate = $period->end_date;
+            }
+        }
+
+        // Priority 2: Active Period for User (Default if no selection)
+        if (!$startDate && !$month) {
+            $activePeriod = \App\Models\PayrollPeriod::where('status', '!=', 'completed')
+                ->whereDate('start_date', '<=', now())
+                ->whereDate('end_date', '>=', now()->subDays(10))
+                ->when($user->payroll_group_id, function($q) use ($user) {
+                    $q->where('payroll_group_id', $user->payroll_group_id);
+                })
+                ->orderBy('start_date', 'desc')
+                ->first();
+
+            if ($activePeriod) {
+                $startDate = $activePeriod->start_date;
+                $endDate = $activePeriod->end_date;
+                $periodId = $activePeriod->id;
+            }
+        }
+
+        // Priority 3: Manual Month/Year Selection
+        if (!$startDate && $month && $year) {
+            $startDate = Carbon::create($year, $month, 1)->startOfMonth();
+            $endDate = $startDate->copy()->endOfMonth();
+        }
+
+        // Final Fallback: Last 15 Days (Bi-weekly view instead of Monthly)
+        if (!$startDate) {
+            // If it's the first half of the month, show 1-15. Else show 16-end.
+            if (now()->day <= 15) {
+                $startDate = now()->startOfMonth();
+                $endDate = $startDate->copy()->addDays(14);
+            } else {
+                $startDate = now()->startOfMonth()->addDays(15);
+                $endDate = now()->endOfMonth();
+            }
+            $month = $startDate->month;
+            $year = $startDate->year;
+        } else {
+            // Sync month/year for the UI dropdowns
+            $month = $startDate->month;
+            $year = $startDate->year;
+        }
 
         $attendances = $this->attendanceService->getAttendanceForDTR($user, $startDate, $endDate);
 
         // Calculate summary
         $summary = $this->calculateDTRSummary($attendances, $user, $startDate, $endDate);
 
-        return view('dtr.index', compact('attendances', 'summary', 'month', 'year', 'user'));
+        return view('dtr.index', compact('attendances', 'summary', 'month', 'year', 'user', 'payrollPeriods', 'periodId', 'startDate', 'endDate'));
     }
 
     /**
