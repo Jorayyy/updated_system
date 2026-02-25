@@ -68,12 +68,88 @@ class DtrService
     /**
      * Get the effective schedule for an employee
      */
-    protected function getScheduleForEmployee(User $employee): array
+    protected function getScheduleForEmployee(User $user, ?Carbon $date = null): array
     {
         $this->loadSettings();
-        // Try to get account-specific schedule
-        if ($employee->account_id) {
-            $schedule = Schedule::where('account_id', $employee->account_id)
+        $date = $date ?? now();
+        $dayName = strtolower($date->format('l')); // e.g. "monday"
+        $scheduleField = "{$dayName}_schedule";
+        
+        // Final fallback structure
+        $defaultSchedule = [
+            'work_start_time' => $this->standardTimeIn,
+            'work_end_time' => $this->standardTimeOut,
+            'work_minutes' => $this->standardWorkMinutes,
+            'break_minutes' => $this->lunchMinutes + $this->breakMinutes,
+            'is_rest_day' => false,
+        ];
+
+        // 1. Check user-specific daily schedule (Manual entry from plotting tool)
+        if (!empty($user->{$scheduleField})) {
+            if (in_array($user->{$scheduleField}, ['Rest day', 'OFF', 'Off'])) {
+                return array_merge($defaultSchedule, ['is_rest_day' => true, 'work_minutes' => 0]);
+            }
+
+            // Support both "H:i to H:i" and "h:i A - h:i A"
+            $parts = preg_split('/(\s+to\s+|\s+-\s+)/', $user->{$scheduleField});
+
+            if (count($parts) === 2) {
+                try {
+                    $startStr = trim($parts[0]);
+                    $endStr = trim($parts[1]);
+                    
+                    // Try parsing as H:i first (what we save from dropdowns now)
+                    try {
+                        $startTimeStr = Carbon::parse($startStr)->format('H:i');
+                        $endTimeStr = Carbon::parse($endStr)->format('H:i');
+                    } catch (\Exception $e) {
+                        try {
+                            $startTimeStr = Carbon::createFromFormat('h:i A', $startStr)->format('H:i');
+                            $endTimeStr = Carbon::createFromFormat('h:i A', $endStr)->format('H:i');
+                        } catch (\Exception $e2) {
+                            $startTimeStr = '08:00';
+                            $endTimeStr = '17:00';
+                        }
+                    }
+
+                    $start = Carbon::parse($startTimeStr);
+                    $end = Carbon::parse($endTimeStr);
+                    if ($end->lt($start)) {
+                        $end->addDay();
+                    }
+                    $workMinutes = $start->diffInMinutes($end);
+                    
+                    return array_merge($defaultSchedule, [
+                        'work_start_time' => $startTimeStr,
+                        'work_end_time' => $endTimeStr,
+                        'work_minutes' => $workMinutes, // Dynamic based on entry
+                        'break_minutes' => 60, // Default 1 hour lunch
+                    ]);
+                } catch (\Exception $e) {
+                    // Fail gracefully to next check
+                }
+            }
+        }
+
+        // 2. Check for Shift from Shift Table (Department-based)
+        if ($user->department_id) {
+            $shift = \App\Models\Shift::where('department_id', $user->department_id)
+                ->where('category', 'Regular/Wholeday') // Default to regular
+                ->first();
+
+            if ($shift) {
+                return array_merge($defaultSchedule, [
+                    'work_start_time' => Carbon::parse($shift->time_in)->format('H:i'),
+                    'work_end_time' => Carbon::parse($shift->time_out)->format('H:i'),
+                    'work_minutes' => $shift->registered_hours * 60,
+                    'break_minutes' => ($shift->lunch_break_minutes ?? 0) + ($shift->first_break_minutes ?? 0) + ($shift->second_break_minutes ?? 0),
+                ]);
+            }
+        }
+
+        // 3. Try to get account-specific schedule
+        if ($user->account_id) {
+            $schedule = Schedule::where('account_id', $user->account_id)
                 ->where('is_active', true)
                 ->first();
 
@@ -86,22 +162,17 @@ class DtrService
                 }
                 $workMinutes = $start->diffInMinutes($end);
 
-                return [
+                return array_merge($defaultSchedule, [
                     'work_start_time' => $schedule->work_start_time,
                     'work_end_time' => $schedule->work_end_time,
                     'work_minutes' => $workMinutes,
                     'break_minutes' => $schedule->break_duration_minutes,
-                ];
+                ]);
             }
         }
 
-        // Return defaults if no specific schedule found
-        return [
-            'work_start_time' => $this->standardTimeIn,
-            'work_end_time' => $this->standardTimeOut,
-            'work_minutes' => $this->standardWorkMinutes,
-            'break_minutes' => $this->lunchMinutes + $this->breakMinutes,
-        ];
+        // 4. Return defaults if no specific schedule found
+        return $defaultSchedule;
     }
 
     /**
@@ -232,6 +303,26 @@ class DtrService
 
         // Calculate time metrics
         $metrics = $this->calculateTimeMetrics($attendance, $date, $schedule);
+
+        // Update the source Attendance status and late_minutes if necessary to stay in sync
+        if ($attendance) {
+            // Map DTR status to Attendance allowed enum values (present, absent, late, half_day, on_leave)
+            $map = [
+                DailyTimeRecord::STATUS_PRESENT => 'present',
+                DailyTimeRecord::STATUS_LATE => 'late',
+                DailyTimeRecord::STATUS_HALF_DAY => 'half_day',
+                DailyTimeRecord::STATUS_ABSENT => 'absent',
+                DailyTimeRecord::STATUS_ON_LEAVE => 'on_leave',
+                DailyTimeRecord::STATUS_INCOMPLETE => 'present', // Treat incomplete as present in attendance table
+                DailyTimeRecord::STATUS_HOLIDAY => 'present',
+                DailyTimeRecord::STATUS_REST_DAY => 'present',
+            ];
+
+            $attendance->update([
+                'status' => $map[$attendanceStatus] ?? 'present',
+                'late_minutes' => $metrics['late_minutes'],
+            ]);
+        }
 
         // Create or update DTR
         $dtrData = [
@@ -404,19 +495,29 @@ class DtrService
             $metrics['actual_work_minutes'] = $attendance->time_in->diffInMinutes($expectedTimeOut);
         }
 
-        // Get break minutes from attendance or use default
+        // Total break minutes: largest of either actual punches OR scheduled time
         $defaultBreakMinutes = $schedule ? $schedule['break_minutes'] : ($this->lunchMinutes + $this->breakMinutes);
-        $metrics['total_break_minutes'] = $attendance->total_break_minutes ?? $defaultBreakMinutes;
+        $actualBreakMinutes = $attendance->total_break_minutes ?? 0;
+        
+        $metrics['total_break_minutes'] = max($actualBreakMinutes, $defaultBreakMinutes);
 
         // Calculate net work minutes (actual - breaks)
+        // Ensure we use the same break duration used for total_break_minutes
         $metrics['net_work_minutes'] = max(0, $metrics['actual_work_minutes'] - $metrics['total_break_minutes']);
 
         // Calculate late minutes
         $expectedTimeIn = $date->copy()->setTimeFromTimeString($startTimeStr);
+        
+        // Night shift logic for late calculation:
+        // If they clock in shortly after midnight (00:00 - 11:59) for a shift starting night (12:00 - 23:59)
+        if ($attendance->time_in->hour < 12 && Carbon::parse($startTimeStr)->hour >= 12) {
+            $expectedTimeIn->subDay();
+        }
+        
         $graceTime = $expectedTimeIn->copy()->addMinutes($this->graceMinutes);
         
         if ($attendance->time_in->gt($graceTime)) {
-            $metrics['late_minutes'] = $expectedTimeIn->diffInMinutes($attendance->time_in);
+             $metrics['late_minutes'] = $expectedTimeIn->diffInMinutes($attendance->time_in);
         }
 
         // Calculate undertime/overtime

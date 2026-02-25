@@ -58,13 +58,17 @@
                                         <div id="{{ $day }}_select_container">
                                             <select name="{{ $day }}_schedule" id="{{ $day }}_select" class="w-full border-gray-200 rounded text-sm focus:ring-red-500 focus:border-red-500">
                                                 <option value="Rest day" {{ $user->{$day.'_schedule'} == 'Rest day' ? 'selected' : '' }}>Rest day</option>
-                                                @foreach($schedules as $shift)
-                                                    @php
-                                                        $shiftTime = \Carbon\Carbon::parse($shift->work_start_time)->format('H:i') . ' to ' . \Carbon\Carbon::parse($shift->work_end_time)->format('H:i');
-                                                    @endphp
-                                                    <option value="{{ $shiftTime }}" {{ $user->{$day.'_schedule'} == $shiftTime ? 'selected' : '' }}>
-                                                        {{ $shiftTime }}
-                                                    </option>
+                                                @foreach($schedules->groupBy(fn($s) => $s->department->name ?? 'GENERAL') as $deptName => $deptShifts)
+                                                    <optgroup label="{{ $deptName }}">
+                                                        @foreach($deptShifts as $shift)
+                                                            @php
+                                                                $shiftTime = \Carbon\Carbon::parse($shift->time_in)->format('H:i') . ' to ' . \Carbon\Carbon::parse($shift->time_out)->format('H:i');
+                                                            @endphp
+                                                            <option value="{{ $shiftTime }}" {{ $user->{$day.'_schedule'} == $shiftTime ? 'selected' : '' }}>
+                                                                {{ $shiftTime }}
+                                                            </option>
+                                                        @endforeach
+                                                    </optgroup>
                                                 @endforeach
                                             </select>
                                         </div>

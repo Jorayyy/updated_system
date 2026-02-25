@@ -9,6 +9,7 @@ use App\Models\AuditLog;
 use App\Models\AllowedIp;
 use App\Models\CompanySetting;
 use App\Models\Schedule;
+use App\Models\Shift;
 use App\Models\OvertimeRequest;
 use Carbon\Carbon;
 use Illuminate\Support\Facades\DB;
@@ -180,6 +181,16 @@ class AttendanceService
             
             $attendance->save();
             
+            // Sync with DTR if completed
+            if ($step === 'time_out') {
+                try {
+                    $dtrService = app(\App\Services\DtrService::class);
+                    $dtrService->generateDtrForEmployee($user, $attendance->date);
+                } catch (\Exception $e) {
+                    \Log::error("Failed to sync DTR for user {$user->id} on {$attendance->date}: " . $e->getMessage());
+                }
+            }
+            
             AuditLog::log(
                 $step,
                 Attendance::class,
@@ -248,6 +259,8 @@ class AttendanceService
 
         DB::beginTransaction();
         try {
+            $statusResult = $this->determineStatus($now, $user);
+            
             $attendance = Attendance::updateOrCreate(
                 [
                     'user_id' => $user->id,
@@ -255,7 +268,8 @@ class AttendanceService
                 ],
                 [
                     'time_in' => $now,
-                    'status' => $this->determineStatus($now, $user),
+                    'status' => $statusResult['status'],
+                    'late_minutes' => $statusResult['late_minutes'],
                     'current_step' => 'time_in',
                 ]
             );
@@ -354,6 +368,14 @@ class AttendanceService
             }
             
             $attendance->save();
+
+            // Sync with DTR immediately
+            try {
+                $dtrService = app(\App\Services\DtrService::class);
+                $dtrService->generateDtrForEmployee($user, $attendance->date);
+            } catch (\Exception $e) {
+                \Log::error("Failed to sync DTR for user {$user->id} on {$attendance->date}: " . $e->getMessage());
+            }
 
             AuditLog::log(
                 'time_out_early',
@@ -458,24 +480,51 @@ class AttendanceService
         $dayName = strtolower($date->format('l')); // e.g. "monday"
         $scheduleField = "{$dayName}_schedule";
         
+        // Final fallback structure
+        $defaultSchedule = [
+            'work_start_time' => CompanySetting::getValue('work_start_time', '21:00'),
+            'work_end_time' => CompanySetting::getValue('work_end_time', '07:00'),
+            'standard_minutes' => 480,
+            'lunch_break_minutes' => 60,
+            'first_break_minutes' => 15,
+            'second_break_minutes' => 15,
+            'break_minutes' => 90,
+            'is_rest_day' => false,
+        ];
+
         // 1. Check user-specific daily schedule
         if (!empty($user->{$scheduleField})) {
-            // Assume format: "08:00 AM - 05:00 PM"
-            $parts = explode('-', $user->{$scheduleField});
+            if ($user->{$scheduleField} === 'Rest day' || $user->{$scheduleField} === 'OFF') {
+                return array_merge($defaultSchedule, ['is_rest_day' => true]);
+            }
+
+            // Support both "H:i to H:i" and "h:i A - h:i A"
+            $parts = preg_split('/(\s+to\s+|\s+-\s+)/', $user->{$scheduleField});
+
             if (count($parts) === 2) {
                 try {
                     $startStr = trim($parts[0]);
                     $endStr = trim($parts[1]);
                     
-                    // Parse times
-                    $startTime = Carbon::createFromFormat('h:i A', $startStr)->format('H:i');
-                    $endTime = Carbon::createFromFormat('h:i A', $endStr)->format('H:i');
+                    // Try parsing as H:i first (what we save from dropdowns now)
+                    try {
+                        $startTime = Carbon::parse($startStr)->format('H:i');
+                        $endTime = Carbon::parse($endStr)->format('H:i');
+                    } catch (\Exception $e) {
+                        // Fallback to specific format if needed
+                        try {
+                            $startTime = Carbon::createFromFormat('h:i A', $startStr)->format('H:i');
+                            $endTime = Carbon::createFromFormat('h:i A', $endStr)->format('H:i');
+                        } catch (\Exception $e2) {
+                             $startTime = '08:00';
+                             $endTime = '17:00';
+                        }
+                    }
                     
-                    return [
+                    return array_merge($defaultSchedule, [
                         'work_start_time' => $startTime,
                         'work_end_time' => $endTime,
-                        'standard_minutes' => 480, // Default 8 hours
-                    ];
+                    ]);
                 } catch (\Exception $e) {
                     // Fail gracefully to next check
                 }
@@ -489,11 +538,15 @@ class AttendanceService
                 ->first();
 
             if ($shift) {
-                return [
+                return array_merge($defaultSchedule, [
                     'work_start_time' => Carbon::parse($shift->time_in)->format('H:i'),
                     'work_end_time' => Carbon::parse($shift->time_out)->format('H:i'),
                     'standard_minutes' => $shift->registered_hours * 60,
-                ];
+                    'lunch_break_minutes' => $shift->lunch_break_minutes ?? 60,
+                    'first_break_minutes' => $shift->first_break_minutes ?? 15,
+                    'second_break_minutes' => $shift->second_break_minutes ?? 15,
+                    'break_minutes' => ($shift->lunch_break_minutes ?? 60) + ($shift->first_break_minutes ?? 15) + ($shift->second_break_minutes ?? 15),
+                ]);
             }
         }
 
@@ -504,23 +557,18 @@ class AttendanceService
                 ->first();
 
             if ($schedule) {
-                return [
+                return array_merge($defaultSchedule, [
                     'work_start_time' => $schedule->work_start_time,
                     'work_end_time' => $schedule->work_end_time,
-                    'standard_minutes' => 480, // Fallback to 8 hours
-                ];
+                    'break_minutes' => $schedule->break_duration_minutes ?? 60,
+                ]);
             }
         }
 
-        // 4. Last fallback: System defaults
-        return [
-            'work_start_time' => CompanySetting::getValue('work_start_time', '21:00'),
-            'work_end_time' => CompanySetting::getValue('work_end_time', '07:00'),
-            'standard_minutes' => 480,
-        ];
+        return $defaultSchedule;
     }
 
-    protected function determineStatus(Carbon $timeIn, User $user): string
+    protected function determineStatus(Carbon $timeIn, User $user): array
     {
         $schedule = $this->getScheduleForUser($user, $timeIn);
         $workStartTime = $schedule['work_start_time'];
@@ -533,19 +581,21 @@ class AttendanceService
         if ($timeIn->hour < 12 && Carbon::parse($workStartTime)->hour >= 12) {
             $workStart->subDay();
         } 
-        // Or if work starts at e.g. 05:00 (early morning) and they clock in at 06:15
-        elseif ($timeIn->hour >= 18 && Carbon::parse($workStartTime)->hour < 6) {
-             // Started early morning today, but it is night shift? 
-             // Logic: If they clock in at e.g. 21:00 for a 05:00 AM shift? Probably shouldn't happen.
-        }
         
         $lateThreshold = $workStart->copy()->addMinutes($gracePeriod);
+        $lateMinutes = 0;
+        $status = 'present';
 
         if ($timeIn->gt($lateThreshold)) {
-            return 'late';
+            $status = 'late';
+            // Late minutes are calculated from the actual shift start, not the threshold
+            $lateMinutes = (int) $workStart->diffInMinutes($timeIn);
         }
 
-        return 'present';
+        return [
+            'status' => $status,
+            'late_minutes' => $lateMinutes
+        ];
     }
 
     /**

@@ -205,19 +205,19 @@
                         @endforeach
                     </div>
 
-                    <!-- Quick Time Out Button (skip all remaining steps) -->
+                    <!-- Emergency / Early Leave Button (skip all remaining steps) -->
                     @if($status['status'] === 'working' || $status['status'] === 'on_break')
                         <div class="mt-6 pt-6 border-t border-gray-200">
                             <form action="{{ route('attendance.time-out') }}" method="POST" class="flex items-center justify-between">
                                 @csrf
                                 <div class="text-sm text-gray-500">
-                                    Need to leave early?
+                                    Unexpectedly leaving early?
                                 </div>
                                 <button type="submit" 
                                     @if($status['ip_blocked'] ?? false) disabled @endif
                                     onclick="return confirm('This will skip all remaining breaks and clock you out. Are you sure?')"
                                     class="px-4 py-2 {{ ($status['ip_blocked'] ?? false) ? 'bg-gray-400 cursor-not-allowed opacity-50' : 'bg-red-600 hover:bg-red-700' }} text-white rounded-lg font-medium transition">
-                                    🚪 Quick Time Out
+                                    🚪 Emergency / Early Leave
                                 </button>
                             </form>
                         </div>

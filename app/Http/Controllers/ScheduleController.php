@@ -4,7 +4,7 @@ namespace App\Http\Controllers;
 
 use App\Models\Account;
 use App\Models\Department;
-use App\Models\Schedule;
+use App\Models\Shift;
 use App\Models\PayrollGroup;
 use App\Models\Site;
 use App\Models\User;
@@ -57,7 +57,14 @@ class ScheduleController extends Controller
     public function edit($id)
     {
         $user = User::findOrFail($id);
-        $schedules = Schedule::all(); // These are the available shifts
+        // Only show shifts that belong to the user's department, eager load department
+        $schedules = Shift::with('department')->where('department_id', $user->department_id)->get();
+        
+        // If no shifts found for their department, show all as fallback
+        if ($schedules->isEmpty()) {
+            $schedules = Shift::with('department')->get();
+        }
+        
         return view('schedules.edit', compact('user', 'schedules'));
     }
 
@@ -77,10 +84,6 @@ class ScheduleController extends Controller
             $query->where('department_id', $request->department_id);
         }
 
-        if ($request->filled('payroll_group_id')) {
-            $query->where('payroll_group_id', $request->payroll_group_id);
-        }
-
         if ($request->filled('search')) {
             $search = $request->search;
             $query->where(function($q) use ($search) {
@@ -89,7 +92,7 @@ class ScheduleController extends Controller
             });
         }
 
-        $users = $query->with(['site', 'payrollGroup'])->orderBy('name')->get();
+        $users = $query->with(['site', 'assignedDepartment'])->orderBy('name')->get();
 
         if ($request->ajax()) {
             return response()->json($users->map(fn($u) => [
@@ -97,7 +100,7 @@ class ScheduleController extends Controller
                 'name' => $u->name,
                 'employee_id' => $u->employee_id,
                 'site_name' => $u->site->name ?? 'NO SITE',
-                'group_name' => $u->payrollGroup->name ?? 'NO GROUP'
+                'department_name' => $u->assignedDepartment->name ?? 'NO DEPT'
             ]));
         }
 
@@ -105,7 +108,7 @@ class ScheduleController extends Controller
         $departments = Department::all();
         $sites = Site::all();
         $payrollGroups = PayrollGroup::where('is_active', true)->get();
-        $schedules = Schedule::all(); // Shift templates
+        $schedules = Shift::with('department')->get(); // Shift templates
         
         return view('schedules.group-create', compact('users', 'accounts', 'departments', 'sites', 'payrollGroups', 'schedules'));
     }

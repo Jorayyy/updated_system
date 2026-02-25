@@ -44,17 +44,10 @@
                                             @endforeach
                                         </select>
 
-                                        <select name="account_id" id="accountFilter" class="w-full text-xs rounded border-gray-200">
-                                            <option value="">Filter by Account...</option>
-                                            @foreach($accounts as $acc)
-                                                <option value="{{ $acc->id }}">{{ $acc->name }}</option>
-                                            @endforeach
-                                        </select>
-                                        
-                                        <select name="payroll_group_id" id="groupFilter" class="w-full text-xs rounded border-gray-200">
-                                            <option value="">Filter by Group...</option>
-                                            @foreach($payrollGroups as $group)
-                                                <option value="{{ $group->id }}">{{ $group->name }}</option>
+                                        <select name="department_id" id="departmentFilter" class="w-full text-xs rounded border-gray-200">
+                                            <option value="">Filter by Department...</option>
+                                            @foreach($departments as $dept)
+                                                <option value="{{ $dept->id }}">{{ $dept->name }}</option>
                                             @endforeach
                                         </select>
                                     </div>
@@ -95,13 +88,17 @@
                                                 </button>
                                             </div>
                                             <div id="{{ $day }}_select_container">
-                                                <select name="{{ $day }}_schedule" id="{{ $day }}_select" class="w-full border-gray-200 rounded text-sm focus:ring-red-500 focus:border-red-500">
+                                                <select name="{{ $day }}_schedule" id="{{ $day }}_select" class="w-full border-gray-200 rounded text-sm focus:ring-red-500 focus:border-red-500 shift-selector">
                                                     <option value="Rest day">Rest day</option>
-                                                    @foreach($schedules as $shift)
-                                                        @php
-                                                            $shiftTime = \Carbon\Carbon::parse($shift->work_start_time)->format('H:i') . ' to ' . \Carbon\Carbon::parse($shift->work_end_time)->format('H:i');
-                                                        @endphp
-                                                        <option value="{{ $shiftTime }}">{{ $shiftTime }}</option>
+                                                    @foreach($schedules->groupBy(fn($s) => $s->department->name ?? 'GENERAL') as $deptName => $deptShifts)
+                                                        <optgroup label="{{ $deptName }}" data-dept-name="{{ $deptName }}">
+                                                            @foreach($deptShifts as $shift)
+                                                                @php
+                                                                    $shiftTime = \Carbon\Carbon::parse($shift->time_in)->format('H:i') . ' to ' . \Carbon\Carbon::parse($shift->time_out)->format('H:i');
+                                                                @endphp
+                                                                <option value="{{ $shiftTime }}">{{ $shiftTime }}</option>
+                                                            @endforeach
+                                                        </optgroup>
                                                     @endforeach
                                                 </select>
                                             </div>
@@ -163,11 +160,31 @@
         function fetchEmployees() {
             const search = document.getElementById('employeeSearch').value;
             const siteId = document.getElementById('siteFilter').value;
-            const accountId = document.getElementById('accountFilter').value;
-            const groupId = document.getElementById('groupFilter').value;
+            const departmentFilter = document.getElementById('departmentFilter');
+            const departmentId = departmentFilter.value;
+            const selectedDeptName = departmentFilter.options[departmentFilter.selectedIndex].text;
+
+            // Filter the shifts dropdowns based on the selected department
+            document.querySelectorAll('.shift-selector').forEach(select => {
+                const optgroups = select.querySelectorAll('optgroup');
+                let foundMatch = false;
+                
+                optgroups.forEach(og => {
+                    if (!departmentId || og.getAttribute('data-dept-name') === selectedDeptName) {
+                        og.classList.remove('hidden');
+                        // For Browsers that don't support hidden on optgroup, we might need a different approach
+                        // but Tailwind/Modern browsers handle it.
+                        og.style.display = '';
+                        foundMatch = true;
+                    } else {
+                        og.classList.add('hidden');
+                        og.style.display = 'none';
+                    }
+                });
+            });
 
             // Only fetch if at least one filter has a value (search or selects)
-            if (!search && !siteId && !accountId && !groupId) {
+            if (!search && !siteId && !departmentId) {
                 employeeListBody.innerHTML = '<tr><td colspan="2" class="p-8 text-center text-[10px] text-gray-400 italic uppercase">Please use the filters or search bar above to find employees.</td></tr>';
                 return;
             }
@@ -178,8 +195,7 @@
             const params = new URLSearchParams({
                 search: search,
                 site_id: siteId,
-                account_id: accountId,
-                payroll_group_id: groupId
+                department_id: departmentId
             });
 
             fetch(`{{ route('schedules.group-create') }}?${params.toString()}`, {
@@ -206,7 +222,7 @@
                             </td>
                             <td class="px-3 py-2">
                                 <div class="text-[11px] font-bold text-gray-800 uppercase">${user.name}</div>
-                                <div class="text-[10px] text-gray-500">${user.employee_id} | ${user.site_name} | ${user.group_name}</div>
+                                <div class="text-[10px] text-gray-500">${user.employee_id} | ${user.site_name} | ${user.department_name}</div>
                             </td>
                         </tr>
                     `;
@@ -223,8 +239,7 @@
 
         // Attach listeners
         document.getElementById('siteFilter').addEventListener('change', fetchEmployees);
-        document.getElementById('accountFilter').addEventListener('change', fetchEmployees);
-        document.getElementById('groupFilter').addEventListener('change', fetchEmployees);
+        document.getElementById('departmentFilter').addEventListener('change', fetchEmployees);
         
         // Debounce search
         let searchTimeout;

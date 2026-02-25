@@ -168,40 +168,50 @@ class Attendance extends Model
 
         $totalMinutes = $this->time_in->diffInMinutes($this->time_out);
         
-        // If the user has a schedule, use its break duration
-        $user = $this->user;
-        $breakMinutes = 0;
-        
-        if ($user && $user->account && $user->account->activeSchedule) {
-            $breakMinutes = $user->account->activeSchedule->break_duration_minutes;
-        } else {
-            // Fallback to manual breaks if no active schedule found
-            $breakMinutes = $this->calculateBreakMinutes();
-        }
+        $service = app(\App\Services\AttendanceService::class);
+        $schedule = $service->getScheduleForUser($this->user, $this->date);
+        $totalScheduledBreak = $schedule['break_minutes'] ?? 90;
 
-        return max(0, $totalMinutes - $breakMinutes);
+        // Actual total break captured (enforces minimums per break type)
+        $capturedBreak = $this->calculateBreakMinutes();
+        
+        // Subtract the larger of the two to ensure overbreaks are captured
+        // and minimum breaks are enforced even if punches are missing
+        $breakToSubtract = max($capturedBreak, $totalScheduledBreak);
+
+        return max(0, $totalMinutes - $breakToSubtract);
     }
 
     /**
      * Calculate total break minutes from sequential breaks
+     * Enforces the scheduled break as a minimum if actual is shorter
      */
     public function calculateBreakMinutes(): int
     {
         $totalBreak = 0;
+        
+        $service = app(\App\Services\AttendanceService::class);
+        $schedule = $service->getScheduleForUser($this->user, $this->date);
 
         // 1st Break
         if ($this->first_break_out && $this->first_break_in) {
-            $totalBreak += $this->first_break_out->diffInMinutes($this->first_break_in);
+            $actual = $this->first_break_out->diffInMinutes($this->first_break_in);
+            $scheduled = $schedule['first_break_minutes'] ?? 15;
+            $totalBreak += max($actual, $scheduled);
         }
 
         // Lunch Break
         if ($this->lunch_break_out && $this->lunch_break_in) {
-            $totalBreak += $this->lunch_break_out->diffInMinutes($this->lunch_break_in);
+            $actual = $this->lunch_break_out->diffInMinutes($this->lunch_break_in);
+            $scheduled = $schedule['lunch_break_minutes'] ?? 60;
+            $totalBreak += max($actual, $scheduled);
         }
 
         // 2nd Break
         if ($this->second_break_out && $this->second_break_in) {
-            $totalBreak += $this->second_break_out->diffInMinutes($this->second_break_in);
+            $actual = $this->second_break_out->diffInMinutes($this->second_break_in);
+            $scheduled = $schedule['second_break_minutes'] ?? 15;
+            $totalBreak += max($actual, $scheduled);
         }
 
         return $totalBreak;
@@ -296,6 +306,56 @@ class Attendance extends Model
     {
         if ($this->second_break_out && $this->second_break_in) {
             return $this->second_break_out->diffInMinutes($this->second_break_in);
+        }
+        return 0;
+    }
+
+    /**
+     * Calculate late minutes based on a given work start time
+     */
+    public function calculateLateMinutes(string $workStartTime, int $gracePeriod = 15): int
+    {
+        if (!$this->time_in) {
+            return 0;
+        }
+
+        $workStart = $this->time_in->copy()->setTimeFromTimeString($workStartTime);
+
+        // Night shift logic: If work starts e.g. at 21:00 and they clock in at 00:30,
+        // it means their shift started "yesterday".
+        if ($this->time_in->hour < 12 && Carbon::parse($workStartTime)->hour >= 12) {
+            $workStart->subDay();
+        }
+
+        $lateThreshold = $workStart->copy()->addMinutes($gracePeriod);
+
+        if ($this->time_in->gt($lateThreshold)) {
+            return (int) $workStart->diffInMinutes($this->time_in);
+        }
+
+        return 0;
+    }
+
+    /**
+     * Calculate overtime minutes
+     */
+    public function calculateOvertimeMinutes(int $standardWorkMinutes = 480): int
+    {
+        $actualWork = $this->calculateWorkMinutes();
+        if ($actualWork > $standardWorkMinutes) {
+            return $actualWork - $standardWorkMinutes;
+        }
+        return 0;
+    }
+
+    /**
+     * Calculate undertime minutes
+     */
+    public function calculateUndertimeMinutes(int $standardWorkMinutes = 480): int
+    {
+        $actualWork = $this->calculateWorkMinutes();
+        if ($actualWork < $standardWorkMinutes) {
+            return $standardWorkMinutes - $actualWork;
         }
         return 0;
     }
