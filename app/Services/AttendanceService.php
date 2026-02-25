@@ -474,7 +474,7 @@ class AttendanceService
     /**
      * Get the effective schedule for a user
      */
-    protected function getScheduleForUser(User $user, ?Carbon $date = null): array
+    public function getScheduleForUser(User $user, ?Carbon $date = null): array
     {
         $date = $date ?? now();
         $dayName = strtolower($date->format('l')); // e.g. "monday"
