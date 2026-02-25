@@ -162,8 +162,8 @@
                 <tr>
                     <td class="label">Employee ID:</td>
                     <td>{{ $user->employee_id }}</td>
-                    <td class="label">Department:</td>
-                    <td>{{ $user->department ?? '-' }}</td>
+                    <td class="label">Payroll Group:</td>
+                    <td>{{ $user->payrollGroup->name ?? '-' }}</td>
                 </tr>
                 <tr>
                     <td class="label">Name:</td>

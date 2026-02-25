@@ -2,7 +2,7 @@
 
 namespace App\Http\Controllers;
 
-use App\Models\Department;
+use App\Models\PayrollGroup;
 use App\Models\Shift;
 use Illuminate\Http\Request;
 
@@ -10,15 +10,16 @@ class ShiftController extends Controller
 {
     public function index()
     {
-        $departments = Department::with('shifts')->orderBy('name')->get();
-        return view('shifts.index', compact('departments'));
+        // Group shifts by Payroll Groups now instead of Departments
+        $groups = PayrollGroup::with('shifts')->orderBy('name')->get();
+        return view('shifts.index', compact('groups'));
     }
 
     public function create(Request $request)
     {
         $category = $request->query('category', 'Regular/Wholeday');
-        $departments = Department::orderBy('name')->get();
-        return view('shifts.create', compact('category', 'departments'));
+        $groups = PayrollGroup::orderBy('name')->get();
+        return view('shifts.create', compact('category', 'groups'));
     }
 
     private function convertTo24Hour($hour, $minute, $period)
@@ -35,8 +36,8 @@ class ShiftController extends Controller
     public function store(Request $request)
     {
         $request->validate([
-            'department_ids' => 'required|array',
-            'department_ids.*' => 'exists:departments,id',
+            'payroll_group_ids' => 'required|array',
+            'payroll_group_ids.*' => 'exists:payroll_groups,id',
             'category' => 'required|string',
             'time_in_hh' => 'required',
             'time_in_mm' => 'required',
@@ -54,9 +55,9 @@ class ShiftController extends Controller
         $time_in = $this->convertTo24Hour($request->time_in_hh, $request->time_in_mm, $request->time_in_p);
         $time_out = $this->convertTo24Hour($request->time_out_hh, $request->time_out_mm, $request->time_out_p);
 
-        foreach ($request->department_ids as $dept_id) {
+        foreach ($request->payroll_group_ids as $group_id) {
             Shift::create([
-                'department_id' => $dept_id,
+                'payroll_group_id' => $group_id,
                 'category' => $request->category,
                 'time_in' => $time_in,
                 'time_out' => $time_out,
@@ -73,14 +74,14 @@ class ShiftController extends Controller
 
     public function edit(Shift $shift)
     {
-        $departments = Department::orderBy('name')->get();
-        return view('shifts.edit', compact('shift', 'departments'));
+        $groups = PayrollGroup::orderBy('name')->get();
+        return view('shifts.edit', compact('shift', 'groups'));
     }
 
     public function update(Request $request, Shift $shift)
     {
         $request->validate([
-            'department_id' => 'required|exists:departments,id',
+            'payroll_group_id' => 'required|exists:payroll_groups,id',
             'category' => 'required|string',
             'time_in_hh' => 'required',
             'time_in_mm' => 'required',
@@ -99,7 +100,7 @@ class ShiftController extends Controller
         $time_out = $this->convertTo24Hour($request->time_out_hh, $request->time_out_mm, $request->time_out_p);
 
         $shift->update([
-            'department_id' => $request->department_id,
+            'payroll_group_id' => $request->payroll_group_id,
             'category' => $request->category,
             'time_in' => $time_in,
             'time_out' => $time_out,

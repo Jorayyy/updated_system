@@ -493,56 +493,62 @@ class AttendanceService
             'shift_name' => 'System Default'
         ];
 
-        // 1. Check for Department-based Shift (Primary Source)
-        if ($user->department_id) {
-            $shifts = \App\Models\Shift::where('department_id', $user->department_id)
-                ->get();
-
-            if ($shifts->count() > 0) {
-                // If there are multiple shifts, try to pick the one closest to the current time
-                $bestShift = $shifts->first();
-                $targetTime = $date->format('H:i');
-                
-                if ($shifts->count() > 1) {
-                    $minDiff = 9999;
-                    foreach ($shifts as $s) {
-                        $sTime = Carbon::parse($s->time_in);
-                        
-                        // We want to favor shifts that start BEFORE the clock-in time if the user is late
-                        // but also handle early clock-ins.
-                        // For a clock-in at 20:31, 20:00 (diff 31) should beat 21:00 (diff 29) 
-                        // because you are more likely late for the 20:00 shift than 29 mins early for the 21:00 one.
-                        $diff = Carbon::parse($targetTime)->diffInMinutes($sTime);
-                        
-                        // Favor shifts starting before or close to targetTime
-                        if ($sTime->gt(Carbon::parse($targetTime))) {
-                            $diff += 30; // Add a "penalty" to future shifts to favor the current/past one
-                        }
-                        
-                        $diff = abs($diff);
-                        if ($diff > 720) $diff = 1440 - $diff; 
-
-                        if ($diff < $minDiff) {
-                            $minDiff = $diff;
-                            $bestShift = $s;
-                        }
-                    }
-                }
-
-                return array_merge($defaultSchedule, [
-                    'work_start_time' => Carbon::parse($bestShift->time_in)->format('H:i'),
-                    'work_end_time' => Carbon::parse($bestShift->time_out)->format('H:i'),
-                    'standard_minutes' => $bestShift->registered_hours * 60,
-                    'lunch_break_minutes' => $bestShift->lunch_break_minutes ?? 60,
-                    'first_break_minutes' => $bestShift->first_break_minutes ?? 15,
-                    'second_break_minutes' => $bestShift->second_break_minutes ?? 15,
-                    'break_minutes' => ($bestShift->lunch_break_minutes ?? 60) + ($bestShift->first_break_minutes ?? 15) + ($bestShift->second_break_minutes ?? 15),
-                    'shift_name' => $bestShift->description ?: 'Dept Shift',
-                ]);
-            }
+        // 1. Check for Payroll Group or Department-based Shift (Primary Source)
+        $shifts = \App\Models\Shift::query();
+        
+        if ($user->payroll_group_id) {
+            $shifts->where('payroll_group_id', $user->payroll_group_id);
+        } elseif ($user->department_id) {
+            $shifts->where('department_id', $user->department_id);
+        } else {
+            // If neither is set, we skip shift lookup
+            $shifts->where('id', 0); // Force empty
         }
 
-        // 2. Check user-specific manual plotting (Fallback if no dept shift)
+        $shifts = $shifts->get();
+
+        if ($shifts->count() > 0) {
+            // If there are multiple shifts, try to pick the one closest to the current time
+            $bestShift = $shifts->first();
+            $targetTime = $date->format('H:i');
+            
+            if ($shifts->count() > 1) {
+                $minDiff = 9999;
+                foreach ($shifts as $s) {
+                    $sTime = Carbon::parse($s->time_in);
+                    
+                    // We want to favor shifts that start BEFORE the clock-in time if the user is late
+                    // but also handle early clock-ins.
+                    $diff = Carbon::parse($targetTime)->diffInMinutes($sTime);
+                    
+                    // Favor shifts starting before or close to targetTime
+                    if ($sTime->gt(Carbon::parse($targetTime))) {
+                        $diff += 30; // Add a "penalty" to future shifts to favor the current/past one
+                    }
+                    
+                    $diff = abs($diff);
+                    if ($diff > 720) $diff = 1440 - $diff; 
+
+                    if ($diff < $minDiff) {
+                        $minDiff = $diff;
+                        $bestShift = $s;
+                    }
+                }
+            }
+
+            return array_merge($defaultSchedule, [
+                'work_start_time' => Carbon::parse($bestShift->time_in)->format('H:i'),
+                'work_end_time' => Carbon::parse($bestShift->time_out)->format('H:i'),
+                'standard_minutes' => $bestShift->registered_hours * 60,
+                'lunch_break_minutes' => $bestShift->lunch_break_minutes ?? 60,
+                'first_break_minutes' => $bestShift->first_break_minutes ?? 15,
+                'second_break_minutes' => $bestShift->second_break_minutes ?? 15,
+                'break_minutes' => ($bestShift->lunch_break_minutes ?? 60) + ($bestShift->first_break_minutes ?? 15) + ($bestShift->second_break_minutes ?? 15),
+                'shift_name' => $bestShift->description ?: ($bestShift->payroll_group_id ? 'Group Shift' : 'Dept Shift'),
+            ]);
+        }
+
+        // 2. Check user-specific manual plotting (Fallback if no group/dept shift)
         if (!empty($user->{$scheduleField})) {
             if ($user->{$scheduleField} === 'Rest day' || $user->{$scheduleField} === 'OFF') {
                 return array_merge($defaultSchedule, ['is_rest_day' => true, 'shift_name' => 'Rest Day']);

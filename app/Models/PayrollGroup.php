@@ -26,4 +26,9 @@ class PayrollGroup extends Model
     {
         return $this->hasMany(PayrollPeriod::class);
     }
+
+    public function shifts(): HasMany
+    {
+        return $this->hasMany(Shift::class);
+    }
 }

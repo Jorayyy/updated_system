@@ -32,18 +32,18 @@
                     <input type="hidden" name="category" value="{{ $category }}">
 
                     <div class="grid grid-cols-1 md:grid-cols-3 gap-6 items-start">
-                        <label class="font-bold text-gray-700 uppercase tracking-tight text-sm pt-2">Classifications</label>
+                        <label class="font-bold text-gray-700 uppercase tracking-tight text-sm pt-2">Payroll Groups</label>
                         <div class="md:col-span-2">
                             <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-2">
-                                @foreach($departments as $dept)
+                                @foreach($groups as $group)
                                     <label class="inline-flex items-center space-x-3 cursor-pointer group">
-                                        <input type="checkbox" name="department_ids[]" value="{{ $dept->id }}" 
+                                        <input type="checkbox" name="payroll_group_ids[]" value="{{ $group->id }}" 
                                             class="w-5 h-5 text-blue-600 border-gray-300 rounded focus:ring-blue-500 transition-all duration-200">
-                                        <span class="text-xs font-black text-gray-700 uppercase tracking-widest group-hover:text-blue-600">{{ $dept->name }}</span>
+                                        <span class="text-xs font-black text-gray-700 uppercase tracking-widest group-hover:text-blue-600">{{ $group->name }}</span>
                                     </label>
                                 @endforeach
                             </div>
-                            <x-input-error :messages="$errors->get('department_ids')" class="mt-2" />
+                            <x-input-error :messages="$errors->get('payroll_group_ids')" class="mt-2" />
                         </div>
                     </div>
 

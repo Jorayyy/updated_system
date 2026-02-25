@@ -71,7 +71,7 @@
                     @endif
 
                     <div class="space-y-4">
-                        @foreach($departments as $dept)
+                        @foreach($groups as $group)
                             <div x-data="{ open: false }" class="border-t-4 border-green-600 shadow-md">
                                 <div @click="open = !open" class="cursor-pointer bg-gray-100/80 p-3 flex items-center hover:bg-gray-200 transition-colors border border-gray-200 rounded-sm">
                                     <div class="bg-red-600 rounded-full p-1 mr-4 shadow-sm flex items-center justify-center">
@@ -80,7 +80,7 @@
                                         </svg>
                                     </div>
                                     <span class="font-bold text-gray-700 uppercase tracking-widest text-sm">
-                                        Department: {{ $dept->name }}
+                                        Payroll Group: {{ $group->name }}
                                     </span>
                                 </div>
 
@@ -91,7 +91,7 @@
                                      class="p-4 bg-white">
                                      
                                      @php
-                                         $groupedShifts = $dept->shifts->groupBy('category');
+                                         $groupedShifts = $group->shifts->groupBy('category');
                                      @endphp
 
                                      @forelse($groupedShifts as $category => $shifts)
