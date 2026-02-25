@@ -28,6 +28,16 @@
                             </select>
                         </div>
                         <div>
+                            <select name="payroll_period_id" class="border-gray-300 rounded-md shadow-sm">
+                                <option value="">Custom Month/Year</option>
+                                @foreach($payrollPeriods as $period)
+                                    <option value="{{ $period->id }}" {{ $periodId == $period->id ? 'selected' : '' }}>
+                                        {{ $period->payrollGroup->group_name }} ({{ $period->start_date->format('M d') }} - {{ $period->end_date->format('M d, Y') }})
+                                    </option>
+                                @endforeach
+                            </select>
+                        </div>
+                        <div x-show="!$el.closest('form').payroll_period_id.value">
                             <select name="month" class="border-gray-300 rounded-md shadow-sm">
                                 @for($m = 1; $m <= 12; $m++)
                                     <option value="{{ $m }}" {{ $month == $m ? 'selected' : '' }}>
@@ -57,6 +67,7 @@
                         @csrf
                         <input type="hidden" name="month" value="{{ $month }}">
                         <input type="hidden" name="year" value="{{ $year }}">
+                        <input type="hidden" name="payroll_period_id" value="{{ $periodId }}">
                         <div class="flex items-center justify-between">
                             <div class="flex items-center gap-4">
                                 <label class="flex items-center">
@@ -79,7 +90,11 @@
             <div class="bg-white overflow-hidden shadow-sm sm:rounded-lg transition-colors duration-200">
                 <div class="p-6">
                     <h3 class="text-lg font-semibold mb-4 text-gray-900">
-                        DTR Summary - {{ date('F', mktime(0, 0, 0, $month, 1)) }} {{ $year }}
+                        @if(isset($startDate) && isset($endDate))
+                            DTR Summary - {{ $startDate->format('M d') }} - {{ $endDate->format('M d, Y') }}
+                        @else
+                            DTR Summary - {{ date('F', mktime(0, 0, 0, $month, 1)) }} {{ $year }}
+                        @endif
                     </h3>
                     <div class="overflow-x-auto">
                         <table class="min-w-full divide-y divide-gray-200">

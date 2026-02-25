@@ -113,16 +113,30 @@ class DTRController extends Controller
         
         $month = $request->get('month', now()->month);
         $year = $request->get('year', now()->year);
+        $periodId = $request->get('payroll_period_id');
 
-        $startDate = Carbon::create($year, $month, 1)->startOfMonth();
-        $endDate = $startDate->copy()->endOfMonth();
+        $startDate = null;
+        $endDate = null;
+
+        if ($periodId) {
+            $period = \App\Models\PayrollPeriod::find($periodId);
+            if ($period) {
+                $startDate = $period->start_date;
+                $endDate = $period->end_date;
+            }
+        }
+
+        if (!$startDate) {
+            $startDate = Carbon::create($year, $month, 1)->startOfMonth();
+            $endDate = $startDate->copy()->endOfMonth();
+        }
 
         $attendances = $this->attendanceService->getAttendanceForDTR($user, $startDate, $endDate);
         $summary = $this->calculateDTRSummary($attendances, $user, $startDate, $endDate);
 
-        $pdf = Pdf::loadView('dtr.pdf', compact('attendances', 'summary', 'month', 'year', 'user'));
+        $pdf = Pdf::loadView('dtr.pdf', compact('attendances', 'summary', 'month', 'year', 'user', 'startDate', 'endDate'));
         
-        $filename = "DTR_{$user->employee_id}_{$year}_{$month}.pdf";
+        $filename = "DTR_{$user->employee_id}_{$startDate->format('Y-m-d')}.pdf";
         
         return $pdf->download($filename);
     }
@@ -136,9 +150,23 @@ class DTRController extends Controller
         $year = $request->get('year', now()->year);
         $employeeFilter = $request->get('employee');
         $departmentFilter = $request->get('department');
+        $periodId = $request->get('payroll_period_id');
 
-        $startDate = Carbon::create($year, $month, 1)->startOfMonth();
-        $endDate = $startDate->copy()->endOfMonth();
+        $startDate = null;
+        $endDate = null;
+
+        if ($periodId) {
+            $period = \App\Models\PayrollPeriod::find($periodId);
+            if ($period) {
+                $startDate = $period->start_date;
+                $endDate = $period->end_date;
+            }
+        }
+
+        if (!$startDate) {
+            $startDate = Carbon::create($year, $month, 1)->startOfMonth();
+            $endDate = $startDate->copy()->endOfMonth();
+        }
 
         $query = User::where('is_active', true)
             ->where('role', 'employee');
@@ -161,6 +189,12 @@ class DTRController extends Controller
             ->pluck('department')
             ->filter();
 
+        // Get available payroll periods for filter
+        $payrollPeriods = \App\Models\PayrollPeriod::with('payrollGroup')
+            ->orderBy('start_date', 'desc')
+            ->take(20)
+            ->get();
+
         // Build DTR data for each employee
         $dtrData = [];
         $filteredEmployees = $query->orderBy('name')->get();
@@ -181,7 +215,11 @@ class DTRController extends Controller
             'departments',
             'dtrData',
             'month',
-            'year'
+            'year',
+            'payrollPeriods',
+            'periodId',
+            'startDate',
+            'endDate'
         ));
     }
 
@@ -190,16 +228,76 @@ class DTRController extends Controller
      */
     public function show(Request $request, User $user)
     {
-        $month = $request->get('month', now()->month);
-        $year = $request->get('year', now()->year);
+        // 1. Get available payroll periods for the selection dropdown
+        $payrollPeriodsQuery = \App\Models\PayrollPeriod::with('payrollGroup')->orderBy('start_date', 'desc');
+        
+        if ($user->payroll_group_id) {
+            $payrollPeriodsQuery->where('payroll_group_id', $user->payroll_group_id);
+        }
+        
+        $payrollPeriods = $payrollPeriodsQuery->take(20)->get();
 
-        $startDate = Carbon::create($year, $month, 1)->startOfMonth();
-        $endDate = $startDate->copy()->endOfMonth();
+        // 2. Determine the date range to display
+        $periodId = $request->get('payroll_period_id');
+        $month = $request->get('month');
+        $year = $request->get('year');
+        
+        $startDate = null;
+        $endDate = null;
+
+        // Priority 1: Specifically selected Period
+        if ($periodId) {
+            $period = \App\Models\PayrollPeriod::find($periodId);
+            if ($period) {
+                $startDate = $period->start_date;
+                $endDate = $period->end_date;
+            }
+        }
+
+        // Priority 2: Active Period for THIS user (Default if no selection)
+        if (!$startDate && !$month) {
+            $activePeriod = \App\Models\PayrollPeriod::where('status', '!=', 'completed')
+                ->whereDate('start_date', '<=', now())
+                ->whereDate('end_date', '>=', now()->subDays(10))
+                ->when($user->payroll_group_id, function($q) use ($user) {
+                    $q->where('payroll_group_id', $user->payroll_group_id);
+                })
+                ->orderBy('start_date', 'desc')
+                ->first();
+
+            if ($activePeriod) {
+                $startDate = $activePeriod->start_date;
+                $endDate = $activePeriod->end_date;
+                $periodId = $activePeriod->id;
+            }
+        }
+
+        // Priority 3: Manual Month/Year Selection
+        if (!$startDate && $month && $year) {
+            $startDate = Carbon::create($year, $month, 1)->startOfMonth();
+            $endDate = $startDate->copy()->endOfMonth();
+        }
+
+        // Final Fallback: Last 15 Days
+        if (!$startDate) {
+            if (now()->day <= 15) {
+                $startDate = now()->startOfMonth();
+                $endDate = $startDate->copy()->addDays(14);
+            } else {
+                $startDate = now()->startOfMonth()->addDays(15);
+                $endDate = now()->endOfMonth();
+            }
+            $month = $startDate->month;
+            $year = $startDate->year;
+        } else {
+            $month = $startDate->month;
+            $year = $startDate->year;
+        }
 
         $attendances = $this->attendanceService->getAttendanceForDTR($user, $startDate, $endDate);
         $summary = $this->calculateDTRSummary($attendances, $user, $startDate, $endDate);
 
-        return view('dtr.index', compact('attendances', 'summary', 'month', 'year', 'user'));
+        return view('dtr.index', compact('attendances', 'summary', 'month', 'year', 'user', 'payrollPeriods', 'periodId', 'startDate', 'endDate'));
     }
 
     /**
@@ -209,16 +307,30 @@ class DTRController extends Controller
     {
         $month = $request->get('month', now()->month);
         $year = $request->get('year', now()->year);
+        $periodId = $request->get('payroll_period_id');
 
-        $startDate = Carbon::create($year, $month, 1)->startOfMonth();
-        $endDate = $startDate->copy()->endOfMonth();
+        $startDate = null;
+        $endDate = null;
+
+        if ($periodId) {
+            $period = \App\Models\PayrollPeriod::find($periodId);
+            if ($period) {
+                $startDate = $period->start_date;
+                $endDate = $period->end_date;
+            }
+        }
+
+        if (!$startDate) {
+            $startDate = Carbon::create($year, $month, 1)->startOfMonth();
+            $endDate = $startDate->copy()->endOfMonth();
+        }
 
         $attendances = $this->attendanceService->getAttendanceForDTR($user, $startDate, $endDate);
         $summary = $this->calculateDTRSummary($attendances, $user, $startDate, $endDate);
 
-        $pdf = Pdf::loadView('dtr.pdf', compact('attendances', 'summary', 'month', 'year', 'user'));
+        $pdf = Pdf::loadView('dtr.pdf', compact('attendances', 'summary', 'month', 'year', 'user', 'startDate', 'endDate'));
         
-        $filename = "DTR_{$user->employee_id}_{$year}_{$month}.pdf";
+        $filename = "DTR_{$user->employee_id}_{$startDate->format('Y-m-d')}.pdf";
         
         return $pdf->download($filename);
     }
@@ -231,14 +343,29 @@ class DTRController extends Controller
         $request->validate([
             'employees' => 'required|array|min:1',
             'employees.*' => 'exists:users,id',
-            'month' => 'required|integer|between:1,12',
-            'year' => 'required|integer|min:2020',
+            'month' => 'nullable|integer|between:1,12',
+            'year' => 'nullable|integer|min:2020',
+            'payroll_period_id' => 'nullable|exists:payroll_periods,id'
         ]);
 
         $employees = User::whereIn('id', $request->employees)->get();
+        $periodId = $request->get('payroll_period_id');
 
-        $startDate = Carbon::create($request->year, $request->month, 1)->startOfMonth();
-        $endDate = $startDate->copy()->endOfMonth();
+        $startDate = null;
+        $endDate = null;
+
+        if ($periodId) {
+            $period = \App\Models\PayrollPeriod::find($periodId);
+            if ($period) {
+                $startDate = $period->start_date;
+                $endDate = $period->end_date;
+            }
+        }
+
+        if (!$startDate) {
+            $startDate = Carbon::create($request->year ?? now()->year, $request->month ?? now()->month, 1)->startOfMonth();
+            $endDate = $startDate->copy()->endOfMonth();
+        }
 
         $dtrs = [];
         foreach ($employees as $employee) {
@@ -252,12 +379,12 @@ class DTRController extends Controller
             ];
         }
 
-        $month = $request->month;
-        $year = $request->year;
+        $month = $startDate->month;
+        $year = $startDate->year;
 
-        $pdf = Pdf::loadView('dtr.bulk-pdf', compact('dtrs', 'month', 'year'));
+        $pdf = Pdf::loadView('dtr.bulk-pdf', compact('dtrs', 'month', 'year', 'startDate', 'endDate'));
         
-        $filename = "DTR_All_Employees_{$year}_{$month}.pdf";
+        $filename = "DTR_Bulk_{$startDate->format('Y-m-d')}.pdf";
         
         return $pdf->download($filename);
     }

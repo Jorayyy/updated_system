@@ -154,7 +154,13 @@
             <div class="company-name">MEBS Call Center</div>
             <div>Tacloban City, Leyte, Philippines</div>
             <div class="document-title">DAILY TIME RECORD</div>
-            <div class="period">For the month of {{ date('F Y', mktime(0, 0, 0, $month, 1, $year)) }}</div>
+            <div class="period">
+                @if(isset($startDate) && isset($endDate))
+                    For the period {{ $startDate->format('M d') }} - {{ $endDate->format('M d, Y') }}
+                @else
+                    For the month of {{ date('F Y', mktime(0, 0, 0, $month, 1, $year)) }}
+                @endif
+            </div>
         </div>
 
         <div class="employee-info">
@@ -190,11 +196,13 @@
             </thead>
             <tbody>
                 @php
-                    $startDate = \Carbon\Carbon::create($year, $month, 1);
-                    $endDate = $startDate->copy()->endOfMonth();
-                    $attendanceByDate = $attendances->keyBy(fn($a) => $a->date->format('Y-m-d'));
+                    $loopStart = $startDate ?? \Carbon\Carbon::create($year, $month, 1);
+                    $loopEnd = $endDate ?? $loopStart->copy()->endOfMonth();
+                    $attendanceByDate = $attendances->keyBy(fn($a) => 
+                        ($a->date instanceof \Carbon\Carbon) ? $a->date->format('Y-m-d') : \Carbon\Carbon::parse($a->date)->format('Y-m-d')
+                    );
                 @endphp
-                @for($date = $startDate->copy(); $date <= $endDate; $date->addDay())
+                @for($date = $loopStart->copy(); $date <= $loopEnd; $date->addDay())
                     @php
                         $attendance = $attendanceByDate->get($date->format('Y-m-d'));
                         $isWeekend = $date->isWeekend();
