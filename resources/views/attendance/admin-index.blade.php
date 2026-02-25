@@ -116,7 +116,22 @@
                                             @if($attendance->time_out)
                                                 {{ $attendance->time_out->format('h:i A') }}
                                             @else
-                                                <span class="text-yellow-600">Working</span>
+                                                @php
+                                                    $stepLabels = [
+                                                        'time_in' => ['label' => 'Active', 'color' => 'text-green-600'],
+                                                        'first_break_out' => ['label' => '1st Break', 'color' => 'text-yellow-600'],
+                                                        'first_break_in' => ['label' => 'Active', 'color' => 'text-green-600'],
+                                                        'lunch_break_out' => ['label' => 'On Lunch', 'color' => 'text-orange-600'],
+                                                        'lunch_break_in' => ['label' => 'Active', 'color' => 'text-green-600'],
+                                                        'second_break_out' => ['label' => '2nd Break', 'color' => 'text-cyan-600'],
+                                                        'second_break_in' => ['label' => 'Active', 'color' => 'text-green-600'],
+                                                    ];
+                                                    $current = $stepLabels[$attendance->current_step] ?? ['label' => 'Working', 'color' => 'text-yellow-600'];
+                                                @endphp
+                                                <span class="{{ $current['color'] }} font-semibold italic flex items-center justify-center">
+                                                    <span class="w-1.5 h-1.5 rounded-full bg-current mr-1.5 animate-pulse"></span>
+                                                    {{ $current['label'] }}
+                                                </span>
                                             @endif
                                         </td>
                                         <td class="px-4 py-4 whitespace-nowrap text-sm text-center">
@@ -175,14 +190,21 @@
                                             @endif
                                         </td>
                                         <td class="px-4 py-4 whitespace-nowrap text-center">
-                                            <span class="px-2 py-1 text-xs rounded-full 
-                                                @if($attendance->status == 'present') bg-green-100 text-green-800
-                                                @elseif($attendance->status == 'late') bg-yellow-100 text-yellow-800
-                                                @elseif($attendance->status == 'absent') bg-red-100 text-red-800
-                                                @elseif($attendance->status == 'on_leave') bg-blue-100 text-blue-800
-                                                @else bg-gray-100 text-gray-800 @endif">
-                                                {{ ucfirst(str_replace('_', ' ', $attendance->status)) }}
-                                            </span>
+                                            <div class="flex flex-col items-center">
+                                                <span class="px-2 py-1 text-xs font-bold rounded-full shadow-sm
+                                                    @if($attendance->status == 'present') bg-green-100 text-green-800
+                                                    @elseif($attendance->status == 'late') bg-red-100 text-red-800
+                                                    @elseif($attendance->status == 'absent') bg-red-100 text-red-800
+                                                    @elseif($attendance->status == 'on_leave') bg-blue-100 text-blue-800
+                                                    @else bg-gray-100 text-gray-800 @endif">
+                                                    {{ ucfirst(str_replace('_', ' ', $attendance->status)) }}
+                                                </span>
+                                                @if($attendance->status == 'late' && $attendance->late_minutes > 0)
+                                                    <span class="text-[10px] text-red-600 font-bold mt-1 uppercase tracking-tighter">
+                                                        {{ $attendance->late_minutes }}m LATE
+                                                    </span>
+                                                @endif
+                                            </div>
                                         </td>
                                         <td class="px-4 py-4 whitespace-nowrap text-center">
                                             <a href="{{ route('attendance.show', $attendance) }}" 
