@@ -115,7 +115,7 @@
                                                             $sched = $service->getScheduleForUser($attendance->user, $attendance->time_in);
                                                             $workStart = $attendance->time_in->copy()->setTimeFromTimeString($sched['work_start_time']);
                                                             
-                                                            if ($attendance->time_in->hour < 12 && Carbon::parse($sched['work_start_time'])->hour >= 12) {
+                                                            if ($attendance->time_in->hour < 12 && \Carbon\Carbon::parse($sched['work_start_time'])->hour >= 12) {
                                                                 $workStart->subDay();
                                                             }
                                                             
@@ -223,7 +223,7 @@
                                                     $service = app(\App\Services\AttendanceService::class);
                                                     $sched = $service->getScheduleForUser($attendance->user, $attendance->time_in);
                                                     $workStart = $attendance->time_in->copy()->setTimeFromTimeString($sched['work_start_time']);
-                                                    if ($attendance->time_in->hour < 12 && Carbon::parse($sched['work_start_time'])->hour >= 12) {
+                                                    if ($attendance->time_in->hour < 12 && \Carbon\Carbon::parse($sched['work_start_time'])->hour >= 12) {
                                                         $workStart->subDay();
                                                     }
                                                     $lateMinBadge = (int) $workStart->diffInMinutes($attendance->time_in);
