@@ -50,24 +50,6 @@
                                 </span>
                             @endif
                         @endif
-                        
-                        <!-- Fallback Selection by Month (if they want historical data) -->
-                        <div class="flex items-center gap-1 bg-slate-50 px-2 py-1 rounded border border-slate-100">
-                            <label class="text-[9px] text-slate-400 uppercase mr-1">Or Month:</label>
-                            <select name="month" class="bg-white border-0 text-[11px] h-8 p-1 rounded focus:ring-0">
-                                @for($mo = 1; $mo <= 12; $mo++)
-                                    <option value="{{ $mo }}" {{ $month == $mo && !$periodId ? 'selected' : '' }}>
-                                        {{ date('F', mktime(0, 0, 0, $mo, 1)) }}
-                                    </option>
-                                @endfor
-                            </select>
-                            <select name="year" class="bg-white border-0 text-[11px] h-8 p-1 rounded focus:ring-0">
-                                @for($y = date('Y'); $y >= date('Y') - 5; $y--)
-                                    <option value="{{ $y }}" {{ $year == $y && !$periodId ? 'selected' : '' }}>{{ $y }}</option>
-                                @endfor
-                            </select>
-                            <button type="submit" class="bg-slate-700 text-white px-3 py-1.5 rounded text-[10px] font-bold">Go</button>
-                        </div>
                     </div>
                 </form>
                 <div class="flex gap-2">
