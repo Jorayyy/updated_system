@@ -289,6 +289,11 @@ class User extends Authenticatable
         return $this->belongsTo(Site::class);
     }
 
+    public function department_rel()
+    {
+        return $this->belongsTo(Department::class, 'department_id');
+    }
+
     /**
      * Get the account that the user belongs to.
      */

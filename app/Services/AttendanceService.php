@@ -571,20 +571,18 @@ class AttendanceService
             }
         }
 
-        return $defaultSchedule;
-    }
-
-        // 3. Check for Account-level active schedule
+        // 3. Check for legacy account-level active schedule (Lowest priority)
         if ($user->account_id) {
-            $schedule = Schedule::where('account_id', $user->account_id)
+            $scheduleModel = \App\Models\Schedule::where('account_id', $user->account_id)
                 ->where('is_active', true)
                 ->first();
 
-            if ($schedule) {
+            if ($scheduleModel) {
                 return array_merge($defaultSchedule, [
-                    'work_start_time' => $schedule->work_start_time,
-                    'work_end_time' => $schedule->work_end_time,
-                    'break_minutes' => $schedule->break_duration_minutes ?? 60,
+                    'work_start_time' => $scheduleModel->work_start_time,
+                    'work_end_time' => $scheduleModel->work_end_time,
+                    'break_minutes' => $scheduleModel->break_duration_minutes ?? 60,
+                    'shift_name' => 'Account Schedule'
                 ]);
             }
         }
