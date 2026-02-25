@@ -568,7 +568,10 @@ class AttendanceService
         return $defaultSchedule;
     }
 
-    protected function determineStatus(Carbon $timeIn, User $user): array
+    /**
+     * Determine attendance status based on time in
+     */
+    public function determineStatus(Carbon $timeIn, User $user): array
     {
         $schedule = $this->getScheduleForUser($user, $timeIn);
         $workStartTime = $schedule['work_start_time'];

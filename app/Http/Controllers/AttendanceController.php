@@ -350,6 +350,19 @@ class AttendanceController extends Controller
         }
 
         $attendance->update($updateData);
+
+        // Recalculate Late Minutes and sync status if it was changed
+        if ($attendance->time_in) {
+            $statusResult = $this->attendanceService->determineStatus($attendance->time_in, $attendance->user);
+            $attendance->late_minutes = $statusResult['late_minutes'];
+            
+            // If the user hasn't explicitly changed the status in the form to something DIFFERENT 
+            // than the previous state, we can automatically update the status to match the calculation.
+            // This prevents the "sticky" Late status when correcting Time In.
+            if ($request->status == $attendance->getOriginal('status')) {
+                $attendance->status = $statusResult['status'];
+            }
+        }
         
         // Recalculate totals using model methods (handles schedule breaks)
         // If the user manually provided work minutes in the request, prioritize that
