@@ -84,7 +84,40 @@ class DtrService
             'is_rest_day' => false,
         ];
 
-        // 1. Check user-specific daily schedule (Manual entry from plotting tool)
+        // 1. Check for Department-based Shift (Primary Source per user request)
+        if ($user->department_id) {
+            $shifts = \App\Models\Shift::where('department_id', $user->department_id)
+                ->where('category', 'Regular/Wholeday')
+                ->get();
+
+            if ($shifts->count() > 0) {
+                $bestShift = $shifts->first();
+                $targetTime = $date->format('H:i');
+                
+                if ($shifts->count() > 1) {
+                    $minDiff = 9999;
+                    foreach ($shifts as $s) {
+                        $sTime = Carbon::parse($s->time_in);
+                        $diff = abs(Carbon::parse($targetTime)->diffInMinutes($sTime));
+                        if ($diff > 720) $diff = 1440 - $diff; 
+
+                        if ($diff < $minDiff) {
+                            $minDiff = $diff;
+                            $bestShift = $s;
+                        }
+                    }
+                }
+
+                return array_merge($defaultSchedule, [
+                    'work_start_time' => Carbon::parse($bestShift->time_in)->format('H:i'),
+                    'work_end_time' => Carbon::parse($bestShift->time_out)->format('H:i'),
+                    'work_minutes' => $bestShift->registered_hours * 60,
+                    'break_minutes' => ($bestShift->lunch_break_minutes ?? 60) + ($bestShift->first_break_minutes ?? 15) + ($bestShift->second_break_minutes ?? 15),
+                ]);
+            }
+        }
+
+        // 2. Check user-specific daily schedule (Fallback if no dept shift)
         if (!empty($user->{$scheduleField})) {
             if (in_array($user->{$scheduleField}, ['Rest day', 'OFF', 'Off'])) {
                 return array_merge($defaultSchedule, ['is_rest_day' => true, 'work_minutes' => 0]);
@@ -128,22 +161,6 @@ class DtrService
                 } catch (\Exception $e) {
                     // Fail gracefully to next check
                 }
-            }
-        }
-
-        // 2. Check for Shift from Shift Table (Department-based)
-        if ($user->department_id) {
-            $shift = \App\Models\Shift::where('department_id', $user->department_id)
-                ->where('category', 'Regular/Wholeday') // Default to regular
-                ->first();
-
-            if ($shift) {
-                return array_merge($defaultSchedule, [
-                    'work_start_time' => Carbon::parse($shift->time_in)->format('H:i'),
-                    'work_end_time' => Carbon::parse($shift->time_out)->format('H:i'),
-                    'work_minutes' => $shift->registered_hours * 60,
-                    'break_minutes' => ($shift->lunch_break_minutes ?? 0) + ($shift->first_break_minutes ?? 0) + ($shift->second_break_minutes ?? 0),
-                ]);
             }
         }
 

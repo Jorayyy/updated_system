@@ -118,7 +118,7 @@
                                                         @foreach($shifts as $shift)
                                                             <tr class="hover:bg-yellow-50 transition-colors">
                                                                 <td class="px-4 py-4 text-sm text-gray-700 font-medium">
-                                                                    {{ \Carbon\Carbon::parse($shift->time_in)->format('H:i') }} to {{ \Carbon\Carbon::parse($shift->time_out)->format('H:i') }}
+                                                                    {{ \Carbon\Carbon::parse($shift->time_in)->format('h:i A') }} to {{ \Carbon\Carbon::parse($shift->time_out)->format('h:i A') }}
                                                                 </td>
                                                                 <td class="px-4 py-4 text-sm text-gray-600">
                                                                     <div class="flex flex-col space-y-1">

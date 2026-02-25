@@ -482,20 +482,61 @@ class AttendanceService
         
         // Final fallback structure
         $defaultSchedule = [
-            'work_start_time' => CompanySetting::getValue('work_start_time', '21:00'),
-            'work_end_time' => CompanySetting::getValue('work_end_time', '07:00'),
+            'work_start_time' => CompanySetting::getValue('work_start_time', '08:00'),
+            'work_end_time' => CompanySetting::getValue('work_end_time', '17:00'),
             'standard_minutes' => 480,
             'lunch_break_minutes' => 60,
             'first_break_minutes' => 15,
             'second_break_minutes' => 15,
             'break_minutes' => 90,
             'is_rest_day' => false,
+            'shift_name' => 'System Default'
         ];
 
-        // 1. Check user-specific daily schedule
+        // 1. Check for Department-based Shift (Primary Source)
+        if ($user->department_id) {
+            $shifts = \App\Models\Shift::where('department_id', $user->department_id)
+                ->where('category', 'Regular/Wholeday')
+                ->get();
+
+            if ($shifts->count() > 0) {
+                // If there are multiple shifts, try to pick the one closest to the current time
+                $bestShift = $shifts->first();
+                $targetTime = $date->format('H:i');
+                
+                if ($shifts->count() > 1) {
+                    $minDiff = 9999;
+                    foreach ($shifts as $s) {
+                        $sTime = Carbon::parse($s->time_in);
+                        // Calculate difference in minutes from current target
+                        $diff = abs(Carbon::parse($targetTime)->diffInMinutes($sTime));
+                        // Since we deal with night shifts, we check wrapping too
+                        if ($diff > 720) $diff = 1440 - $diff; 
+
+                        if ($diff < $minDiff) {
+                            $minDiff = $diff;
+                            $bestShift = $s;
+                        }
+                    }
+                }
+
+                return array_merge($defaultSchedule, [
+                    'work_start_time' => Carbon::parse($bestShift->time_in)->format('H:i'),
+                    'work_end_time' => Carbon::parse($bestShift->time_out)->format('H:i'),
+                    'standard_minutes' => $bestShift->registered_hours * 60,
+                    'lunch_break_minutes' => $bestShift->lunch_break_minutes ?? 60,
+                    'first_break_minutes' => $bestShift->first_break_minutes ?? 15,
+                    'second_break_minutes' => $bestShift->second_break_minutes ?? 15,
+                    'break_minutes' => ($bestShift->lunch_break_minutes ?? 60) + ($bestShift->first_break_minutes ?? 15) + ($bestShift->second_break_minutes ?? 15),
+                    'shift_name' => $bestShift->description ?: 'Dept Shift',
+                ]);
+            }
+        }
+
+        // 2. Check user-specific manual plotting (Fallback if no dept shift)
         if (!empty($user->{$scheduleField})) {
             if ($user->{$scheduleField} === 'Rest day' || $user->{$scheduleField} === 'OFF') {
-                return array_merge($defaultSchedule, ['is_rest_day' => true]);
+                return array_merge($defaultSchedule, ['is_rest_day' => true, 'shift_name' => 'Rest Day']);
             }
 
             // Support both "H:i to H:i" and "h:i A - h:i A"
@@ -506,12 +547,10 @@ class AttendanceService
                     $startStr = trim($parts[0]);
                     $endStr = trim($parts[1]);
                     
-                    // Try parsing as H:i first (what we save from dropdowns now)
                     try {
                         $startTime = Carbon::parse($startStr)->format('H:i');
                         $endTime = Carbon::parse($endStr)->format('H:i');
                     } catch (\Exception $e) {
-                        // Fallback to specific format if needed
                         try {
                             $startTime = Carbon::createFromFormat('h:i A', $startStr)->format('H:i');
                             $endTime = Carbon::createFromFormat('h:i A', $endStr)->format('H:i');
@@ -524,31 +563,16 @@ class AttendanceService
                     return array_merge($defaultSchedule, [
                         'work_start_time' => $startTime,
                         'work_end_time' => $endTime,
+                        'shift_name' => 'Manual Plotting'
                     ]);
                 } catch (\Exception $e) {
-                    // Fail gracefully to next check
+                    // Fail gracefully
                 }
             }
         }
 
-        // 2. Check for Shift from Shift Table (Department-based)
-        if ($user->department_id) {
-            $shift = \App\Models\Shift::where('department_id', $user->department_id)
-                ->where('category', 'Regular/Wholeday') // Default to regular
-                ->first();
-
-            if ($shift) {
-                return array_merge($defaultSchedule, [
-                    'work_start_time' => Carbon::parse($shift->time_in)->format('H:i'),
-                    'work_end_time' => Carbon::parse($shift->time_out)->format('H:i'),
-                    'standard_minutes' => $shift->registered_hours * 60,
-                    'lunch_break_minutes' => $shift->lunch_break_minutes ?? 60,
-                    'first_break_minutes' => $shift->first_break_minutes ?? 15,
-                    'second_break_minutes' => $shift->second_break_minutes ?? 15,
-                    'break_minutes' => ($shift->lunch_break_minutes ?? 60) + ($shift->first_break_minutes ?? 15) + ($shift->second_break_minutes ?? 15),
-                ]);
-            }
-        }
+        return $defaultSchedule;
+    }
 
         // 3. Check for Account-level active schedule
         if ($user->account_id) {
