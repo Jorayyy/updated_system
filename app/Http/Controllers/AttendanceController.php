@@ -50,7 +50,8 @@ class AttendanceController extends Controller
      */
     public function processStep(Request $request)
     {
-        $result = $this->attendanceService->processStep(auth()->user());
+        $step = $request->get('step');
+        $result = $this->attendanceService->processStep(auth()->user(), $step);
 
         return redirect()->back()->with(
             $result['success'] ? 'success' : 'error',

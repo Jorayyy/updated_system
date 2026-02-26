@@ -60,173 +60,115 @@
                         </div>
                     </div>
 
-                    <!-- Sequential Steps UI -->
-                    <div class="space-y-3">
-                        @foreach($status['steps'] as $stepKey => $step)
-                            <div class="flex items-center justify-between p-3 rounded-lg border-2 transition-all
-                                @if($step['is_completed'])
-                                    @switch($step['color'])
-                                        @case('blue')
-                                            bg-blue-50 border-blue-300
-                                            @break
-                                        @case('yellow')
-                                            bg-yellow-50 border-yellow-300
-                                            @break
-                                        @case('green')
-                                            bg-green-50 border-green-300
-                                            @break
-                                        @case('orange')
-                                            bg-orange-50 border-orange-300
-                                            @break
-                                        @case('pink')
-                                            bg-pink-50 border-pink-300
-                                            @break
-                                        @case('cyan')
-                                            bg-cyan-50 border-cyan-300
-                                            @break
-                                        @case('lime')
-                                            bg-lime-50 border-lime-300
-                                            @break
-                                        @case('red')
-                                            bg-red-50 border-red-300
-                                            @break
-                                        @default
-                                            bg-gray-50 border-gray-300
-                                    @endswitch
-                                @elseif($step['is_next'])
-                                    bg-white border-indigo-400 shadow-md
-                                @else
-                                    bg-gray-50 border-gray-200 opacity-60
-                                @endif
-                            ">
-                                <div class="flex items-center gap-3">
-                                    <!-- Step indicator -->
-                                    <div class="w-10 h-10 rounded-full flex items-center justify-center text-sm font-bold
-                                        @if($step['is_completed'])
-                                            @switch($step['color'])
-                                                @case('blue')
-                                                    bg-blue-500 text-white
-                                                    @break
-                                                @case('yellow')
-                                                    bg-yellow-500 text-white
-                                                    @break
-                                                @case('green')
-                                                    bg-green-500 text-white
-                                                    @break
-                                                @case('orange')
-                                                    bg-orange-500 text-white
-                                                    @break
-                                                @case('pink')
-                                                    bg-pink-500 text-white
-                                                    @break
-                                                @case('cyan')
-                                                    bg-cyan-500 text-white
-                                                    @break
-                                                @case('lime')
-                                                    bg-lime-500 text-white
-                                                    @break
-                                                @case('red')
-                                                    bg-red-500 text-white
-                                                    @break
-                                                @default
-                                                    bg-gray-500 text-white
-                                            @endswitch
-                                        @elseif($step['is_next'])
-                                            bg-indigo-500 text-white animate-pulse
-                                        @else
-                                            bg-gray-200 text-gray-500
-                                        @endif
-                                    ">
-                                        @if($step['is_completed'])
-                                            <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"/>
-                                            </svg>
-                                        @else
-                                            <span>○</span>
-                                        @endif
-                                    </div>
-                                    
-                                    <!-- Step label -->
-                                    <div>
-                                        <div class="font-semibold text-gray-900">{{ $step['label'] }}</div>
-                                        @if($step['time'])
-                                            <div class="text-sm text-gray-500">{{ $step['time'] }}</div>
-                                        @endif
-                                    </div>
-                                </div>
-
-                                <!-- Action button for next step -->
-                                @if($step['is_next'])
-                                    @if($status['ip_blocked'] ?? false)
-                                        <button type="button" disabled class="px-4 py-2 bg-gray-400 text-white rounded-lg font-medium cursor-not-allowed opacity-50" title="IP Restricted">
-                                            {{ $step['action'] }}
-                                        </button>
+                    <!-- Punch Selection UI (Radio Button List) -->
+                    <form action="{{ route('attendance.step') }}" method="POST">
+                        @csrf
+                        <div class="space-y-1 mb-8 overflow-hidden rounded-xl border border-gray-100 shadow-sm">
+                            @foreach($status['steps'] as $stepKey => $step)
+                                <label class="flex items-center justify-between p-3 transition-all cursor-pointer hover:bg-slate-50 border-b border-gray-100 last:border-0
+                                    @if($step['is_completed'])
+                                        bg-gray-50/50 opacity-60
+                                    @elseif($step['is_next'])
+                                        bg-white ring-1 ring-inset ring-blue-100
                                     @else
-                                        <form action="{{ route('attendance.step') }}" method="POST">
-                                            @csrf
-                                            <button type="submit" class="px-4 py-2 bg-indigo-600 hover:bg-indigo-700 text-white rounded-lg font-medium transition">
-                                                {{ $step['action'] }}
-                                            </button>
-                                        </form>
+                                        bg-white
                                     @endif
-                                @elseif($step['is_completed'])
-                                    <span class="text-sm font-medium 
-                                        @switch($step['color'])
-                                            @case('blue')
-                                                text-blue-600
-                                                @break
-                                            @case('yellow')
-                                                text-yellow-600
-                                                @break
-                                            @case('green')
-                                                text-green-600
-                                                @break
-                                            @case('orange')
-                                                text-orange-600
-                                                @break
-                                            @case('pink')
-                                                text-pink-600
-                                                @break
-                                            @case('cyan')
-                                                text-cyan-600
-                                                @break
-                                            @case('lime')
-                                                text-lime-600
-                                                @break
-                                            @case('red')
-                                                text-red-600
-                                                @break
-                                            @default
-                                                text-gray-600
-                                        @endswitch
-                                    ">✓ Done</span>
-                                @endif
-                            </div>
-                        @endforeach
-                    </div>
+                                " style="background-color: 
+                                    @if($stepKey == 'time_in' || $stepKey == 'time_out')
+                                        #ebf5ff
+                                    @elseif(str_contains($stepKey, 'first_break'))
+                                        #fffcf0
+                                    @elseif(str_contains($stepKey, 'lunch_break'))
+                                        #fff5f5
+                                    @elseif(str_contains($stepKey, 'second_break'))
+                                        #f0fff4
+                                    @endif
+                                    !important;">
+                                    <div class="flex items-center gap-4">
+                                        {{-- Row Background Highlight based on image --}}
+                                        <div class="w-24 px-3 py-1.5 text-center rounded text-[11px] font-black uppercase tracking-widest text-slate-700
+                                            @if($stepKey == 'time_in' || $stepKey == 'time_out')
+                                                bg-blue-500 text-white
+                                            @elseif(str_contains($stepKey, 'first_break'))
+                                                bg-yellow-100
+                                            @elseif(str_contains($stepKey, 'lunch_break'))
+                                                bg-pink-100
+                                            @elseif(str_contains($stepKey, 'second_break'))
+                                                bg-green-100
+                                            @endif
+                                        ">
+                                            {{ $step['label'] }}
+                                        </div>
+                                        
+                                        @if($step['time'])
+                                            <div class="text-xs font-bold text-blue-600 flex items-center bg-blue-50 px-2 py-0.5 rounded border border-blue-100">
+                                                <svg class="w-3 h-3 mr-1" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z" stroke-width="2.5"/></svg>
+                                                Punched: {{ $step['time'] }}
+                                            </div>
+                                        @endif
+                                    </div>
 
-                    <!-- Emergency / Early Leave Button (skip all remaining steps) -->
-                    @if($status['status'] === 'working' || $status['status'] === 'on_break')
-                        <div class="mt-6 pt-6 border-t border-gray-200">
-                            <form action="{{ route('attendance.time-out') }}" method="POST" class="flex items-center justify-between">
+                                    @if(!$step['is_completed'])
+                                        <div class="flex items-center gap-2">
+                                            @if($step['is_next'])
+                                                <span class="text-[10px] font-bold text-blue-500 animate-pulse uppercase tracking-wider">Suggested</span>
+                                            @endif
+                                            <input type="radio" name="step" value="{{ $stepKey }}" 
+                                                class="w-6 h-6 text-indigo-600 border-gray-300 focus:ring-indigo-500 ring-offset-2"
+                                                {{ $step['is_next'] ? 'checked' : '' }}>
+                                        </div>
+                                    @else
+                                        <div class="text-emerald-500 pr-1">
+                                            <svg class="w-6 h-6" fill="currentColor" viewBox="0 0 20 20"><path fill-rule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zm3.707-9.293a1 1 0 00-1.414-1.414L9 10.586 7.707 9.293a1 1 0 00-1.414 1.414l2 2a1 1 0 001.414 0l4-4z" clip-rule="evenodd"/></svg>
+                                        </div>
+                                    @endif
+                                </label>
+                            @endforeach
+                        </div>
+
+                        <!-- Big PUNCH Button -->
+                        @if($status['ip_blocked'] ?? false)
+                            <div class="p-6 bg-red-50 rounded-2xl border border-red-100 flex items-center justify-center gap-2 text-red-600 font-black uppercase text-center italic tracking-widest shadow-inner">
+                                <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="3" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z"/></svg>
+                                Network Restrictions Active
+                            </div>
+                        @elseif($status['status'] === 'completed')
+                            <div class="p-6 bg-blue-50 rounded-2xl border border-blue-100 text-center font-black uppercase text-blue-600 tracking-widest">
+                                Your Attendance is already completed for today.
+                            </div>
+                        @else
+                            <button type="submit" class="w-full py-5 bg-[#e74c3c] hover:bg-[#c0392b] text-white rounded-xl font-black text-2xl uppercase tracking-widest shadow-xl shadow-red-500/30 transition-all active:scale-95 flex items-center justify-center group overflow-hidden relative">
+                                <div class="absolute inset-0 bg-white/10 translate-y-full group-hover:translate-y-0 transition-transform duration-300"></div>
+                                <span class="relative z-10 flex items-center gap-3">
+                                    <svg class="w-6 h-6 group-hover:animate-bounce" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="3" d="M15 13l-3 3m0 0l-3-3m3 3V8m0 13a9 9 0 110-18 9 9 0 010 18z"/></svg>
+                                    PUNCH
+                                </span>
+                            </button>
+                        @endif
+                    </form>
+                    
+                    @if($status['attendance'])
+                        <div class="mt-8 flex justify-end">
+                            <form action="{{ route('attendance.time-out') }}" method="POST" onsubmit="return confirm('WARNING: This will immediately clock you out and complete your day even if you missed lunch or breaks. Continue?')">
                                 @csrf
-                                <div class="text-sm text-gray-500">
-                                    Unexpectedly leaving early?
-                                </div>
-                                <button type="submit" 
-                                    @if($status['ip_blocked'] ?? false) disabled @endif
-                                    onclick="return confirm('This will skip all remaining breaks and clock you out. Are you sure?')"
-                                    class="px-4 py-2 {{ ($status['ip_blocked'] ?? false) ? 'bg-gray-400 cursor-not-allowed opacity-50' : 'bg-red-600 hover:bg-red-700' }} text-white rounded-lg font-medium transition">
-                                    🚪 Emergency / Early Leave
+                                <input type="hidden" name="reason" value="Immediate Dismissal">
+                                <button type="submit" class="text-xs font-bold text-red-500 hover:text-red-700 underline uppercase tracking-tighter">
+                                    Force Immediate Checkout
                                 </button>
                             </form>
                         </div>
                     @endif
+                </div>
+            </div>
 
-                    <!-- Summary (when completed) -->
-                    @if($status['status'] === 'completed' && $status['attendance'])
-                        <div class="mt-6 pt-6 border-t border-gray-200">
-                            <h4 class="font-semibold text-gray-900 mb-4">Today's Summary</h4>
+            <!-- Today's Summary (when completed) -->
+            @if($status['status'] === 'completed' && $status['attendance'])
+                <div class="bg-white overflow-hidden shadow-sm sm:rounded-lg mb-6 border-t-4 border-blue-500">
+                    <div class="p-6">
+                        <h4 class="font-black text-gray-900 mb-6 uppercase tracking-widest text-sm flex items-center">
+                            <svg class="w-5 h-5 mr-2 text-blue-500" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2a2 2 0 002-2zm0 0V9a2 2 0 012-2h2a2 2 0 012 2v10m-6 0a2 2 0 002 2h2a2 2 0 002-2m0 0V5a2 2 0 012-2h2a2 2 0 012 2v14a2 2 0 01-2 2h-2a2 2 0 01-2-2z"/></svg>
+                            Clock In Summary
+                        </h4>
                             <div class="grid grid-cols-2 md:grid-cols-4 gap-4">
                                 <div class="bg-gray-50 p-3 rounded-lg">
                                     <div class="text-xs text-gray-500 uppercase">Work Time</div>
@@ -258,9 +200,8 @@
                                 @endif
                             </div>
                         </div>
-                    @endif
-                </div>
-            </div>
+                    </div>
+            @endif
 
             <!-- This Week's Attendance -->
             <div class="bg-white overflow-hidden shadow-sm sm:rounded-lg">

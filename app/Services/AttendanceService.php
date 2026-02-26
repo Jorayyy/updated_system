@@ -39,9 +39,9 @@ class AttendanceService
     }
 
     /**
-     * Process attendance action (sequential step)
+     * Process attendance action (sequential step or specific selection)
      */
-    public function processStep(User $user): array
+    public function processStep(User $user, ?string $requestedStep = null): array
     {
         // Check IP restriction
         $ipCheck = $this->checkIpRestriction();
@@ -55,17 +55,48 @@ class AttendanceService
         // Get or create attendance for the current active shift
         $attendance = $this->getCurrentAttendance($user);
         
-        // If no attendance record, create one and do time in
+        // If a specific step is requested, allow manual selection (non-sequential)
+        if ($requestedStep) {
+            // Validate step exists in system constants
+            if (!isset(Attendance::STEPS[$requestedStep])) {
+                return [
+                    'success' => false,
+                    'message' => "Invalid selection '{$requestedStep}'.",
+                ];
+            }
+
+            // If no attendance record exists, we must create one first (equivalent to Time In)
+            if (!$attendance) {
+                if ($requestedStep === 'time_in') {
+                    return $this->timeIn($user);
+                } else {
+                    // Start the day with an automatic Time In if they skipped directly to a later step (like lunch)
+                    $timeInResult = $this->timeIn($user);
+                    if (!$timeInResult['success']) {
+                        return $timeInResult;
+                    }
+                    $attendance = $timeInResult['attendance'];
+                }
+            }
+
+            // Prevent re-punching the same step if it's already filled
+            if ($attendance->{$requestedStep} !== null) {
+                return [
+                    'success' => false,
+                    'message' => 'This step has already been recorded.',
+                ];
+            }
+
+            return $this->executeStep($attendance, $requestedStep, $user);
+        }
+
+        // Fallback to auto-sequential logic if no specific step was selected
         if (!$attendance) {
             return $this->timeIn($user);
         }
         
         // If already completed, return error
         if ($attendance->isCompleted()) {
-            // If it's the next day and we completed yesterday's shift, we might want to start a new one
-            // But usually the user wants to see "Already completed" if they just finished.
-            // If we are here, getCurrentAttendance returned a COMPLETED record which means 
-            // no incomplete records were found for today or recently.
             return [
                 'success' => false,
                 'message' => 'You have already completed your attendance for today.',
@@ -73,8 +104,6 @@ class AttendanceService
         }
         
         $schedule = $this->getScheduleForUser($user, $attendance->date);
-        
-        // Get next step and execute it
         $nextStep = $attendance->getNextStep($schedule);
         
         if (!$nextStep) {
