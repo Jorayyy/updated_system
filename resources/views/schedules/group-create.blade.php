@@ -44,10 +44,10 @@
                                             @endforeach
                                         </select>
 
-                                        <select name="department_id" id="departmentFilter" class="w-full text-xs rounded border-gray-200">
-                                            <option value="">Filter by Department...</option>
-                                            @foreach($departments as $dept)
-                                                <option value="{{ $dept->id }}">{{ $dept->name }}</option>
+                                        <select name="payroll_group_id" id="groupFilter" class="w-full text-xs rounded border-gray-200">
+                                            <option value="">Filter by Payroll Group...</option>
+                                            @foreach($payrollGroups as $group)
+                                                <option value="{{ $group->id }}">{{ $group->name }}</option>
                                             @endforeach
                                         </select>
                                     </div>
@@ -90,9 +90,9 @@
                                             <div id="{{ $day }}_select_container">
                                                 <select name="{{ $day }}_schedule" id="{{ $day }}_select" class="w-full border-gray-200 rounded text-sm focus:ring-red-500 focus:border-red-500 shift-selector">
                                                     <option value="Rest day">Rest day</option>
-                                                    @foreach($schedules->groupBy(fn($s) => $s->department->name ?? 'GENERAL') as $deptName => $deptShifts)
-                                                        <optgroup label="{{ $deptName }}" data-dept-name="{{ $deptName }}">
-                                                            @foreach($deptShifts as $shift)
+                                                    @foreach($schedules->groupBy(fn($s) => $s->payrollGroup->name ?? 'GENERAL') as $groupName => $groupShifts)
+                                                        <optgroup label="{{ $groupName }}" data-group-name="{{ $groupName }}">
+                                                            @foreach($groupShifts as $shift)
                                                                 @php
                                                                     $shiftTime = \Carbon\Carbon::parse($shift->time_in)->format('H:i') . ' to ' . \Carbon\Carbon::parse($shift->time_out)->format('H:i');
                                                                 @endphp
@@ -160,31 +160,25 @@
         function fetchEmployees() {
             const search = document.getElementById('employeeSearch').value;
             const siteId = document.getElementById('siteFilter').value;
-            const departmentFilter = document.getElementById('departmentFilter');
-            const departmentId = departmentFilter.value;
-            const selectedDeptName = departmentFilter.options[departmentFilter.selectedIndex].text;
+            const groupFilter = document.getElementById('groupFilter');
+            const groupId = groupFilter.value;
+            const selectedGroupName = groupFilter.options[groupFilter.selectedIndex].text;
 
-            // Filter the shifts dropdowns based on the selected department
+            // Filter the shifts dropdowns based on the selected group
             document.querySelectorAll('.shift-selector').forEach(select => {
                 const optgroups = select.querySelectorAll('optgroup');
-                let foundMatch = false;
                 
                 optgroups.forEach(og => {
-                    if (!departmentId || og.getAttribute('data-dept-name') === selectedDeptName) {
-                        og.classList.remove('hidden');
-                        // For Browsers that don't support hidden on optgroup, we might need a different approach
-                        // but Tailwind/Modern browsers handle it.
+                    if (!groupId || og.getAttribute('data-group-name') === selectedGroupName) {
                         og.style.display = '';
-                        foundMatch = true;
                     } else {
-                        og.classList.add('hidden');
                         og.style.display = 'none';
                     }
                 });
             });
 
             // Only fetch if at least one filter has a value (search or selects)
-            if (!search && !siteId && !departmentId) {
+            if (!search && !siteId && !groupId) {
                 employeeListBody.innerHTML = '<tr><td colspan="2" class="p-8 text-center text-[10px] text-gray-400 italic uppercase">Please use the filters or search bar above to find employees.</td></tr>';
                 return;
             }
@@ -195,7 +189,7 @@
             const params = new URLSearchParams({
                 search: search,
                 site_id: siteId,
-                department_id: departmentId
+                payroll_group_id: groupId
             });
 
             fetch(`{{ route('schedules.group-create') }}?${params.toString()}`, {
@@ -222,7 +216,7 @@
                             </td>
                             <td class="px-3 py-2">
                                 <div class="text-[11px] font-bold text-gray-800 uppercase">${user.name}</div>
-                                <div class="text-[10px] text-gray-500">${user.employee_id} | ${user.site_name} | ${user.department_name}</div>
+                                <div class="text-[10px] text-gray-500">${user.employee_id} | ${user.site_name} | ${user.group_name}</div>
                             </td>
                         </tr>
                     `;
@@ -239,7 +233,7 @@
 
         // Attach listeners
         document.getElementById('siteFilter').addEventListener('change', fetchEmployees);
-        document.getElementById('departmentFilter').addEventListener('change', fetchEmployees);
+        document.getElementById('groupFilter').addEventListener('change', fetchEmployees);
         
         // Debounce search
         let searchTimeout;

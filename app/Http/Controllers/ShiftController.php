@@ -47,7 +47,9 @@ class ShiftController extends Controller
             'time_out_p' => 'required|in:AM,PM',
             'lunch_break_minutes' => 'required|integer',
             'first_break_minutes' => 'required|integer',
+            'has_first_break' => 'boolean',
             'second_break_minutes' => 'required|integer',
+            'has_second_break' => 'boolean',
             'registered_hours' => 'required|numeric',
             'description' => 'nullable|string',
         ]);
@@ -63,7 +65,9 @@ class ShiftController extends Controller
                 'time_out' => $time_out,
                 'lunch_break_minutes' => $request->lunch_break_minutes,
                 'first_break_minutes' => $request->first_break_minutes,
+                'has_first_break' => $request->has('has_first_break'),
                 'second_break_minutes' => $request->second_break_minutes,
+                'has_second_break' => $request->has('has_second_break'),
                 'registered_hours' => $request->registered_hours,
                 'description' => $request->description,
             ]);
@@ -91,7 +95,9 @@ class ShiftController extends Controller
             'time_out_p' => 'required|in:AM,PM',
             'lunch_break_minutes' => 'required|integer',
             'first_break_minutes' => 'required|integer',
+            'has_first_break' => 'boolean',
             'second_break_minutes' => 'required|integer',
+            'has_second_break' => 'boolean',
             'registered_hours' => 'required|numeric',
             'description' => 'nullable|string',
         ]);
@@ -106,7 +112,9 @@ class ShiftController extends Controller
             'time_out' => $time_out,
             'lunch_break_minutes' => $request->lunch_break_minutes,
             'first_break_minutes' => $request->first_break_minutes,
+            'has_first_break' => $request->has('has_first_break'),
             'second_break_minutes' => $request->second_break_minutes,
+            'has_second_break' => $request->has('has_second_break'),
             'registered_hours' => $request->registered_hours,
             'description' => $request->description,
         ]);

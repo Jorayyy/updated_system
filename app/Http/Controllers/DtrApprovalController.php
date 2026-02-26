@@ -4,9 +4,11 @@ namespace App\Http\Controllers;
 
 use App\Models\DailyTimeRecord;
 use App\Models\PayrollPeriod;
+use App\Models\PayrollGroup;
 use App\Models\User;
 use App\Services\DtrApprovalService;
 use App\Services\DtrService;
+use Carbon\Carbon;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Log;
@@ -571,5 +573,45 @@ class DtrApprovalController extends Controller
             'approved_count' => $dtrs->where('status', 'approved')->count(),
             'pending_count' => $dtrs->whereIn('status', ['pending', 'draft'])->count(),
         ]);
+    }
+
+    /**
+     * Advance weekly period in advance (Monday to Sunday)
+     */
+    public function advanceWeek(PayrollGroup $group)
+    {
+        $lastPeriod = PayrollPeriod::where('payroll_group_id', $group->id)
+            ->where('period_type', 'weekly')
+            ->orderBy('end_date', 'desc')
+            ->first();
+
+        $startDate = $lastPeriod 
+            ? Carbon::parse($lastPeriod->end_date)->addDay()->startOfDay()
+            : Carbon::now()->startOfWeek(Carbon::MONDAY);
+            
+        $endDate = (clone $startDate)->endOfWeek(Carbon::SUNDAY);
+
+        // Check if this week already exists
+        $exists = PayrollPeriod::where('payroll_group_id', $group->id)
+            ->whereDate('start_date', $startDate)
+            ->exists();
+
+        if ($exists) {
+            return back()->with('error', 'The next weekly period already exists for this group.');
+        }
+
+        PayrollPeriod::create([
+            'payroll_group_id' => $group->id,
+            'period_type' => 'weekly',
+            'start_date' => $startDate,
+            'end_date' => $endDate,
+            'pay_date' => (clone $endDate)->addDays(5), // Default pay date 5 days after end
+            'cover_month' => $startDate->format('F'),
+            'cover_year' => $startDate->year,
+            'status' => 'draft',
+            'cut_off_label' => 'Weekly Period: ' . $startDate->format('M d') . ' - ' . $endDate->format('M d, Y')
+        ]);
+
+        return back()->with('success', 'Next weekly period added in advance.');
     }
 }

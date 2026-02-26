@@ -72,8 +72,10 @@ class AttendanceService
             ];
         }
         
+        $schedule = $this->getScheduleForUser($user, $attendance->date);
+        
         // Get next step and execute it
-        $nextStep = $attendance->getNextStep();
+        $nextStep = $attendance->getNextStep($schedule);
         
         if (!$nextStep) {
             return [
@@ -414,6 +416,7 @@ class AttendanceService
         $ipCheck = $this->checkIpRestriction();
 
         if (!$attendance) {
+            $schedule = $this->getScheduleForUser($user, now());
             return [
                 'status' => 'not_started',
                 'can_proceed' => $ipCheck['allowed'],
@@ -422,14 +425,15 @@ class AttendanceService
                 'next_action' => 'Clock In',
                 'next_step' => 'time_in',
                 'attendance' => null,
-                'steps' => $this->getEmptySteps($ipCheck['allowed']),
+                'steps' => $this->getEmptySteps($schedule, $ipCheck['allowed']),
                 'current_break' => null,
             ];
         }
 
+        $schedule = $this->getScheduleForUser($user, $attendance->date);
         $isOnBreak = $attendance->isOnBreak();
         $isCompleted = $attendance->isCompleted();
-        $nextStepInfo = $attendance->getNextStepInfo();
+        $nextStepInfo = $attendance->getNextStepInfo($schedule);
 
         return [
             'status' => $this->getStatusLabel($attendance, $isOnBreak),
@@ -437,9 +441,9 @@ class AttendanceService
             'ip_blocked' => !$ipCheck['allowed'],
             'ip_message' => !$ipCheck['allowed'] ? $ipCheck['message'] : null,
             'next_action' => ($nextStepInfo && $ipCheck['allowed']) ? $nextStepInfo['action'] : null,
-            'next_step' => $attendance->getNextStep(),
+            'next_step' => $attendance->getNextStep($schedule),
             'attendance' => $attendance,
-            'steps' => $attendance->getStepsStatus($ipCheck['allowed']),
+            'steps' => $attendance->getStepsStatus($schedule, $ipCheck['allowed']),
             'current_break' => null, // Legacy support
         ];
     }
@@ -447,12 +451,20 @@ class AttendanceService
     /**
      * Get empty steps for when no attendance record exists
      */
-    protected function getEmptySteps(bool $canProceed = true): array
+    protected function getEmptySteps(array $schedule, bool $canProceed = true): array
     {
         $steps = [];
         $isFirst = true;
         
         foreach (Attendance::STEPS as $step => $info) {
+            // Check if break should be skipped
+            if ($step === 'first_break_out' || $step === 'first_break_in') {
+                if (!($schedule['has_first_break'] ?? true)) continue;
+            }
+            if ($step === 'second_break_out' || $step === 'second_break_in') {
+                if (!($schedule['has_second_break'] ?? true)) continue;
+            }
+
             $steps[$step] = [
                 'label' => $info['label'],
                 'color' => $info['color'],
@@ -462,7 +474,10 @@ class AttendanceService
                 'is_current' => false,
                 'is_next' => $isFirst && $canProceed,
             ];
-            $isFirst = false;
+            
+            if ($isFirst && $canProceed) {
+                $isFirst = false;
+            }
         }
         
         return $steps;
@@ -487,7 +502,9 @@ class AttendanceService
             'standard_minutes' => 480,
             'lunch_break_minutes' => 60,
             'first_break_minutes' => 15,
+            'has_first_break' => true,
             'second_break_minutes' => 15,
+            'has_second_break' => true,
             'break_minutes' => 90,
             'is_rest_day' => false,
             'shift_name' => 'System Default'
@@ -542,7 +559,9 @@ class AttendanceService
                 'standard_minutes' => $bestShift->registered_hours * 60,
                 'lunch_break_minutes' => $bestShift->lunch_break_minutes ?? 60,
                 'first_break_minutes' => $bestShift->first_break_minutes ?? 15,
+                'has_first_break' => (bool) ($bestShift->has_first_break ?? true),
                 'second_break_minutes' => $bestShift->second_break_minutes ?? 15,
+                'has_second_break' => (bool) ($bestShift->has_second_break ?? true),
                 'break_minutes' => ($bestShift->lunch_break_minutes ?? 60) + ($bestShift->first_break_minutes ?? 15) + ($bestShift->second_break_minutes ?? 15),
                 'shift_name' => $bestShift->description ?: ($bestShift->payroll_group_id ? 'Group Shift' : 'Dept Shift'),
             ]);

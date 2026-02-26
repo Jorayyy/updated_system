@@ -15,7 +15,9 @@ class Shift extends Model
         'time_out',
         'lunch_break_minutes',
         'first_break_minutes',
+        'has_first_break',
         'second_break_minutes',
+        'has_second_break',
         'registered_hours',
         'description',
     ];

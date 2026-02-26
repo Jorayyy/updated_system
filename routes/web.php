@@ -241,6 +241,7 @@ Route::middleware('auth')->group(function () {
             Route::post('/bulk-approve-corrections', [DtrApprovalController::class, 'bulkApproveCorrections'])->name('bulk-approve-corrections');
             Route::post('/period/{payrollPeriod}/approve-all', [DtrApprovalController::class, 'approveAllForPeriod'])->name('approve-all-period');
             Route::post('/generate', [DtrApprovalController::class, 'generateDtrs'])->name('generate');
+            Route::post('/advance-week/{group}', [DtrApprovalController::class, 'advanceWeek'])->name('advance-week');
         });
 
         // Payroll Management

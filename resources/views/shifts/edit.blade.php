@@ -112,23 +112,31 @@
 
                     <div class="grid grid-cols-1 md:grid-cols-3 gap-6 items-center">
                         <label class="font-bold text-gray-700 uppercase tracking-tight text-sm">1st Break</label>
-                        <div class="md:col-span-2">
+                        <div class="md:col-span-2 flex items-center space-x-4">
                             <select name="first_break_minutes" class="w-full border-gray-300 rounded-md shadow-sm focus:border-green-500 focus:ring-green-500 text-sm">
                                 @foreach([0, 15, 30] as $m)
                                     <option value="{{ $m }}" {{ $shift->first_break_minutes == $m ? 'selected' : '' }}>{{ $m }}</option>
                                 @endforeach
                             </select>
+                            <div class="flex items-center">
+                                <input type="checkbox" name="has_first_break" id="has_first_break" value="1" {{ $shift->has_first_break ? 'checked' : '' }} class="rounded border-gray-300 text-green-600 shadow-sm focus:border-green-300 focus:ring focus:ring-green-200 focus:ring-opacity-50">
+                                <label for="has_first_break" class="ml-2 text-xs text-gray-600 font-bold uppercase">Enabled</label>
+                            </div>
                         </div>
                     </div>
 
                     <div class="grid grid-cols-1 md:grid-cols-3 gap-6 items-center">
                         <label class="font-bold text-gray-700 uppercase tracking-tight text-sm">2nd Break</label>
-                        <div class="md:col-span-2">
+                        <div class="md:col-span-2 flex items-center space-x-4">
                             <select name="second_break_minutes" class="w-full border-gray-300 rounded-md shadow-sm focus:border-green-500 focus:ring-green-500 text-sm">
                                 @foreach([0, 15, 30] as $m)
                                     <option value="{{ $m }}" {{ $shift->second_break_minutes == $m ? 'selected' : '' }}>{{ $m }}</option>
                                 @endforeach
                             </select>
+                            <div class="flex items-center">
+                                <input type="checkbox" name="has_second_break" id="has_second_break" value="1" {{ $shift->has_second_break ? 'checked' : '' }} class="rounded border-gray-300 text-green-600 shadow-sm focus:border-green-300 focus:ring focus:ring-green-200 focus:ring-opacity-50">
+                                <label for="has_second_break" class="ml-2 text-xs text-gray-600 font-bold uppercase">Enabled</label>
+                            </div>
                         </div>
                     </div>
 

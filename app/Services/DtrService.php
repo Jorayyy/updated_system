@@ -84,7 +84,40 @@ class DtrService
             'is_rest_day' => false,
         ];
 
-        // 1. Check for Department-based Shift (Primary Source per user request)
+        // 1. Check for Payroll Group-based Shift (Primary Source per user request)
+        if ($user->payroll_group_id) {
+            $shifts = \App\Models\Shift::where('payroll_group_id', $user->payroll_group_id)
+                ->where('category', 'Regular/Wholeday')
+                ->get();
+
+            if ($shifts->count() > 0) {
+                $bestShift = $shifts->first();
+                $targetTime = $date->format('H:i');
+                
+                if ($shifts->count() > 1) {
+                    $minDiff = 9999;
+                    foreach ($shifts as $s) {
+                        $sTime = Carbon::parse($s->time_in);
+                        $diff = abs(Carbon::parse($targetTime)->diffInMinutes($sTime));
+                        if ($diff > 720) $diff = 1440 - $diff; 
+
+                        if ($diff < $minDiff) {
+                            $minDiff = $diff;
+                            $bestShift = $s;
+                        }
+                    }
+                }
+
+                return array_merge($defaultSchedule, [
+                    'work_start_time' => Carbon::parse($bestShift->time_in)->format('H:i'),
+                    'work_end_time' => Carbon::parse($bestShift->time_out)->format('H:i'),
+                    'work_minutes' => $bestShift->registered_hours * 60,
+                    'break_minutes' => ($bestShift->lunch_break_minutes ?? 60) + ($bestShift->first_break_minutes ?? 15) + ($bestShift->second_break_minutes ?? 15),
+                ]);
+            }
+        }
+        
+        // 1.2 Check for Department-based Shift (Legacy Fallback)
         if ($user->department_id) {
             $shifts = \App\Models\Shift::where('department_id', $user->department_id)
                 ->where('category', 'Regular/Wholeday')
@@ -207,11 +240,8 @@ class DtrService
             'errors' => [],
         ];
 
-        // Get employees based on scope
-        // User Request: Only the employee account of an admin/staff can have DTR.
-        // System/Admin accounts should not have DTR records generated.
-        $query = User::where('is_active', true)
-            ->where('role', 'employee');
+        // Get active users.
+        $query = User::where('is_active', true);
 
         // If specific user IDs are provided, use them
         if (!empty($userIds)) {
@@ -224,10 +254,13 @@ class DtrService
                     if ($period->payroll_group_id) {
                         $query->where('payroll_group_id', $period->payroll_group_id);
                     } else {
-                        // Global period: Only users NOT in any group
-                        $query->whereNull('payroll_group_id');
+                        // Global period: Only users NOT in any group and are employees
+                        $query->whereNull('payroll_group_id')->where('role', 'employee');
                     }
                 }
+            } else {
+                // Fallback: Default to employees only for global/untargeted runs
+                $query->where('role', 'employee');
             }
         }
 
@@ -646,12 +679,6 @@ class DtrService
             $currentDate = $period->start_date->copy();
             
             while ($currentDate->lte($period->end_date)) {
-                // RULE: If period is Weekly, strict weekdays only (Mon-Fri)
-                if ($period->period_type === 'weekly' && $currentDate->isWeekend()) {
-                    $currentDate->addDay();
-                    continue;
-                }
-
                 // Process incomplete attendance first
                 $this->processIncompleteAttendance($currentDate);
                 

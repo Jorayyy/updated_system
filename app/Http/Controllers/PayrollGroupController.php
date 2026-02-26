@@ -58,7 +58,10 @@ class PayrollGroupController extends Controller
         }]);
         
         $availableUsers = User::where('role', 'employee')
-            ->whereNull('payroll_group_id')
+            ->where(function($q) use ($payrollGroup) {
+                $q->whereNull('payroll_group_id')
+                  ->orWhere('payroll_group_id', '!=', $payrollGroup->id);
+            })
             ->orderByRaw('COALESCE(last_name, name)')
             ->get();
 

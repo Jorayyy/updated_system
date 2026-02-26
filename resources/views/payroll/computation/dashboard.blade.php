@@ -3,11 +3,11 @@
         <div class="flex justify-between items-center">
             <div class="flex items-center gap-4">
                 <h2 class="font-black text-2xl text-slate-800 uppercase tracking-tighter">
-                    Payroll <span class="text-indigo-600">Command Center</span>
+                    Payroll <span class="text-indigo-600">Dashboard</span>
                 </h2>
             </div>
             <div class="flex items-center gap-3">
-                <span class="text-[10px] font-black uppercase tracking-widest text-slate-400">MEBS HIYAS v2.0</span>
+                <span class="text-[10px] font-black uppercase tracking-widest text-slate-400">Payroll System v2.0</span>
             </div>
         </div>
     </x-slot>

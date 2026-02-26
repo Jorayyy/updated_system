@@ -3,14 +3,14 @@
         <div class="flex flex-col md:flex-row justify-between items-start md:items-center gap-4">
             <div>
                 <h2 class="font-black text-2xl text-slate-900 leading-tight tracking-tight uppercase">
-                    Structural <span class="text-blue-600">Sectors</span>
+                    Company <span class="text-blue-600">Departments</span>
                 </h2>
-                <p class="text-xs font-bold text-slate-500 uppercase tracking-widest mt-1">Organizational Hierarchy & Departmental Mapping</p>
+                <p class="text-xs font-bold text-slate-500 uppercase tracking-widest mt-1">Manage and Organize Company Departments</p>
             </div>
             <div class="flex items-center gap-3">
                 <a href="{{ route('departments.create') }}" 
                    class="px-6 py-3 bg-slate-900 text-white text-[10px] font-black uppercase tracking-[0.2em] rounded-2xl hover:bg-slate-800 transition-all shadow-xl shadow-slate-200">
-                    Architect New Sector
+                    Add New Department
                 </a>
             </div>
         </div>
@@ -22,11 +22,11 @@
                 <table class="w-full border-separate border-spacing-y-3">
                     <thead>
                         <tr class="text-left">
-                            <th class="px-6 py-4 text-[10px] font-black text-slate-400 uppercase tracking-[0.2em]">Designation</th>
-                            <th class="px-6 py-4 text-[10px] font-black text-slate-400 uppercase tracking-[0.2em]">Operational Scope</th>
-                            <th class="px-6 py-4 text-[10px] font-black text-slate-400 uppercase tracking-[0.2em]">Vitality</th>
-                            <th class="px-4 py-4 text-[10px] font-black text-slate-400 uppercase tracking-[0.2em] text-center">Workforce</th>
-                            <th class="px-6 py-4 text-[10px] font-black text-slate-400 uppercase tracking-[0.2em] text-right">Operations</th>
+                            <th class="px-6 py-4 text-[10px] font-black text-slate-400 uppercase tracking-[0.2em]">Department Name</th>
+                            <th class="px-6 py-4 text-[10px] font-black text-slate-400 uppercase tracking-[0.2em]">Description</th>
+                            <th class="px-6 py-4 text-[10px] font-black text-slate-400 uppercase tracking-[0.2em]">Status</th>
+                            <th class="px-4 py-4 text-[10px] font-black text-slate-400 uppercase tracking-[0.2em] text-center">Employees</th>
+                            <th class="px-6 py-4 text-[10px] font-black text-slate-400 uppercase tracking-[0.2em] text-right">Actions</th>
                         </tr>
                     </thead>
                     <tbody>
@@ -39,16 +39,16 @@
                                         </div>
                                         <div>
                                             <div class="font-black text-slate-900 uppercase tracking-tight text-sm">{{ $department->name }}</div>
-                                            <div class="text-[9px] font-bold text-slate-400 uppercase tracking-widest mt-0.5">Sector ID: DEP-{{ str_pad($department->id, 3, '0', STR_PAD_LEFT) }}</div>
+                                            <div class="text-[9px] font-bold text-slate-400 uppercase tracking-widest mt-0.5">Dept ID: DEP-{{ str_pad($department->id, 3, '0', STR_PAD_LEFT) }}</div>
                                         </div>
                                     </div>
                                 </td>
                                 <td class="px-6 py-5 bg-white/40 backdrop-blur-xl border-y border-white/60 transition-all group-hover:bg-white/60">
-                                    <p class="text-xs font-medium text-slate-600 line-clamp-1 max-w-xs lowercase first-letter:uppercase">{{ $department->description ?? 'No operational description provided.' }}</p>
+                                    <p class="text-xs font-medium text-slate-600 line-clamp-1 max-w-xs lowercase first-letter:uppercase">{{ $department->description ?? 'No description provided.' }}</p>
                                 </td>
                                 <td class="px-6 py-5 bg-white/40 backdrop-blur-xl border-y border-white/60 transition-all group-hover:bg-white/60">
                                     <span class="px-3 py-1.5 inline-flex text-[9px] font-black uppercase tracking-widest rounded-xl transition-all {{ $department->is_active ? 'bg-emerald-100/50 text-emerald-600 border border-emerald-200/50' : 'bg-rose-100/50 text-rose-600 border border-rose-200/50' }}">
-                                        {{ $department->is_active ? 'Fully Operational' : 'Offline' }}
+                                        {{ $department->is_active ? 'Active' : 'Inactive' }}
                                     </span>
                                 </td>
                                 <td class="px-4 py-5 bg-white/40 backdrop-blur-xl border-y border-white/60 text-center transition-all group-hover:bg-white/60">
@@ -60,15 +60,15 @@
                                     <div class="flex justify-end gap-2">
                                         <a href="{{ route('departments.edit', $department) }}" 
                                            class="p-2.5 bg-white border border-slate-200 text-slate-400 hover:text-blue-600 hover:border-blue-200 rounded-xl shadow-sm transition-all group-hover:scale-105"
-                                           title="Modify Sector">
+                                           title="Edit Department">
                                             <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z"></path></svg>
                                         </a>
-                                        <form action="{{ route('departments.destroy', $department) }}" method="POST" class="inline" onsubmit="return confirm('Execute sector decommissioning? All departmental links will be severed.');">
+                                        <form action="{{ route('departments.destroy', $department) }}" method="POST" class="inline" onsubmit="return confirm('Are you sure you want to delete this department?');">
                                             @csrf
                                             @method('DELETE')
                                             <button type="submit" 
                                                     class="p-2.5 bg-white border border-slate-200 text-slate-400 hover:text-rose-600 hover:border-rose-200 rounded-xl shadow-sm transition-all group-hover:scale-105"
-                                                    title="Decommission">
+                                                    title="Delete">
                                                 <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"></path></svg>
                                             </button>
                                         </form>
@@ -83,11 +83,11 @@
                                             <svg class="w-8 h-8" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 21V5a2 2 0 00-2-2H7a2 2 0 00-2 2v16m14 0h2m-2 0h-5m-9 0H3m2 0h5M9 7h1m-1 4h1m4-4h1m-1 4h1m-5 10v-5a1 1 0 011-1h2a1 1 0 011 1v5m-4 0h4"/></svg>
                                         </div>
                                         <div>
-                                            <p class="text-[10px] font-black text-slate-400 uppercase tracking-[0.2em] mb-1">Structural Void</p>
-                                            <p class="text-xs font-bold text-slate-300 uppercase tracking-widest leading-relaxed">No operational sectors have been mapped to the mainframe architecture</p>
+                                            <p class="text-[10px] font-black text-slate-400 uppercase tracking-[0.2em] mb-1">No Departments Found</p>
+                                            <p class="text-xs font-bold text-slate-300 uppercase tracking-widest leading-relaxed">No company departments have been created yet.</p>
                                         </div>
                                         <a href="{{ route('departments.create') }}" class="mt-4 px-8 py-3 bg-slate-900 text-white text-[10px] font-black uppercase tracking-[0.2em] rounded-2xl shadow-xl shadow-slate-200">
-                                            Initialize Core Sector
+                                            Add First Department
                                         </a>
                                     </div>
                                 </td>

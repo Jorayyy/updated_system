@@ -1,38 +1,49 @@
 <x-app-layout>
     <x-slot name="header">
-        <h2 class="font-semibold text-xl text-gray-800 leading-tight">
-            {{ __('Leave Management Hub') }}
+        <h2 class="font-black text-2xl text-slate-800 uppercase tracking-tighter">
+            Leave <span class="text-blue-600">Operations</span>
         </h2>
     </x-slot>
 
-    <div class="py-6">
-        <div class="max-w-full mx-auto sm:px-6 lg:px-8 focus:outline-none">
-            
-            <!-- Unified Hub Header & Pill Switcher (Matching Image 1 & 2) -->
-            <div class="mb-8 flex flex-col md:flex-row md:items-center justify-between gap-4">
-                <div>
-                    <h1 class="text-2xl font-black text-slate-900 uppercase tracking-tight">Leave Management Hub</h1>
-                    <p class="text-[10px] font-black text-slate-600 uppercase tracking-[0.2em] mt-1">Centralized Administration</p>
-                </div>
+    <div class="space-y-10">
+        <div class="max-w-7xl mx-auto space-y-10">
+            {{-- Unified Management Hub Header --}}
+            <div class="bg-white/40 backdrop-blur-xl border border-white/60 p-10 rounded-[2.5rem] shadow-sm relative overflow-hidden group">
+                <div class="relative z-10 flex flex-col lg:flex-row items-center justify-between gap-10">
+                    <div class="flex flex-col md:flex-row items-center gap-8 flex-1">
+                        {{-- Hub Identity --}}
+                        <div class="text-center md:text-left">
+                            <h3 class="text-4xl font-black text-slate-900 uppercase tracking-tighter leading-none mb-3">Management Hub</h3>
+                            <div class="flex flex-col gap-2">
+                                <div class="flex items-center justify-center md:justify-start text-slate-400">
+                                    <span class="text-[10px] font-black uppercase tracking-[0.15em]">Centralized Personnel Administration</span>
+                                </div>
+                                <div class="flex items-center justify-center md:justify-start text-slate-400">
+                                    <span class="text-[10px] font-black uppercase tracking-[0.15em]">System Date: {{ now()->format('M d, Y') }}</span>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
 
-                <!-- PILL STYLE TAB SWITCHER -->
-                <div class="inline-flex p-1.5 bg-slate-100 rounded-full border border-slate-200/50">
-                    <a href="{{ route('leaves.manage', ['tab' => 'requests']) }}" 
-                       class="px-8 py-2.5 rounded-full text-[11px] font-black uppercase tracking-widest transition-all duration-300 {{ $activeTab === 'requests' ? 'bg-white text-indigo-700 shadow-sm border border-slate-200/50' : 'text-slate-600 hover:text-slate-800' }}">
-                        Requests
-                    </a>
-                    
-                    @if(auth()->user()->isSuperAdmin())
-                    <a href="{{ route('leaves.manage', ['tab' => 'credits', 'year' => request('year', date('Y'))]) }}" 
-                       class="px-8 py-2.5 rounded-full text-[11px] font-black uppercase tracking-widest transition-all duration-300 {{ $activeTab === 'credits' ? 'bg-white text-indigo-700 shadow-sm border border-slate-200/50' : 'text-slate-600 hover:text-slate-800' }}">
-                        Credits
-                    </a>
-                    @endif
+                    {{-- Navigation Badges --}}
+                    <div class="inline-flex p-1.5 bg-slate-100 rounded-full border border-slate-200/50 shadow-inner">
+                        <a href="{{ route('leaves.manage', ['tab' => 'requests']) }}" 
+                           class="px-8 py-2.5 rounded-full text-[11px] font-black uppercase tracking-widest transition-all duration-300 {{ $activeTab === 'requests' ? 'bg-white text-blue-600 shadow-sm border border-slate-200/50' : 'text-slate-500 hover:text-slate-700' }}">
+                            Requests
+                        </a>
+                        
+                        @if(auth()->user()->isSuperAdmin())
+                        <a href="{{ route('leaves.manage', ['tab' => 'credits', 'year' => request('year', date('Y'))]) }}" 
+                           class="px-8 py-2.5 rounded-full text-[11px] font-black uppercase tracking-widest transition-all duration-300 {{ $activeTab === 'credits' ? 'bg-white text-blue-600 shadow-sm border border-slate-200/50' : 'text-slate-500 hover:text-slate-700' }}">
+                            Credits
+                        </a>
+                        @endif
 
-                    <a href="{{ route('leaves.manage', ['tab' => 'types']) }}" 
-                       class="px-8 py-2.5 rounded-full text-[11px] font-black uppercase tracking-widest transition-all duration-300 {{ $activeTab === 'types' ? 'bg-white text-indigo-700 shadow-sm border border-slate-200/50' : 'text-slate-600 hover:text-slate-800' }}">
-                        Policies
-                    </a>
+                        <a href="{{ route('leaves.manage', ['tab' => 'types']) }}" 
+                           class="px-8 py-2.5 rounded-full text-[11px] font-black uppercase tracking-widest transition-all duration-300 {{ $activeTab === 'types' ? 'bg-white text-blue-600 shadow-sm border border-slate-200/50' : 'text-slate-500 hover:text-slate-700' }}">
+                            Policies
+                        </a>
+                    </div>
                 </div>
             </div>
 

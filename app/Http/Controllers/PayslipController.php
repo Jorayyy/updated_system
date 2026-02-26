@@ -69,7 +69,10 @@ class PayslipController extends Controller
 
         $payroll->load(['user', 'payrollPeriod']);
 
-        return view('payslip.show', compact('payroll'));
+        // Get YTD Summary for the employee on the payroll, not the viewer
+        $ytdSum = $this->payslipService->getYtdSummary($payroll->user, $payroll->payrollPeriod->start_date->year);
+
+        return view('payslip.show', compact('payroll', 'ytdSum'));
     }
 
     /**

@@ -112,9 +112,34 @@ class Attendance extends Model
     /**
      * Get next step to perform
      */
-    public function getNextStep(): ?string
+    public function getNextStep(?array $schedule = null): ?string
     {
-        $steps = array_keys(self::STEPS);
+        $steps = ['time_in'];
+        
+        if ($schedule) {
+            if ($schedule['has_first_break'] ?? true) {
+                $steps[] = 'first_break_out';
+                $steps[] = 'first_break_in';
+            }
+            
+            $steps[] = 'lunch_break_out';
+            $steps[] = 'lunch_break_in';
+
+            if ($schedule['has_second_break'] ?? true) {
+                $steps[] = 'second_break_out';
+                $steps[] = 'second_break_in';
+            }
+        } else {
+            // Default sequential steps if no schedule provided
+            $steps = array_merge($steps, [
+                'first_break_out', 'first_break_in',
+                'lunch_break_out', 'lunch_break_in', 
+                'second_break_out', 'second_break_in'
+            ]);
+        }
+        
+        $steps[] = 'time_out';
+
         $currentIndex = array_search($this->current_step, $steps);
         
         if ($currentIndex === false || $currentIndex >= count($steps) - 1) {
@@ -127,9 +152,9 @@ class Attendance extends Model
     /**
      * Get next step info
      */
-    public function getNextStepInfo(): ?array
+    public function getNextStepInfo(?array $schedule = null): ?array
     {
-        $nextStep = $this->getNextStep();
+        $nextStep = $this->getNextStep($schedule);
         return $nextStep ? self::STEPS[$nextStep] : null;
     }
 
@@ -381,21 +406,27 @@ class Attendance extends Model
     }
 
     /**
-     * Get all steps with their status and times
+     * Get all steps with their status and times, filtered by schedule
      */
-    public function getStepsStatus(bool $canProceed = true): array
+    public function getStepsStatus(?array $schedule = null, bool $canProceed = true): array
     {
         $steps = [];
-        $stepOrder = array_keys(self::STEPS);
-        $currentStepIndex = array_search($this->current_step, $stepOrder);
+        $nextStep = $this->getNextStep($schedule);
         
         foreach (self::STEPS as $step => $info) {
-            $stepIndex = array_search($step, $stepOrder);
+            // Check if break should be skipped
+            if ($step === 'first_break_out' || $step === 'first_break_in') {
+                if ($schedule && !($schedule['has_first_break'] ?? true)) continue;
+            }
+            if ($step === 'second_break_out' || $step === 'second_break_in') {
+                if ($schedule && !($schedule['has_second_break'] ?? true)) continue;
+            }
+
             $time = $this->{$step};
             
             $isCompleted = $time !== null;
             $isCurrent = $step === $this->current_step && !$this->isCompleted();
-            $isNext = $canProceed && !$this->isCompleted() && $this->getNextStep() === $step;
+            $isNext = $canProceed && !$this->isCompleted() && $nextStep === $step;
             
             $steps[$step] = [
                 'label' => $info['label'],

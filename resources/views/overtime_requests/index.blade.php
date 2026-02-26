@@ -3,14 +3,14 @@
         <div class="flex flex-col md:flex-row justify-between items-start md:items-center gap-4">
             <div>
                 <h2 class="font-black text-2xl text-slate-900 leading-tight tracking-tight uppercase">
-                    Extended <span class="text-blue-600">Hours</span>
+                    Overtime <span class="text-blue-600">History</span>
                 </h2>
-                <p class="text-xs font-bold text-slate-500 uppercase tracking-widest mt-1">Overtime Authorization & Chronology</p>
+                <p class="text-xs font-bold text-slate-500 uppercase tracking-widest mt-1">Authorization & Record History</p>
             </div>
             <div class="flex items-center gap-3">
                 <a href="{{ route('overtime-requests.create') }}" 
                    class="px-6 py-3 bg-slate-900 text-white text-[10px] font-black uppercase tracking-[0.2em] rounded-2xl hover:bg-slate-800 transition-all shadow-xl shadow-slate-200">
-                    Request Extension
+                    Request Overtime
                 </a>
             </div>
         </div>
@@ -22,11 +22,11 @@
                 <table class="w-full border-separate border-spacing-y-3">
                     <thead>
                         <tr class="text-left">
-                            <th class="px-6 py-4 text-[10px] font-black text-slate-400 uppercase tracking-[0.2em]">Temporal Window</th>
+                            <th class="px-6 py-4 text-[10px] font-black text-slate-400 uppercase tracking-[0.2em]">Date</th>
                             <th class="px-6 py-4 text-[10px] font-black text-slate-400 uppercase tracking-[0.2em]">Duration & Cycle</th>
-                            <th class="px-6 py-4 text-[10px] font-black text-slate-400 uppercase tracking-[0.2em]">Operational Reason</th>
-                            <th class="px-6 py-4 text-[10px] font-black text-slate-400 uppercase tracking-[0.2em]">Verification Status</th>
-                            <th class="px-6 py-4 text-[10px] font-black text-slate-400 uppercase tracking-[0.2em] text-right">Authorized By</th>
+                            <th class="px-6 py-4 text-[10px] font-black text-slate-400 uppercase tracking-[0.2em]">Reason</th>
+                            <th class="px-6 py-4 text-[10px] font-black text-slate-400 uppercase tracking-[0.2em]">Status</th>
+                            <th class="px-6 py-4 text-[10px] font-black text-slate-400 uppercase tracking-[0.2em] text-right">Approver</th>
                         </tr>
                     </thead>
                     <tbody>
@@ -69,7 +69,7 @@
                                     <div class="flex items-center justify-end gap-3">
                                         <div class="text-right">
                                             <div class="font-black text-slate-900 uppercase tracking-tight text-[10px]">{{ $request->approver->name ?? 'System' }}</div>
-                                            <div class="text-[8px] font-bold text-slate-400 uppercase tracking-widest leading-none mt-0.5">{{ $request->approver ? 'Ops Director' : 'Awaiting Audit' }}</div>
+                                            <div class="text-[8px] font-bold text-slate-400 uppercase tracking-widest leading-none mt-0.5">{{ $request->approver ? 'Supervisor' : 'Pending Review' }}</div>
                                         </div>
                                         <div class="w-8 h-8 rounded-full bg-slate-100 border border-slate-200 flex items-center justify-center text-[10px] font-black text-slate-400">
                                             {{ substr($request->approver->name ?? 'S', 0, 1) }}
@@ -85,11 +85,11 @@
                                             <svg class="w-8 h-8" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z"/></svg>
                                         </div>
                                         <div>
-                                            <p class="text-[10px] font-black text-slate-400 uppercase tracking-[0.2em] mb-1">Standard Operations</p>
-                                            <p class="text-xs font-bold text-slate-300 uppercase tracking-widest">Global workforce is operating within standard temporal cycles</p>
+                                            <p class="text-[10px] font-black text-slate-400 uppercase tracking-[0.2em] mb-1">Standard Schedule</p>
+                                            <p class="text-xs font-bold text-slate-300 uppercase tracking-widest">No overtime requests found</p>
                                         </div>
                                         <a href="{{ route('overtime-requests.create') }}" class="mt-4 px-8 py-3 bg-slate-900 text-white text-[10px] font-black uppercase tracking-[0.2em] rounded-2xl shadow-xl shadow-slate-200">
-                                            Initialize Request
+                                            New Overtime Request
                                         </a>
                                     </div>
                                 </td>

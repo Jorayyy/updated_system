@@ -122,9 +122,32 @@
                                                                 </td>
                                                                 <td class="px-4 py-4 text-sm text-gray-600">
                                                                     <div class="flex flex-col space-y-1">
-                                                                        <span class="flex justify-between w-48 italic">lunch break: <span class="font-bold ml-1">{{ $shift->lunch_break_minutes }}min(s).</span></span>
-                                                                        <span class="flex justify-between w-48 italic">1st break: <span class="font-bold ml-1">{{ sprintf("%02d", $shift->first_break_minutes) }}min(s).</span></span>
-                                                                        <span class="flex justify-between w-48 italic">2nd break: <span class="font-bold ml-1">{{ sprintf("%02d", $shift->second_break_minutes) }}min(s).</span></span>
+                                                                        <div class="flex items-center justify-between w-56 italic">
+                                                                            <span>lunch break:</span>
+                                                                            <span class="font-bold">{{ $shift->lunch_break_minutes }}min(s).</span>
+                                                                        </div>
+                                                                        <div class="flex items-center justify-between w-56 italic">
+                                                                            <span class="{{ !$shift->has_first_break ? 'text-gray-400 line-through' : '' }}">1st break:</span>
+                                                                            <div class="flex items-center">
+                                                                                <span class="font-bold {{ !$shift->has_first_break ? 'text-gray-400' : '' }}">{{ sprintf("%02d", $shift->first_break_minutes) }}min(s).</span>
+                                                                                @if($shift->has_first_break)
+                                                                                    <span class="ml-1 text-green-600 font-bold text-[10px] uppercase">[ON]</span>
+                                                                                @else
+                                                                                    <span class="ml-1 text-gray-400 font-bold text-[10px] uppercase">[OFF]</span>
+                                                                                @endif
+                                                                            </div>
+                                                                        </div>
+                                                                        <div class="flex items-center justify-between w-56 italic">
+                                                                            <span class="{{ !$shift->has_second_break ? 'text-gray-400 line-through' : '' }}">2nd break:</span>
+                                                                            <div class="flex items-center">
+                                                                                <span class="font-bold {{ !$shift->has_second_break ? 'text-gray-400' : '' }}">{{ sprintf("%02d", $shift->second_break_minutes) }}min(s).</span>
+                                                                                @if($shift->has_second_break)
+                                                                                    <span class="ml-1 text-green-600 font-bold text-[10px] uppercase">[ON]</span>
+                                                                                @else
+                                                                                    <span class="ml-1 text-gray-400 font-bold text-[10px] uppercase">[OFF]</span>
+                                                                                @endif
+                                                                            </div>
+                                                                        </div>
                                                                     </div>
                                                                 </td>
                                                                 <td class="px-4 py-4 text-sm text-gray-900 font-bold text-center">

@@ -10,6 +10,7 @@ use App\Models\ShiftChangeRequest;
 use App\Models\CompanyAsset;
 use App\Models\PerformanceReview;
 use App\Models\HrPolicy;
+use App\Models\Announcement;
 use Carbon\Carbon;
 use Illuminate\Http\Request;
 
@@ -123,6 +124,14 @@ class DashboardController extends Controller
         $daysAbsent = $monthlyAttendance->where('status', 'absent')->count();
         $totalWorkHours = round($monthlyAttendance->sum('total_work_minutes') / 60, 1);
 
+        // This month's approved leaves
+        $approvedLeaves = LeaveRequest::where('user_id', $user->id)
+            ->where('status', 'approved')
+            ->where(function($query) use ($startOfMonth, $endOfMonth) {
+                $query->whereBetween('start_date', [$startOfMonth, $endOfMonth])
+                      ->orWhereBetween('end_date', [$startOfMonth, $endOfMonth]);
+            })->count();
+
         // Recent leave requests
         $recentLeaveRequests = LeaveRequest::with('leaveType')
             ->where('user_id', $user->id)
@@ -160,11 +169,16 @@ class DashboardController extends Controller
             ->orderBy('effective_date', 'desc')
             ->first();
 
+        $announcements = Announcement::orderBy('created_at', 'desc')
+            ->limit(3)
+            ->get();
+
         return view('dashboard.employee', compact(
             'todayAttendance',
             'daysPresent',
             'daysLate',
             'daysAbsent',
+            'approvedLeaves',
             'totalWorkHours',
             'recentLeaveRequests',
             'leaveBalances',
@@ -172,7 +186,8 @@ class DashboardController extends Controller
             'myShiftRequests',
             'myAssets',
             'pendingAcknowledgementReview',
-            'latestPolicy'
+            'latestPolicy',
+            'announcements'
         ));
     }
 }
