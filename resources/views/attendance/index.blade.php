@@ -32,7 +32,7 @@
             @endif
 
             <!-- Current Status Card -->
-            <div class="bg-white overflow-hidden shadow-sm sm:rounded-lg mb-6">
+            <div class="bg-white shadow-sm sm:rounded-lg mb-6 overflow-visible">
                 <div class="p-6">
                     <div class="flex justify-between items-start mb-6">
                         <div>
@@ -127,24 +127,15 @@
                         </div>
 
                         <!-- Big PUNCH Button -->
-                        @if($status['ip_blocked'] ?? false)
-                            <div class="p-6 bg-red-50 rounded-2xl border border-red-100 flex items-center justify-center gap-2 text-red-600 font-black uppercase text-center italic tracking-widest shadow-inner">
-                                <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="3" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z"/></svg>
-                                Network Restrictions Active
-                            </div>
-                        @elseif($status['status'] === 'completed')
-                            <div class="p-6 bg-blue-50 rounded-2xl border border-blue-100 text-center font-black uppercase text-blue-600 tracking-widest">
-                                Your Attendance is already completed for today.
-                            </div>
-                        @else
-                            <button type="submit" class="w-full py-5 bg-[#e74c3c] hover:bg-[#c0392b] text-white rounded-xl font-black text-2xl uppercase tracking-widest shadow-xl shadow-red-500/30 transition-all active:scale-95 flex items-center justify-center group overflow-hidden relative">
+                        <div class="mt-6">
+                            <button type="submit" class="w-full py-5 px-6 bg-yellow-400 hover:bg-yellow-500 text-black rounded-xl font-black text-2xl uppercase tracking-widest shadow-xl shadow-yellow-500/30 transition-all active:scale-95 flex items-center justify-center group overflow-visible relative border-4 border-red-600" style="min-height: 80px;">
                                 <div class="absolute inset-0 bg-white/10 translate-y-full group-hover:translate-y-0 transition-transform duration-300"></div>
                                 <span class="relative z-10 flex items-center gap-3">
                                     <svg class="w-6 h-6 group-hover:animate-bounce" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="3" d="M15 13l-3 3m0 0l-3-3m3 3V8m0 13a9 9 0 110-18 9 9 0 010 18z"/></svg>
                                     PUNCH
                                 </span>
                             </button>
-                        @endif
+                        </div>
                     </form>
                     
                     @if($status['attendance'])
