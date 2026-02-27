@@ -63,6 +63,14 @@ class PayrollGroupController extends Controller
             return $user->role ?? 'unknown';
         });
 
+        // Include employee records that are either unassigned or assigned to other groups,
+        // but restrict to actual employee-role accounts. Additionally, limit to employee
+        // accounts that belong to accounts which have admin/management users (this helps
+        // surface 'employee-mode' accounts tied to admin accounts while excluding pure
+        // management accounts themselves).
+        // Option B: Show all employee accounts that are NOT in this payroll group.
+        // This includes unassigned employees and employees assigned to other groups,
+        // while excluding management accounts (only role = 'employee').
         $availableUsers = User::where('role', 'employee')
             ->where(function($q) use ($payrollGroup) {
                 $q->whereNull('payroll_group_id')
