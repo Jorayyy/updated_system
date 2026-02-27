@@ -51,12 +51,18 @@ class PayrollGroupController extends Controller
      */
     public function show(PayrollGroup $payrollGroup)
     {
+        // Load associated users (do not restrict by role here) and recent periods
         $payrollGroup->load(['users' => function($q) {
-            $q->where('role', 'employee');
+            $q->orderBy('name');
         }, 'periods' => function($q) {
             $q->latest()->limit(5);
         }]);
-        
+
+        // Group users by role for clearer presentation in the view
+        $groupedUsers = $payrollGroup->users->groupBy(function($user) {
+            return $user->role ?? 'unknown';
+        });
+
         $availableUsers = User::where('role', 'employee')
             ->where(function($q) use ($payrollGroup) {
                 $q->whereNull('payroll_group_id')
@@ -65,7 +71,7 @@ class PayrollGroupController extends Controller
             ->orderByRaw('COALESCE(last_name, name)')
             ->get();
 
-        return view('admin.payroll-groups.show', compact('payrollGroup', 'availableUsers'));
+        return view('admin.payroll-groups.show', compact('payrollGroup', 'availableUsers', 'groupedUsers'));
     }
 
     /**

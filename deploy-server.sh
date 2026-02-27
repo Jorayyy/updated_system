@@ -72,10 +72,28 @@ else
     exit 1
 fi
 
-# Step 3: Deployment Strategy - Bypass frontend build on server
+# Step 3: Deployment Strategy - Build frontend assets on server when possible
 print_section "Step 3: Asset Strategy"
-echo "Skipping NPM build on server (Hostinger Limitation). Ensure you have run 'npm run build' locally and pushed the 'public/build' folder."
-print_success "Using pre-built assets from repository"
+if [ -f "package.json" ]; then
+    if command -v npm &> /dev/null; then
+        echo "Node and npm found — building frontend assets (this may take a few minutes)..."
+        # Ensure production environment for frontend build
+        export NODE_ENV=production
+        npm ci --silent --no-audit --no-fund
+        npm run build --silent
+        if [ $? -eq 0 ]; then
+            print_success "Frontend assets built successfully"
+        else
+            print_error "Frontend build failed. Ensure Node version and build scripts are correct. Falling back to repository assets if available."
+        fi
+    else
+        echo "npm not found on server. Falling back to pre-built assets from repository."
+        print_error "npm not available — frontend build skipped"
+    fi
+else
+    echo "No package.json found — assuming no frontend build required."
+    print_success "No frontend build step"
+fi
 
 # Step 4: Verify .env file
 print_section "Step 4: Verifying environment configuration"

@@ -63,23 +63,30 @@
                         <!-- Employee List -->
                         <div class="overflow-y-auto max-h-96">
                             <ul class="divide-y divide-gray-200">
-                                @forelse($payrollGroup->users as $user)
-                                    <li class="py-3 flex justify-between items-center">
-                                        <div class="flex items-center">
-                                            <div class="ml-3">
-                                                <p class="text-sm font-medium text-gray-900">{{ $user->full_name }}</p>
-                                                <p class="text-xs text-gray-500">{{ $user->email }}</p>
+                                @php $any = false; @endphp
+                                @foreach($groupedUsers as $role => $users)
+                                    @php $any = true; @endphp
+                                    <li class="py-2 px-3 bg-gray-50 text-xs text-gray-600 font-semibold">{{ ucfirst($role) }}</li>
+                                    @foreach($users as $user)
+                                        <li class="py-3 flex justify-between items-center">
+                                            <div class="flex items-center">
+                                                <div class="ml-3">
+                                                    <p class="text-sm font-medium text-gray-900">{{ $user->full_name }} <span class="text-xs text-gray-400">@if($user->employee_id) • {{ $user->employee_id }} @endif</span></p>
+                                                    <p class="text-xs text-gray-500">{{ $user->email }} <span class="ml-2 inline-block px-2 py-0.5 text-[10px] rounded bg-gray-100 text-gray-700">{{ ucfirst($user->role ?? 'unknown') }}</span></p>
+                                                </div>
                                             </div>
-                                        </div>
-                                        <form action="{{ route('payroll-groups.remove-employee', ['payrollGroup' => $payrollGroup, 'user' => $user]) }}" method="POST" onsubmit="return confirm('Remove this employee from the group?');">
-                                            @csrf
-                                            @method('DELETE')
-                                            <button type="submit" class="text-red-600 hover:text-red-900 text-sm">Remove</button>
-                                        </form>
-                                    </li>
-                                @empty
+                                            <form action="{{ route('payroll-groups.remove-employee', ['payrollGroup' => $payrollGroup, 'user' => $user]) }}" method="POST" onsubmit="return confirm('Remove this employee from the group?');">
+                                                @csrf
+                                                @method('DELETE')
+                                                <button type="submit" class="text-red-600 hover:text-red-900 text-sm">Remove</button>
+                                            </form>
+                                        </li>
+                                    @endforeach
+                                @endforeach
+
+                                @unless($any)
                                     <li class="py-4 text-center text-gray-500 text-sm">No employees assigned to this group.</li>
-                                @endforelse
+                                @endunless
                             </ul>
                         </div>
                     </div>
