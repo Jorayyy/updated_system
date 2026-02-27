@@ -192,15 +192,17 @@
                                                 View Details
                                             </a>
                                             @if($complaint->isOpen())
-                                                <form action="{{ route('concerns.status', $complaint) }}" method="POST">
-                                                    @csrf
-                                                    @method('PATCH')
-                                                    <input type="hidden" name="status" value="resolved">
-                                                    <input type="hidden" name="resolution_notes" value="Resolved via Timekeeping Management Hub.">
-                                                    <button type="submit" class="w-full px-4 py-2 bg-emerald-600 text-white font-bold text-xs rounded-xl hover:bg-emerald-700 transition-all shadow-md shadow-emerald-100 border border-emerald-500">
-                                                        Approve & Resolve
-                                                    </button>
-                                                </form>
+                                                @if(auth()->user()->isAdmin() || auth()->user()->isSuperAdmin())
+                                                    <form action="{{ route('concerns.status', $complaint) }}" method="POST">
+                                                        @csrf
+                                                        @method('PATCH')
+                                                        <input type="hidden" name="status" value="resolved">
+                                                        <input type="hidden" name="resolution_notes" value="Resolved via Timekeeping Management Hub.">
+                                                        <button type="submit" class="w-full px-4 py-2 bg-emerald-600 text-white font-bold text-xs rounded-xl hover:bg-emerald-700 transition-all shadow-md shadow-emerald-100 border border-emerald-500">
+                                                            Approve & Resolve
+                                                        </button>
+                                                    </form>
+                                                @endif
                                             @endif
                                         </div>
                                     </div>

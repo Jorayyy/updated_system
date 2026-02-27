@@ -125,6 +125,11 @@ class ConcernController extends Controller
             },
         ]);
 
+        // Allow admins, HR and super admins to view any concern
+        if ($concern->reported_by !== Auth::id() && !Auth::user()->isAdmin() && !Auth::user()->isHr()) {
+            abort(403, 'You can only view your own concerns.');
+        }
+
         $categories = Concern::CATEGORIES;
         $priorities = Concern::PRIORITIES;
         $statuses = Concern::STATUSES;
@@ -597,8 +602,8 @@ class ConcernController extends Controller
      */
     public function userShow(Concern $concern)
     {
-        // Make sure employee can only view their own concerns
-        if ($concern->reported_by !== Auth::id()) {
+        // Allow admins, HR and super admins to view any concern
+        if ($concern->reported_by !== Auth::id() && !Auth::user()->isAdmin() && !Auth::user()->isHr()) {
             abort(403, 'You can only view your own concerns.');
         }
 

@@ -138,6 +138,22 @@ Route::middleware('auth')->group(function () {
     Route::get('/my-concerns/{concern}', [ConcernController::class, 'userShow'])->name('concerns.user-show');
     Route::post('/my-concerns/{concern}/comment', [ConcernController::class, 'userComment'])->name('concerns.user-comment');
 
+    // Concerns - Admin/HR management
+    Route::middleware('role:admin,hr,super_admin')->group(function () {
+        Route::get('/concerns', [ConcernController::class, 'index'])->name('concerns.index');
+        Route::get('/concerns/create', [ConcernController::class, 'create'])->name('concerns.create');
+        Route::post('/concerns', [ConcernController::class, 'store'])->name('concerns.store');
+        Route::get('/concerns/{concern}', [ConcernController::class, 'show'])->name('concerns.show');
+        Route::get('/concerns/{concern}/edit', [ConcernController::class, 'edit'])->name('concerns.edit');
+        Route::put('/concerns/{concern}', [ConcernController::class, 'update'])->name('concerns.update');
+        Route::delete('/concerns/{concern}', [ConcernController::class, 'destroy'])->name('concerns.destroy');
+        Route::patch('/concerns/{concern}/status', [ConcernController::class, 'updateStatus'])->name('concerns.status');
+        Route::patch('/concerns/{concern}/assign', [ConcernController::class, 'assign'])->name('concerns.assign');
+        Route::patch('/concerns/{concern}/priority', [ConcernController::class, 'updatePriority'])->name('concerns.priority');
+        Route::post('/concerns/{concern}/comment', [ConcernController::class, 'addComment'])->name('concerns.comment');
+        Route::get('/concerns-stats', [ConcernController::class, 'stats'])->name('concerns.stats');
+    });
+
     // ============================================
     // TRANSACTIONS - Employee (All authenticated users)
     // ============================================
@@ -448,19 +464,8 @@ Route::middleware('auth')->group(function () {
         Route::post('/backups/upload', [BackupController::class, 'upload'])->name('backups.upload');
         Route::delete('/backups/{filename}', [BackupController::class, 'destroy'])->name('backups.destroy');
 
-        // Concerns/Tickets Management
-        Route::get('/concerns', [ConcernController::class, 'index'])->name('concerns.index');
-        Route::get('/concerns/create', [ConcernController::class, 'create'])->name('concerns.create');
-        Route::post('/concerns', [ConcernController::class, 'store'])->name('concerns.store');
-        Route::get('/concerns/{concern}', [ConcernController::class, 'show'])->name('concerns.show');
-        Route::get('/concerns/{concern}/edit', [ConcernController::class, 'edit'])->name('concerns.edit');
-        Route::put('/concerns/{concern}', [ConcernController::class, 'update'])->name('concerns.update');
-        Route::delete('/concerns/{concern}', [ConcernController::class, 'destroy'])->name('concerns.destroy');
-        Route::patch('/concerns/{concern}/status', [ConcernController::class, 'updateStatus'])->name('concerns.status');
-        Route::patch('/concerns/{concern}/assign', [ConcernController::class, 'assign'])->name('concerns.assign');
-        Route::patch('/concerns/{concern}/priority', [ConcernController::class, 'updatePriority'])->name('concerns.priority');
-        Route::post('/concerns/{concern}/comment', [ConcernController::class, 'addComment'])->name('concerns.comment');
-        Route::get('/concerns-stats', [ConcernController::class, 'stats'])->name('concerns.stats');
+        // Concerns/Tickets Management (moved to role-based group)
+        // NOTE: routes for admin/HR access are defined outside the super_admin-only block.
     });
 });
 
