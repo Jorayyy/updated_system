@@ -46,9 +46,15 @@
                             <div class="flex-grow">
                                 <select name="user_id" class="w-full rounded-md shadow-sm border-gray-300 focus:border-indigo-300 focus:ring focus:ring-indigo-200 focus:ring-opacity-50" required>
                                     <option value="">-- Select Employee to Add --</option>
-                                    @foreach($availableUsers as $user)
-                                        <option value="{{ $user->id }}">{{ $user->full_name }}</option>
-                                    @endforeach
+                                    @if(!empty($availableUsersSelect))
+                                        @foreach($availableUsersSelect as $id => $label)
+                                            <option value="{{ $id }}">{{ $label }}</option>
+                                        @endforeach
+                                    @else
+                                        @foreach($availableUsers as $user)
+                                            <option value="{{ $user->id }}">{{ $user->full_name }}</option>
+                                        @endforeach
+                                    @endif
                                 </select>
                             </div>
                             <button type="submit" class="bg-indigo-600 text-white px-4 py-2 rounded-md hover:bg-indigo-700">Add</button>

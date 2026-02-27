@@ -79,9 +79,29 @@ class PayrollGroupController extends Controller
             ->orderByRaw('COALESCE(last_name, name)')
             ->get();
 
-        return view('admin.payroll-groups.show', compact('payrollGroup', 'availableUsers', 'groupedUsers'));
-    }
+        // Prepare select labels that indicate if an employee is an "employee-mode" account
+        $availableUsersSelect = $availableUsers->mapWithKeys(function($u) {
+            $label = $u->full_name;
+            if (!empty($u->employee_id)) {
+                $label .= ' • ' . $u->employee_id;
+            }
 
+            // Detect if this employee belongs to an account that has admin/hr/super_admin users
+            $isEmployeeMode = $u->account && $u->account->users()->whereIn('role', ['admin','hr','super_admin'])->exists();
+            if ($isEmployeeMode) {
+                $admins = $u->account->users()->whereIn('role', ['admin','hr','super_admin'])->pluck('name')->toArray();
+                $label .= ' (Employee Mode';
+                if (!empty($admins)) {
+                    $label .= ': ' . implode(', ', $admins);
+                }
+                $label .= ')';
+            }
+
+            return [$u->id => $label];
+        })->toArray();
+
+        return view('admin.payroll-groups.show', compact('payrollGroup', 'availableUsers', 'groupedUsers', 'availableUsersSelect'));
+    }
     /**
      * Show the form for editing the specified resource.
      */
