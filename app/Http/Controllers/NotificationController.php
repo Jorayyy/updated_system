@@ -14,15 +14,41 @@ class NotificationController extends Controller
     {
         $user = auth()->user();
         
-        $query = Notification::where('user_id', $user->id)
-            ->orderBy('created_at', 'desc');
+        $query = $user->notifications();
+        
+        // Ensure standard time sorting after urgency
+        $query->orderBy('created_at', 'desc');
         
         if ($request->get('filter') === 'unread') {
             $query->unread();
         }
 
+        // Filtering for Super Admin's personal view
+        if ($user->role === 'super_admin' && session('portalView') === 'personal') {
+            // Filter out management-related notifications
+            $query->whereNotIn('type', [
+                'payroll_computed', 
+                'dtr_approved', 
+                'leave_submitted', 
+                'payroll_ready'
+            ]);
+        }
+
         $notifications = $query->paginate(20);
-        $unreadCount = Notification::where('user_id', $user->id)->unread()->count();
+        
+        $unreadQuery = $user->notifications()->unread();
+        
+        // Apply the same Super Admin filter to unread count
+        if ($user->role === 'super_admin' && session('portalView') === 'personal') {
+            $unreadQuery->whereNotIn('type', [
+                'payroll_computed', 
+                'dtr_approved', 
+                'leave_submitted', 
+                'payroll_ready'
+            ]);
+        }
+        
+        $unreadCount = $unreadQuery->count();
 
         return view('notifications.index', compact('notifications', 'unreadCount'));
     }

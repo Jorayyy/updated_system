@@ -16,6 +16,7 @@ class Notification extends Model
         'type',
         'title',
         'message',
+        'priority',
         'action_url',
         'icon',
         'icon_color',

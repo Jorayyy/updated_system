@@ -359,7 +359,24 @@ class User extends Authenticatable
      */
     public function notifications(): HasMany
     {
-        return $this->hasMany(Notification::class);
+        $query = $this->hasMany(Notification::class);
+
+        // Filter and prioritize notifications
+        // Logic: 
+        // 1. Super Admin: Filter out admin-related notifications when in personal employee view
+        // 2. Prioritize by urgency (critical > high > medium > low)
+        
+        $user = $this;
+        
+        // Custom notification prioritization logic
+        $query->orderByRaw("CASE 
+            WHEN priority = 'critical' THEN 1 
+            WHEN priority = 'high' THEN 2 
+            WHEN priority = 'medium' THEN 3 
+            WHEN priority = 'low' THEN 4 
+            ELSE 5 END ASC");
+
+        return $query;
     }
 
     /**

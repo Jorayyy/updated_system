@@ -220,7 +220,17 @@ class TimekeepingController extends Controller
             if ($request->filled('ticket_priority')) {
                 $concernsQuery->where('priority', $request->ticket_priority);
             }
-            $concerns = $concernsQuery->orderBy('created_at', 'desc')->paginate(15, ['*'], 'concerns_page')->withQueryString();
+            
+            // Prioritize based on urgency: critical > high > medium > low
+            $concerns = $concernsQuery->orderByRaw("(CASE 
+                    WHEN priority = 'critical' THEN 1 
+                    WHEN priority = 'high' THEN 2 
+                    WHEN priority = 'medium' THEN 3 
+                    WHEN priority = 'low' THEN 4 
+                    ELSE 5 END) ASC")
+                ->orderBy('created_at', 'desc')
+                ->paginate(15, ['*'], 'concerns_page')->withQueryString();
+            
             $transactions = collect();
             $tkComplaints = collect();
         } else {
