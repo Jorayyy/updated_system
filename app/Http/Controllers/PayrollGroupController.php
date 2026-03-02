@@ -63,8 +63,19 @@ class PayrollGroupController extends Controller
             return $user->role ?? 'unknown';
         });
 
-        // Show all accounts that have the 'employee' role.
-        $availableUsers = User::where('role', 'employee')->get();
+        $currentUser = auth()->user();
+        
+        // Retrieve all employee-role users
+        $availableUsers = User::where('role', 'employee')
+            ->where(function($query) use ($currentUser) {
+                // If the user's name contains "(Employee Mode)", it's an admin's personal employee account
+                // Logic: Only show the employee-mode account if it belongs specifically to the current admin,
+                // OR if it's a standard employee account (not linked to any admin/management).
+                $query->where('name', 'NOT LIKE', '%(Employee Mode)%')
+                      ->orWhere('account_id', $currentUser->id);
+            })
+            ->get();
+
         // Force use the collection for labels to avoid sorting issues with nulls/missing keys
         $availableUsersLabels = $availableUsers->mapWithKeys(function($u) {
             $label = $u->full_name;
