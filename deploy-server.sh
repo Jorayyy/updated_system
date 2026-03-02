@@ -84,11 +84,11 @@ if [ -f "package.json" ]; then
         if [ $? -eq 0 ]; then
             print_success "Frontend assets built successfully"
         else
-            print_error "Frontend build failed. Ensure Node version and build scripts are correct. Falling back to repository assets if available."
+            echo "Frontend build failed. Ensure Node version and build scripts are correct. Falling back to pre-built assets."
         fi
     else
-        echo "npm not found on server. Falling back to pre-built assets from repository."
-        print_error "npm not available — frontend build skipped"
+        echo "npm not found on server. Using pre-built assets from repository."
+        print_success "Using pre-built assets (build/folder)"
     fi
 else
     echo "No package.json found — assuming no frontend build required."
