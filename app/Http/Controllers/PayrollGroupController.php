@@ -72,10 +72,7 @@ class PayrollGroupController extends Controller
         // This includes standard employees and "employee-mode" accounts for admins.
         $availableUsers = User::where('role', 'employee')
             ->with(['account.users'])
-            ->get()
-            ->sortBy(function($user) {
-                return $user->last_name ?: $user->name;
-            });
+            ->get();
 
         // Prepare select labels that indicate if an employee is an "employee-mode" account
         $availableUsersSelect = $availableUsers->mapWithKeys(function($u) {
@@ -85,18 +82,15 @@ class PayrollGroupController extends Controller
             }
 
             // Detect if this employee belongs to an account that has admin/hr/super_admin users
-            $isEmployeeMode = $u->account && $u->account->users->whereIn('role', ['admin','hr','super_admin'])->isNotEmpty();
-            if ($isEmployeeMode) {
-                $admins = $u->account->users->whereIn('role', ['admin','hr','super_admin'])->pluck('name')->toArray();
-                $label .= ' (Employee Mode';
-                if (!empty($admins)) {
-                    $label .= ': ' . implode(', ', $admins);
-                }
-                $label .= ')';
+            $managementUsers = $u->account ? $u->account->users->whereIn('role', ['admin', 'hr', 'super_admin']) : collect();
+            
+            if ($managementUsers->isNotEmpty()) {
+                $adminNames = $managementUsers->pluck('name')->toArray();
+                $label .= ' (Admin: ' . implode(', ', $adminNames) . ')';
             }
 
             return [$u->id => $label];
-        })->toArray();
+        })->sort()->toArray();
 
         return view('admin.payroll-groups.show', compact('payrollGroup', 'availableUsers', 'groupedUsers', 'availableUsersSelect'));
     }
