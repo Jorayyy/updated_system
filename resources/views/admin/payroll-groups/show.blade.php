@@ -39,12 +39,16 @@
                             </thead>
                             <tbody class="bg-white divide-y divide-gray-200" id="employeeTableBody">
                                 @foreach($availableUsers as $user)
-                                    <tr class="hover:bg-indigo-50 transition-colors cursor-pointer employee-row" 
+                                    @php
+                                        $isAlreadyAssigned = $user->payroll_group_id && $user->payroll_group_id != $payrollGroup->id;
+                                    @endphp
+                                    <tr class="hover:bg-indigo-50 transition-colors {{ $isAlreadyAssigned ? 'opacity-50 cursor-not-allowed bg-gray-50' : 'cursor-pointer employee-row' }}" 
                                         data-name="{{ strtolower($user->full_name) }} {{ strtolower($availableUsersSelect[$user->id] ?? '') }}">
                                         <td class="px-4 py-2">
                                             <input type="checkbox" name="user_ids[]" value="{{ $user->id }}" 
                                                 class="employee-checkbox rounded border-gray-300 text-indigo-600 focus:ring-indigo-500" 
-                                                {{ $user->payroll_group_id == $payrollGroup->id ? 'checked' : '' }}>
+                                                {{ $user->payroll_group_id == $payrollGroup->id ? 'checked' : '' }}
+                                                {{ $isAlreadyAssigned ? 'disabled' : '' }}>
                                         </td>
                                         <td class="px-4 py-2">
                                             <div class="text-sm font-bold text-gray-900">{{ $availableUsersSelect[$user->id] ?? $user->full_name }}</div>
@@ -54,7 +58,7 @@
                                             @if($user->payroll_group_id == $payrollGroup->id)
                                                 <span class="px-2 py-0.5 text-[10px] rounded bg-green-100 text-green-700 font-bold uppercase border border-green-200">Current</span>
                                             @elseif($user->payroll_group_id)
-                                                <span class="px-2 py-0.5 text-[10px] rounded bg-yellow-100 text-yellow-700 font-bold uppercase border border-yellow-200">{{ $user->payrollGroup->name ?? 'Assigned' }}</span>
+                                                <span class="px-2 py-0.5 text-[10px] rounded bg-yellow-100 text-yellow-700 font-bold uppercase border border-yellow-200" title="Assigned to {{ $user->payrollGroup->name ?? 'another group' }}">{{ $user->payrollGroup->name ?? 'Assigned' }}</span>
                                             @else
                                                 <span class="px-2 py-0.5 text-[10px] rounded bg-gray-100 text-gray-500 font-bold uppercase italic border border-gray-200">Unassigned</span>
                                             @endif
@@ -94,7 +98,7 @@
 
                             if (selectAll) {
                                 selectAll.addEventListener('change', (e) => {
-                                    const checkboxes = document.querySelectorAll('.employee-checkbox');
+                                    const checkboxes = document.querySelectorAll('.employee-checkbox:not(:disabled)');
                                     checkboxes.forEach(cb => {
                                         if (cb.closest('.employee-row').style.display !== 'none') {
                                             cb.checked = e.target.checked;
@@ -105,8 +109,8 @@
 
                             rows.forEach(row => {
                                 row.addEventListener('click', (e) => {
-                                    if (e.target.tagName !== 'INPUT') {
-                                        const cb = row.querySelector('.employee-checkbox');
+                                    const cb = row.querySelector('.employee-checkbox');
+                                    if (cb && !cb.disabled && e.target.tagName !== 'INPUT') {
                                         cb.checked = !cb.checked;
                                     }
                                 });
