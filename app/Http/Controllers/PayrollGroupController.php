@@ -124,6 +124,23 @@ class PayrollGroupController extends Controller
         return view('admin.payroll-groups.show', compact('payrollGroup', 'availableUsers', 'groupedUsers', 'availableUsersSelect'));
     }
     /**
+     * Add multiple employees to the group.
+     */
+    public function addEmployees(Request $request, PayrollGroup $payrollGroup)
+    {
+        $validated = $request->validate([
+            'user_ids' => 'required|array',
+            'user_ids.*' => 'exists:users,id',
+        ]);
+
+        User::whereIn('id', $validated['user_ids'])->update([
+            'payroll_group_id' => $payrollGroup->id
+        ]);
+
+        return back()->with('success', 'Employees added to the group successfully.');
+    }
+
+    /**
      * Show the form for editing the specified resource.
      */
     public function edit(PayrollGroup $payrollGroup)

@@ -176,6 +176,7 @@ Route::middleware('auth')->group(function () {
         Route::resource('schedules', ScheduleController::class);
         Route::resource('shifts', ShiftController::class);
         
+        Route::post('/payroll-groups/{payrollGroup}/add-employees', [PayrollGroupController::class, 'addEmployees'])->name('payroll-groups.add-employees');
         Route::post('/payroll-groups/{payrollGroup}/add-employee', [PayrollGroupController::class, 'addEmployee'])->name('payroll-groups.add-employee');
         Route::delete('/payroll-groups/{payrollGroup}/remove-employee/{user}', [PayrollGroupController::class, 'removeEmployee'])->name('payroll-groups.remove-employee');
         Route::resource('payroll-groups', PayrollGroupController::class);

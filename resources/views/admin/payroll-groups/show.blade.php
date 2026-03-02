@@ -14,6 +14,113 @@
 
     <div class="py-12">
         <div class="max-w-7xl mx-auto sm:px-6 lg:px-8 space-y-6">
+
+            <x-modal name="batch-add-employee" :show="false" focusable>
+                <form method="post" action="{{ route('payroll-groups.add-employees', $payrollGroup) }}" class="p-6">
+                    @csrf
+                    <h2 class="text-lg font-bold text-gray-900 mb-4">
+                        Manage Employees for {{ $payrollGroup->name }}
+                    </h2>
+
+                    <div class="mb-4">
+                        <input type="text" id="employeeSearch" placeholder="Search employees..." class="w-full rounded-md border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500">
+                    </div>
+
+                    <div class="max-h-96 overflow-y-auto mb-6 border rounded-lg">
+                        <table class="min-w-full divide-y divide-gray-200">
+                            <thead class="bg-gray-50 sticky top-0">
+                                <tr>
+                                    <th class="px-4 py-2 text-left text-xs font-bold text-gray-500 uppercase tracking-wider w-10">
+                                        <input type="checkbox" id="selectAllEmployees" class="rounded border-gray-300 text-indigo-600 focus:ring-indigo-500">
+                                    </th>
+                                    <th class="px-4 py-2 text-left text-xs font-bold text-gray-500 uppercase tracking-wider">Employee</th>
+                                    <th class="px-4 py-2 text-left text-xs font-bold text-gray-500 uppercase tracking-wider">Current Group</th>
+                                </tr>
+                            </thead>
+                            <tbody class="bg-white divide-y divide-gray-200" id="employeeTableBody">
+                                @foreach($availableUsers as $user)
+                                    <tr class="hover:bg-indigo-50 transition-colors cursor-pointer employee-row" 
+                                        data-name="{{ strtolower($user->full_name) }} {{ strtolower($availableUsersSelect[$user->id] ?? '') }}">
+                                        <td class="px-4 py-2">
+                                            <input type="checkbox" name="user_ids[]" value="{{ $user->id }}" 
+                                                class="employee-checkbox rounded border-gray-300 text-indigo-600 focus:ring-indigo-500" 
+                                                {{ $user->payroll_group_id == $payrollGroup->id ? 'checked' : '' }}>
+                                        </td>
+                                        <td class="px-4 py-2">
+                                            <div class="text-sm font-bold text-gray-900">{{ $availableUsersSelect[$user->id] ?? $user->full_name }}</div>
+                                            <div class="text-xs text-gray-500">{{ $user->email }}</div>
+                                        </td>
+                                        <td class="px-4 py-2">
+                                            @if($user->payroll_group_id == $payrollGroup->id)
+                                                <span class="px-2 py-0.5 text-[10px] rounded bg-green-100 text-green-700 font-bold uppercase border border-green-200">Current</span>
+                                            @elseif($user->payroll_group_id)
+                                                <span class="px-2 py-0.5 text-[10px] rounded bg-yellow-100 text-yellow-700 font-bold uppercase border border-yellow-200">{{ $user->payrollGroup->name ?? 'Assigned' }}</span>
+                                            @else
+                                                <span class="px-2 py-0.5 text-[10px] rounded bg-gray-100 text-gray-500 font-bold uppercase italic border border-gray-200">Unassigned</span>
+                                            @endif
+                                        </td>
+                                    </tr>
+                                @endforeach
+                            </tbody>
+                        </table>
+                    </div>
+
+                    <div class="flex items-center justify-end gap-3 pt-4 border-t">
+                        <x-secondary-button x-on:click="$dispatch('close')" type="button">
+                            Cancel
+                        </x-secondary-button>
+                        <x-primary-button>
+                            Update Assignments
+                        </x-primary-button>
+                    </div>
+                </form>
+
+                <script>
+                    (function() {
+                        const initModal = () => {
+                            const searchInput = document.getElementById('employeeSearch');
+                            const rows = document.querySelectorAll('.employee-row');
+                            const selectAll = document.getElementById('selectAllEmployees');
+                            
+                            if (!searchInput || !rows.length) return;
+
+                            searchInput.addEventListener('input', (e) => {
+                                const term = e.target.value.toLowerCase();
+                                rows.forEach(row => {
+                                    const searchable = row.getAttribute('data-name');
+                                    row.style.display = searchable.includes(term) ? '' : 'none';
+                                });
+                            });
+
+                            if (selectAll) {
+                                selectAll.addEventListener('change', (e) => {
+                                    const checkboxes = document.querySelectorAll('.employee-checkbox');
+                                    checkboxes.forEach(cb => {
+                                        if (cb.closest('.employee-row').style.display !== 'none') {
+                                            cb.checked = e.target.checked;
+                                        }
+                                    });
+                                });
+                            }
+
+                            rows.forEach(row => {
+                                row.addEventListener('click', (e) => {
+                                    if (e.target.tagName !== 'INPUT') {
+                                        const cb = row.querySelector('.employee-checkbox');
+                                        cb.checked = !cb.checked;
+                                    }
+                                });
+                            });
+                        };
+                        
+                        // Run on load and whenever modal might be re-rendered
+                        document.addEventListener('DOMContentLoaded', initModal);
+                        if (window.Alpine) {
+                            document.addEventListener('alpine:init', initModal);
+                        }
+                    })();
+                </script>
+            </x-modal>
             
             <!-- Group Info -->
             <div class="bg-white overflow-hidden shadow-sm sm:rounded-lg">
@@ -38,28 +145,14 @@
                 <!-- Employees Management -->
                 <div class="bg-white overflow-hidden shadow-sm sm:rounded-lg">
                     <div class="p-6 bg-white border-b border-gray-200">
-                        <h3 class="text-lg font-medium text-gray-900 mb-4">Assigned Employees</h3>
+                        <div class="flex justify-between items-center mb-6">
+                            <h3 class="text-lg font-medium text-gray-900">Assigned Employees</h3>
+                            <button x-data="" @click="$dispatch('open-modal', 'batch-add-employee')" class="bg-indigo-600 text-white px-4 py-2 rounded-md hover:bg-indigo-700 font-bold text-sm flex items-center gap-2">
+                                <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-8H4"/></svg>
+                                Manage Employees
+                            </button>
+                        </div>
                         
-                        <!-- Add Employee Form -->
-                        <form action="{{ route('payroll-groups.add-employee', $payrollGroup) }}" method="POST" class="mb-6 flex gap-2">
-                            @csrf
-                            <div class="flex-grow">
-                                <select name="user_id" class="w-full rounded-md shadow-sm border-gray-300 focus:border-indigo-300 focus:ring focus:ring-indigo-200 focus:ring-opacity-50" required>
-                                    <option value="">-- Select Employee to Add --</option>
-                                    @if(!empty($availableUsersSelect))
-                                        @foreach($availableUsersSelect as $id => $label)
-                                            <option value="{{ $id }}">{{ $label }}</option>
-                                        @endforeach
-                                    @else
-                                        @foreach($availableUsers as $user)
-                                            <option value="{{ $user->id }}">{{ $user->full_name }}</option>
-                                        @endforeach
-                                    @endif
-                                </select>
-                            </div>
-                            <button type="submit" class="bg-indigo-600 text-white px-4 py-2 rounded-md hover:bg-indigo-700">Add</button>
-                        </form>
-
                         <div class="flex flex-wrap gap-2 mb-6">
                             <a href="{{ route('schedules.group-create', ['payroll_group_id' => $payrollGroup->id]) }}" class="inline-flex items-center px-4 py-2 bg-red-600 border border-transparent rounded-md font-semibold text-xs text-white uppercase tracking-widest hover:bg-red-700 active:bg-red-900 focus:outline-none focus:border-red-900 focus:ring ring-red-300 transition ease-in-out duration-150">
                                 📅 Plot Group Schedule
