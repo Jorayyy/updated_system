@@ -63,61 +63,15 @@ class PayrollGroupController extends Controller
             return $user->role ?? 'unknown';
         });
 
-        // Include employee records that are either unassigned or assigned to other groups,
-        // but restrict to actual employee-role accounts. Additionally, limit to employee
-        // accounts that belong to accounts which have admin/management users (this helps
-        // surface 'employee-mode' accounts tied to admin accounts while excluding pure
-        // management accounts themselves).
         // Show all accounts that have the 'employee' role.
-        // This includes standard employees and "employee-mode" accounts for admins.
-        $availableUsers = User::where('role', 'employee')
-            ->get();
+        $availableUsers = User::where('role', 'employee')->get();
 
-        // Prepare select labels that indicate if an employee is an "employee-mode" account
+        // Prepare select labels
         $availableUsersSelect = $availableUsers->mapWithKeys(function($u) {
             $label = $u->full_name;
             if (!empty($u->employee_id)) {
                 $label .= ' • ' . $u->employee_id;
             }
-
-            // Fallback strategy: If account_id doesn't match, check for name similarity with management accounts
-            $isEmployeeMode = false;
-            $adminNames = [];
-
-            // 1. Try account_id matching first
-            if ($u->account_id) {
-                $managementUsers = User::where('account_id', $u->account_id)
-                    ->whereIn('role', ['admin', 'hr', 'super_admin'])
-                    ->pluck('name')
-                    ->toArray();
-                
-                if (!empty($managementUsers)) {
-                    $isEmployeeMode = true;
-                    $adminNames = $managementUsers;
-                }
-            }
-
-            // 2. Fallback to name-based matching if no account-link found
-            if (!$isEmployeeMode) {
-                $cleanName = str_replace(['(Employee Mode)', '(employee mode)'], '', $u->name);
-                $cleanName = trim($cleanName);
-                
-                $adminsWithName = User::where('name', 'LIKE', '%' . $cleanName . '%')
-                    ->whereIn('role', ['admin', 'hr', 'super_admin'])
-                    ->where('id', '!=', $u->id)
-                    ->pluck('name')
-                    ->toArray();
-
-                if (!empty($adminsWithName)) {
-                    $isEmployeeMode = true;
-                    $adminNames = $adminsWithName;
-                }
-            }
-
-            if ($isEmployeeMode) {
-                $label .= ' (Admin: ' . implode(', ', $adminNames) . ')';
-            }
-
             return [$u->id => $label];
         })->sort()->toArray();
 
