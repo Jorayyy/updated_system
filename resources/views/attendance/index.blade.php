@@ -128,11 +128,12 @@
 
                         <!-- Big PUNCH Button -->
                         <div class="mt-6">
-                            <button type="submit" class="w-full py-5 px-6 bg-yellow-400 hover:bg-yellow-500 text-black rounded-xl font-black text-2xl uppercase tracking-widest shadow-xl shadow-yellow-500/30 transition-all active:scale-95 flex items-center justify-center group overflow-visible relative border-4 border-red-600" style="min-height: 80px;">
-                                <div class="absolute inset-0 bg-white/10 translate-y-full group-hover:translate-y-0 transition-transform duration-300"></div>
-                                <span class="relative z-10 flex items-center gap-3">
-                                    <svg class="w-6 h-6 group-hover:animate-bounce" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="3" d="M15 13l-3 3m0 0l-3-3m3 3V8m0 13a9 9 0 110-18 9 9 0 010 18z"/></svg>
-                                    PUNCH
+                            <button type="submit" 
+                                class="w-full py-6 px-8 bg-gradient-to-r from-blue-600 to-indigo-700 hover:from-blue-700 hover:to-indigo-800 text-white rounded-2xl font-black text-2xl uppercase tracking-[0.25em] shadow-xl shadow-blue-200 transition-all duration-300 active:scale-[0.98] flex items-center justify-center gap-4 relative overflow-hidden group"
+                                style="min-height: 90px;">
+                                <div class="absolute inset-0 bg-white/10 opacity-0 group-hover:opacity-100 transition-opacity duration-300"></div>
+                                <span class="relative z-10 flex items-center justify-center">
+                                    <span class="drop-shadow-md">PUNCH</span>
                                 </span>
                             </button>
                         </div>

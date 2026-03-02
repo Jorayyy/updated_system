@@ -68,16 +68,14 @@ class PayrollGroupController extends Controller
         // accounts that belong to accounts which have admin/management users (this helps
         // surface 'employee-mode' accounts tied to admin accounts while excluding pure
         // management accounts themselves).
-        // Option B: Show all employee accounts that are NOT in this payroll group.
-        // This includes unassigned employees and employees assigned to other groups,
-        // while excluding management accounts (only role = 'employee').
+        // Show all accounts that have the 'employee' role.
+        // This includes standard employees and "employee-mode" accounts for admins.
         $availableUsers = User::where('role', 'employee')
-            ->where(function($q) use ($payrollGroup) {
-                $q->whereNull('payroll_group_id')
-                  ->orWhere('payroll_group_id', '!=', $payrollGroup->id);
-            })
-            ->orderByRaw('COALESCE(last_name, name)')
-            ->get();
+            ->with(['account.users'])
+            ->get()
+            ->sortBy(function($user) {
+                return $user->last_name ?: $user->name;
+            });
 
         // Prepare select labels that indicate if an employee is an "employee-mode" account
         $availableUsersSelect = $availableUsers->mapWithKeys(function($u) {
@@ -87,9 +85,9 @@ class PayrollGroupController extends Controller
             }
 
             // Detect if this employee belongs to an account that has admin/hr/super_admin users
-            $isEmployeeMode = $u->account && $u->account->users()->whereIn('role', ['admin','hr','super_admin'])->exists();
+            $isEmployeeMode = $u->account && $u->account->users->whereIn('role', ['admin','hr','super_admin'])->isNotEmpty();
             if ($isEmployeeMode) {
-                $admins = $u->account->users()->whereIn('role', ['admin','hr','super_admin'])->pluck('name')->toArray();
+                $admins = $u->account->users->whereIn('role', ['admin','hr','super_admin'])->pluck('name')->toArray();
                 $label .= ' (Employee Mode';
                 if (!empty($admins)) {
                     $label .= ': ' . implode(', ', $admins);
