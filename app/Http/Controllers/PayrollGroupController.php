@@ -71,7 +71,6 @@ class PayrollGroupController extends Controller
         // Show all accounts that have the 'employee' role.
         // This includes standard employees and "employee-mode" accounts for admins.
         $availableUsers = User::where('role', 'employee')
-            ->with(['account.users'])
             ->get();
 
         // Prepare select labels that indicate if an employee is an "employee-mode" account
@@ -81,11 +80,41 @@ class PayrollGroupController extends Controller
                 $label .= ' • ' . $u->employee_id;
             }
 
-            // Detect if this employee belongs to an account that has admin/hr/super_admin users
-            $managementUsers = $u->account ? $u->account->users->whereIn('role', ['admin', 'hr', 'super_admin']) : collect();
-            
-            if ($managementUsers->isNotEmpty()) {
-                $adminNames = $managementUsers->pluck('name')->toArray();
+            // Fallback strategy: If account_id doesn't match, check for name similarity with management accounts
+            $isEmployeeMode = false;
+            $adminNames = [];
+
+            // 1. Try account_id matching first
+            if ($u->account_id) {
+                $managementUsers = User::where('account_id', $u->account_id)
+                    ->whereIn('role', ['admin', 'hr', 'super_admin'])
+                    ->pluck('name')
+                    ->toArray();
+                
+                if (!empty($managementUsers)) {
+                    $isEmployeeMode = true;
+                    $adminNames = $managementUsers;
+                }
+            }
+
+            // 2. Fallback to name-based matching if no account-link found
+            if (!$isEmployeeMode) {
+                $cleanName = str_replace(['(Employee Mode)', '(employee mode)'], '', $u->name);
+                $cleanName = trim($cleanName);
+                
+                $adminsWithName = User::where('name', 'LIKE', '%' . $cleanName . '%')
+                    ->whereIn('role', ['admin', 'hr', 'super_admin'])
+                    ->where('id', '!=', $u->id)
+                    ->pluck('name')
+                    ->toArray();
+
+                if (!empty($adminsWithName)) {
+                    $isEmployeeMode = true;
+                    $adminNames = $adminsWithName;
+                }
+            }
+
+            if ($isEmployeeMode) {
                 $label .= ' (Admin: ' . implode(', ', $adminNames) . ')';
             }
 
