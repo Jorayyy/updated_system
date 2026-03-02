@@ -23,29 +23,30 @@ class NotificationController extends Controller
             $query->unread();
         }
 
-        // Filtering for Super Admin's personal view
-        if ($user->role === 'super_admin' && session('portalView') === 'personal') {
-            // Filter out management-related notifications
-            $query->whereNotIn('type', [
-                'payroll_computed', 
-                'dtr_approved', 
-                'leave_submitted', 
-                'payroll_ready'
-            ]);
+        // Define management-only notification types
+        $managementTypes = [
+            'payroll_computed', 
+            'dtr_approved', 
+            'leave_submitted', 
+            'payroll_ready',
+            'concern_submitted',
+            'leave_processing_warning',
+            'leave_processing_failed',
+            'bulk_payslips_ready'
+        ];
+
+        // Ensure employees and super admins (personal view) only see employee-related notifications
+        if ($user->role === 'employee' || ($user->role === 'super_admin' && session('portalView') === 'personal')) {
+            $query->whereNotIn('type', $managementTypes);
         }
 
         $notifications = $query->paginate(20);
         
         $unreadQuery = $user->notifications()->unread();
         
-        // Apply the same Super Admin filter to unread count
-        if ($user->role === 'super_admin' && session('portalView') === 'personal') {
-            $unreadQuery->whereNotIn('type', [
-                'payroll_computed', 
-                'dtr_approved', 
-                'leave_submitted', 
-                'payroll_ready'
-            ]);
+        // Apply the same filters to unread count
+        if ($user->role === 'employee' || ($user->role === 'super_admin' && session('portalView') === 'personal')) {
+            $unreadQuery->whereNotIn('type', $managementTypes);
         }
         
         $unreadCount = $unreadQuery->count();

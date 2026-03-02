@@ -364,10 +364,30 @@ class User extends Authenticatable
         // Filter and prioritize notifications
         // Logic: 
         // 1. Super Admin: Filter out admin-related notifications when in personal employee view
-        // 2. Prioritize by urgency (critical > high > medium > low)
+        // 2. Regular Employees: ALWAYS filter out management-related notifications
+        // 3. Prioritize by urgency (critical > high > medium > low)
         
         $user = $this;
         
+        // Define management-only notification types
+        $managementTypes = [
+            'payroll_computed', 
+            'dtr_approved', 
+            'leave_submitted', 
+            'payroll_ready',
+            'concern_submitted',
+            'leave_processing_warning',
+            'leave_processing_failed',
+            'bulk_payslips_ready'
+        ];
+
+        // Apply filters based on role and view
+        if ($user->role === 'employee') {
+            $query->whereNotIn('type', $managementTypes);
+        } elseif ($user->role === 'super_admin' && session('portalView') === 'personal') {
+            $query->whereNotIn('type', $managementTypes);
+        }
+
         // Custom notification prioritization logic
         $query->orderByRaw("CASE 
             WHEN priority = 'critical' THEN 1 
