@@ -41,9 +41,10 @@
                                 @foreach($availableUsers as $user)
                                     @php
                                         $isAlreadyAssigned = $user->payroll_group_id && $user->payroll_group_id != $payrollGroup->id;
+                                        $userLabel = $availableUsersLabels[$user->id] ?? $user->full_name;
                                     @endphp
                                     <tr class="hover:bg-indigo-50 transition-colors {{ $isAlreadyAssigned ? 'opacity-50 cursor-not-allowed bg-gray-50' : 'cursor-pointer employee-row' }}" 
-                                        data-name="{{ strtolower($user->full_name) }} {{ strtolower($availableUsersSelect[$user->id] ?? '') }}">
+                                        data-name="{{ strtolower($user->full_name) }} {{ strtolower($userLabel) }}">
                                         <td class="px-4 py-2">
                                             <input type="checkbox" name="user_ids[]" value="{{ $user->id }}" 
                                                 class="employee-checkbox rounded border-gray-300 text-indigo-600 focus:ring-indigo-500" 
@@ -51,7 +52,7 @@
                                                 {{ $isAlreadyAssigned ? 'disabled' : '' }}>
                                         </td>
                                         <td class="px-4 py-2">
-                                            <div class="text-sm font-bold text-gray-900">{{ $availableUsersSelect[$user->id] ?? $user->full_name }}</div>
+                                            <div class="text-sm font-bold text-gray-900">{{ $userLabel }}</div>
                                             <div class="text-xs text-gray-500">{{ $user->email }}</div>
                                         </td>
                                         <td class="px-4 py-2">

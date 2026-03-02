@@ -65,17 +65,16 @@ class PayrollGroupController extends Controller
 
         // Show all accounts that have the 'employee' role.
         $availableUsers = User::where('role', 'employee')->get();
-
-        // Prepare select labels
-        $availableUsersSelect = $availableUsers->mapWithKeys(function($u) {
+        // Force use the collection for labels to avoid sorting issues with nulls/missing keys
+        $availableUsersLabels = $availableUsers->mapWithKeys(function($u) {
             $label = $u->full_name;
             if (!empty($u->employee_id)) {
                 $label .= ' • ' . $u->employee_id;
             }
             return [$u->id => $label];
-        })->sort()->toArray();
+        });
 
-        return view('admin.payroll-groups.show', compact('payrollGroup', 'availableUsers', 'groupedUsers', 'availableUsersSelect'));
+        return view('admin.payroll-groups.show', compact('payrollGroup', 'availableUsers', 'groupedUsers', 'availableUsersLabels'));
     }
     /**
      * Add multiple employees to the group.
