@@ -34,6 +34,47 @@ class DtrApprovalController extends Controller
     }
 
     /**
+     * Generate current/next period for a group to allow instant filtering
+     */
+    public function quickGeneratePeriod(Request $request, PayrollGroup $payrollGroup)
+    {
+        $user = Auth::user();
+        if (!$user->canApproveMajorDecisions()) {
+            abort(403);
+        }
+
+        // Simplistic logic: generate for current month if none exists
+        $start = Carbon::now()->startOfMonth();
+        $end = Carbon::now()->endOfMonth();
+        
+        // Find if a period already exists for this range
+        $exists = PayrollPeriod::where('payroll_group_id', $payrollGroup->id)
+            ->where('start_date', $start->toDateString())
+            ->where('end_date', $end->toDateString())
+            ->first();
+            
+        if ($exists) {
+            return redirect()->back()->with('info', 'Period already exists for ' . $start->format('M Y'));
+        }
+
+        $period = PayrollPeriod::create([
+            'payroll_group_id' => $payrollGroup->id,
+            'name' => 'Period: ' . $start->format('M d') . ' - ' . $end->format('M d, Y'),
+            'start_date' => $start,
+            'end_date' => $end,
+            'pay_date' => $end->copy()->addDays(5),
+            'status' => 'draft',
+            'period_type' => $payrollGroup->period_type,
+            'cut_off_label' => $start->format('M Y'),
+        ]);
+
+        return redirect()->route('dtr-approval.index', [
+            'payroll_group_id' => $payrollGroup->id,
+            'payroll_period_id' => $period->id
+        ])->with('success', 'New period generated successfully.');
+    }
+
+    /**
      * Display DTR records list with filters
      */
     public function index(Request $request)
@@ -87,6 +128,27 @@ class DtrApprovalController extends Controller
 
         if ($request->filled('day_type')) {
             $query->where('day_type', $request->day_type);
+        }
+
+        // Live Search Filter
+        if ($request->filled('search')) {
+            $search = $request->search;
+            $query->whereHas('user', function($q) use ($search) {
+                $q->where(function($sq) use ($search) {
+                    $sq->where('name', 'like', "%{$search}%")
+                       ->orWhere('employee_id', 'like', "%{$search}%")
+                       ->orWhere('department', 'like', "%{$search}%");
+                });
+            });
+        }
+
+        // Discrepancy Toggle
+        if ($request->boolean('discrepancy_only')) {
+            $query->where(function($q) {
+                $q->whereNull('time_in')
+                  ->orWhereNull('time_out')
+                  ->orWhere('net_work_minutes', '<', 480); // Less than 8 hours
+            });
         }
 
         $dtrs = $query->orderBy('date', 'desc')
