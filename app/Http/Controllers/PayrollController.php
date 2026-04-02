@@ -516,6 +516,6 @@ class PayrollController extends Controller
         $period->dailyTimeRecords()->delete();
         $period->delete();
 
-        return redirect()->route('payroll.periods')->with('success', 'Payroll period deleted successfully.');
+        return back()->with('success', 'Payroll period deleted successfully.');
     }
 }

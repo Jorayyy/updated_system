@@ -323,6 +323,15 @@ class PayrollComputationService
         $employees = $query->get();
         $totalEmployees = $employees->count(); // Total count for progress
         
+        if ($totalEmployees === 0) {
+            $period->update(['status' => 'draft']);
+            Cache::forget("payroll_progress_{$period->id}");
+            return [
+                'success' => false,
+                'message' => 'No matching employees found for this pay period computation.'
+            ];
+        }
+
         Cache::put("payroll_progress_{$period->id}", [
             'status' => 'processing',
             'percentage' => 0,
@@ -345,20 +354,20 @@ class PayrollComputationService
             ->whereIn('user_id', $employeeIds)
             ->where('status', 'approved')
             ->orderBy('date')
-            ->get()
-            ->groupBy('user_id');
+            ->get();
+        $groupedDtrs = $allApprovedDtrs->groupBy('user_id');
 
         $allLoans = \App\Models\Loan::whereIn('user_id', $employeeIds)
             ->where('status', 'approved')
             ->where('remaining_balance', '>', 0)
-            ->get()
-            ->groupBy('user_id');
+            ->get();
+        $groupedLoans = $allLoans->groupBy('user_id');
 
         $allTransactions = \App\Models\EmployeeTransaction::whereIn('user_id', $employeeIds)
             ->where('status', 'approved')
             ->whereBetween('effective_date', [$period->start_date, $period->end_date])
-            ->get()
-            ->groupBy('user_id');
+            ->get();
+        $groupedTransactions = $allTransactions->groupBy('user_id');
 
         $processedCount = 0;
 
@@ -366,7 +375,7 @@ class PayrollComputationService
             $processedCount++;
             
             // Update Progress in Cache (every 5 employees or so to reduce cache writes)
-            if ($processedCount % 1 == 0 || $processedCount == $totalEmployees) {
+            if ($processedCount % 5 == 0 || $processedCount == $totalEmployees) {
                  $percentage = ($processedCount / $totalEmployees) * 100;
                  Cache::put("payroll_progress_{$period->id}", [
                     'status' => 'processing',
@@ -390,9 +399,9 @@ class PayrollComputationService
             $result = $this->computeFromDtr(
                 $employee, 
                 $period, 
-                $allApprovedDtrs->get($employee->id, new Collection()),
-                $allLoans->get($employee->id, new Collection()),
-                $allTransactions->get($employee->id, new Collection()),
+                $groupedDtrs->get($employee->id, collect([])),
+                $groupedLoans->get($employee->id, collect([])),
+                $groupedTransactions->get($employee->id, collect([])),
                 $manualMode
             );
 

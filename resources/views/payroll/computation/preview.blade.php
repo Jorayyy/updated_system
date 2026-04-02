@@ -4,7 +4,7 @@
             <h2 class="font-semibold text-xl text-gray-800 leading-tight">
                 {{ __('Payroll Preview') }}
             </h2>
-            <a href="{{ route('payroll.computation.dashboard') }}" class="text-indigo-600 hover:text-indigo-900">
+            <a href="{{ route('payroll.periods') }}" class="text-indigo-600 hover:text-indigo-900">
                 ← Back to Dashboard
             </a>
         </div>
@@ -180,7 +180,7 @@
 
             {{-- Action Buttons --}}
             <div class="flex justify-end space-x-4">
-                <a href="{{ route('payroll.computation.dashboard') }}" class="px-4 py-2 bg-gray-300 text-gray-700 rounded-md hover:bg-gray-400 transition">
+                <a href="{{ route('payroll.periods') }}" class="px-4 py-2 bg-gray-300 text-gray-700 rounded-md hover:bg-gray-400 transition">
                     Cancel
                 </a>
                 

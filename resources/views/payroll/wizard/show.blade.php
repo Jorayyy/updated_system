@@ -369,7 +369,7 @@
             </div>
             
             <div class="mt-8 flex justify-center">
-                 <a href="{{ route('payroll.computation.dashboard') }}" class="text-gray-600 hover:text-gray-900 underline">Back to Dashboard</a>
+                 <a href="{{ route('payroll.periods') }}" class="text-gray-600 hover:text-gray-900 underline">Back to Periods</a>
             </div>
         </div>
     </div>

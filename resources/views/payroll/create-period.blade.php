@@ -4,8 +4,8 @@
             <h2 class="font-semibold text-xl text-gray-800 leading-tight">
                 {{ __('Create Payroll Period') }}
             </h2>
-            <a href="{{ route('payroll.computation.dashboard') }}" class="text-sm text-gray-600 hover:text-gray-900">
-                ← Back to Command Center
+            <a href="{{ route('dashboard') }}" class="text-sm text-gray-600 hover:text-gray-900">
+                ← Back to Dashboard
             </a>
         </div>
     </x-slot>
@@ -155,7 +155,7 @@
 
                             <!-- Submit -->
                             <div class="flex items-center justify-end gap-4 pt-4 border-t">
-                                <a href="{{ route('payroll.computation.dashboard') }}" class="text-gray-600 hover:text-gray-800">
+                                <a href="{{ route('payroll.periods') }}" class="text-gray-600 hover:text-gray-800">
                                     Cancel
                                 </a>
                                 <x-primary-button>

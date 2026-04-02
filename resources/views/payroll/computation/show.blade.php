@@ -23,7 +23,7 @@
                         </button>
                     </form>
                 @endif
-                <a href="{{ route('payroll.computation.dashboard') }}" class="px-4 py-2 bg-gray-200 text-gray-700 rounded-md hover:bg-gray-300 text-sm font-medium">
+                <a href="{{ route('payroll.periods') }}" class="px-4 py-2 bg-gray-200 text-gray-700 rounded-md hover:bg-gray-300 text-sm font-medium">
                     ← Back to Dashboard
                 </a>
                 

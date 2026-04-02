@@ -38,10 +38,10 @@
                         <input type="text" name="search" value="{{ request('search') }}" 
                             placeholder="Search employee..."
                             class="border-gray-300 rounded-md shadow-sm">
-                        <select name="department" class="border-gray-300 rounded-md shadow-sm">
-                            <option value="">All Departments</option>
-                            @foreach($departments as $dept)
-                                <option value="{{ $dept }}" {{ request('department') == $dept ? 'selected' : '' }}>{{ $dept }}</option>
+                        <select name="payroll_group_id" class="border-gray-300 rounded-md shadow-sm">
+                            <option value="">All Groups</option>
+                            @foreach($payrollGroups as $group)
+                                <option value="{{ $group->id }}" {{ request('payroll_group_id') == $group->id ? 'selected' : '' }}>{{ $group->name }}</option>
                             @endforeach
                         </select>
                         <select name="status" class="border-gray-300 rounded-md shadow-sm">
@@ -52,12 +52,20 @@
                             <option value="on_leave" {{ request('status') == 'on_leave' ? 'selected' : '' }}>On Leave</option>
                             <option value="half_day" {{ request('status') == 'half_day' ? 'selected' : '' }}>Half Day</option>
                         </select>
-                        <input type="date" name="date" value="{{ request('date', date('Y-m-d')) }}" 
-                            class="border-gray-300 rounded-md shadow-sm">
-                        <button type="submit" class="bg-indigo-600 text-white px-4 py-2 rounded-md hover:bg-indigo-700">
+                        <div class="flex items-center gap-2">
+                            <span class="text-xs font-bold text-gray-500 uppercase">From:</span>
+                            <input type="date" name="date_from" value="{{ $dateFrom }}" 
+                                class="border-gray-300 rounded-md shadow-sm text-sm">
+                        </div>
+                        <div class="flex items-center gap-2">
+                            <span class="text-xs font-bold text-gray-500 uppercase">To:</span>
+                            <input type="date" name="date_to" value="{{ $dateTo }}" 
+                                class="border-gray-300 rounded-md shadow-sm text-sm">
+                        </div>
+                        <button type="submit" class="bg-indigo-600 text-white px-4 py-2 rounded-md hover:bg-indigo-700 font-bold uppercase text-xs tracking-widest shadow-sm">
                             Filter
                         </button>
-                        <a href="{{ route('attendance.manage') }}" class="text-gray-600 hover:text-gray-800">Reset</a>
+                        <a href="{{ route('attendance.manage') }}" class="text-gray-600 hover:text-gray-800 text-xs font-bold uppercase tracking-widest">Reset</a>
                     </form>
                 </div>
             </div>
@@ -66,7 +74,11 @@
             <div class="bg-white overflow-hidden shadow-sm sm:rounded-lg mb-6">
                 <div class="p-4 flex items-center justify-between">
                     <div class="text-sm text-gray-600">
-                        Showing attendance for: <strong>{{ \Carbon\Carbon::parse(request('date', date('Y-m-d')))->format('l, F d, Y') }}</strong>
+                        @if($dateFrom == $dateTo)
+                            Showing attendance for: <strong>{{ \Carbon\Carbon::parse($dateFrom)->format('l, F d, Y') }}</strong>
+                        @else
+                            Showing attendance from: <strong>{{ \Carbon\Carbon::parse($dateFrom)->format('M d, Y') }}</strong> to <strong>{{ \Carbon\Carbon::parse($dateTo)->format('M d, Y') }}</strong>
+                        @endif
                     </div>
                     <a href="{{ route('attendance.create') }}" class="bg-green-600 text-white px-4 py-2 rounded-md hover:bg-green-700">
                         Manual Entry
@@ -82,6 +94,7 @@
                             <thead class="bg-gray-50">
                                 <tr>
                                     <th class="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase">Employee</th>
+                                    <th class="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase">Date</th>
                                     <th class="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase">Account/Site</th>
                                     <th class="px-4 py-3 text-center text-xs font-medium text-gray-500 uppercase">Time In</th>
                                     <th class="px-4 py-3 text-center text-xs font-medium text-gray-500 uppercase">Time Out</th>
@@ -98,6 +111,10 @@
                                         <td class="px-4 py-4 whitespace-nowrap">
                                             <div class="text-sm font-medium text-gray-900">{{ $attendance->user->name }}</div>
                                             <div class="text-xs text-gray-500">{{ $attendance->user->employee_id }} • {{ $attendance->user->department ?? '-' }}</div>
+                                        </td>
+                                        <td class="px-4 py-4 whitespace-nowrap">
+                                            <div class="text-sm text-gray-900 font-bold">{{ \Carbon\Carbon::parse($attendance->date)->format('M d, Y') }}</div>
+                                            <div class="text-[10px] text-gray-500 uppercase">{{ \Carbon\Carbon::parse($attendance->date)->format('l') }}</div>
                                         </td>
                                         <td class="px-4 py-4 whitespace-nowrap">
                                             <div class="text-xs font-bold text-indigo-600 uppercase">{{ $attendance->user->account->name ?? '-' }}</div>

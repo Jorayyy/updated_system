@@ -198,9 +198,6 @@
                                     <x-dropdown-link :href="route('payroll.index')">
                                         {{ __('Manage Payrolls') }}
                                     </x-dropdown-link>
-                                    <x-dropdown-link :href="route('payroll.computation.dashboard')">
-                                        {{ __('Compute Payroll') }}
-                                    </x-dropdown-link>
 
                                     <div class="border-t border-gray-100"></div>
                                     <div class="block px-4 py-2 text-xs text-gray-400">
@@ -380,9 +377,6 @@
                 @if(auth()->user()->isAccounting())
                     <x-responsive-nav-link :href="route('dtr-approval.index')" :active="request()->routeIs('dtr-approval.*')">
                         {{ __('DTR Center') }}
-                    </x-responsive-nav-link>
-                    <x-responsive-nav-link :href="route('payroll.computation.dashboard')" :active="request()->routeIs('payroll.computation.*')">
-                        {{ __('Payroll Computation') }}
                     </x-responsive-nav-link>
                 @endif
                 @if(auth()->user()->isAdmin())

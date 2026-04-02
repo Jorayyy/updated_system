@@ -256,7 +256,7 @@
                                     </div>
                                 </div>
                             </div>
-                            <a href="{{ route('payroll.show-period', $currentPayrollPeriod) }}" class="inline-flex items-center justify-center gap-3 bg-white text-slate-900 px-8 py-4 rounded-2xl font-black uppercase text-[11px] tracking-widest hover:bg-slate-100 transition shadow-lg shrink-0">
+                            <a href="{{ route('dtr-approval.index') }}" class="inline-flex items-center justify-center gap-3 bg-white text-slate-900 px-8 py-4 rounded-2xl font-black uppercase text-[11px] tracking-widest hover:bg-slate-100 transition shadow-lg shrink-0">
                                 <span>Manage Payroll</span>
                                 <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                                     <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 8l4 4m0 0l-4 4m4-4H3"/>
@@ -342,6 +342,15 @@
                                     </svg>
                                 </div>
                                 <span class="text-[10px] font-black text-slate-700 text-center uppercase tracking-widest leading-tight">Holidays</span>
+                            </a>
+
+                            <a href="{{ route('payroll-groups.index') }}" class="group flex flex-col items-center gap-4 p-5 bg-slate-50 rounded-2xl hover:bg-purple-50 transition-all border border-transparent hover:border-purple-100">
+                                <div class="p-3 bg-purple-100 rounded-xl group-hover:bg-purple-200 transition-colors shadow-sm">
+                                    <svg class="w-7 h-7 text-purple-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 20h5v-2a3 3 0 00-5.356-1.857M17 20H7m10 0v-2c0-.656-.126-1.283-.356-1.857M7 20H2v-2a3 3 0 015.356-1.857M7 20v-2c0-.656.126-1.283.356-1.857m0 0a5.002 5.002 0 019.288 0M15 7a3 3 0 11-6 0 3 3 0 016 0zm6 3a2 2 0 11-4 0 2 2 0 014 0zM7 10a2 2 0 11-4 0 2 2 0 014 0z"/>
+                                    </svg>
+                                </div>
+                                <span class="text-[10px] font-black text-slate-700 text-center uppercase tracking-widest leading-tight">Payroll Groups</span>
                             </a>
                         </div>
                     </div>

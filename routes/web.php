@@ -8,7 +8,6 @@ use App\Http\Controllers\LeaveController;
 use App\Http\Controllers\LeaveTypeController;
 use App\Http\Controllers\DTRController;
 use App\Http\Controllers\PayrollController;
-use App\Http\Controllers\PayrollComputationController;
 use App\Http\Controllers\PayslipController;
 use App\Http\Controllers\HolidayController;
 use App\Http\Controllers\NotificationController;
@@ -18,12 +17,14 @@ use App\Http\Controllers\BackupController;
 use App\Http\Controllers\AuditLogController;
 use App\Http\Controllers\ComputerController;
 use App\Http\Controllers\LeaveCreditsController;
+use App\Http\Controllers\PayrollPeriodController;
+use App\Http\Controllers\DtrApprovalController;
+use Illuminate\Support\Facades\Route;
 use App\Http\Controllers\ConcernController;
 use App\Http\Controllers\AllowedIpController;
 use App\Http\Controllers\TimekeepingController;
 use App\Http\Controllers\TransactionController;
 use App\Http\Controllers\AnalyticsController;
-use App\Http\Controllers\DtrApprovalController;
 use App\Http\Controllers\AutomationController;
 use App\Http\Controllers\SiteController;
 use App\Http\Controllers\AccountController;
@@ -41,7 +42,6 @@ use App\Http\Controllers\CompanyAssetController;
 use App\Http\Controllers\ShiftChangeRequestController;
 use App\Http\Controllers\HrPolicyController;
 use App\Http\Controllers\EmployeeImportController;
-use Illuminate\Support\Facades\Route;
 
 /*
 |--------------------------------------------------------------------------
@@ -245,11 +245,14 @@ Route::middleware('auth')->group(function () {
         // DTR Approval Workflow (New)
         Route::prefix('dtr-approval')->name('dtr-approval.')->group(function () {
             Route::get('/', [DtrApprovalController::class, 'index'])->name('index');
+            Route::get('/create', [DtrApprovalController::class, 'create'])->name('create');
+            Route::post('/', [DtrApprovalController::class, 'store'])->name('store');
             Route::get('/pending', [DtrApprovalController::class, 'pendingApprovals'])->name('pending');
             Route::get('/corrections', [DtrApprovalController::class, 'correctionRequests'])->name('corrections');
             Route::get('/{dailyTimeRecord}', [DtrApprovalController::class, 'show'])->name('show');
             Route::get('/{dailyTimeRecord}/edit', [DtrApprovalController::class, 'edit'])->name('edit');
             Route::put('/{dailyTimeRecord}', [DtrApprovalController::class, 'update'])->name('update');
+            Route::delete('/{dailyTimeRecord}', [DtrApprovalController::class, 'destroy'])->name('destroy');
             Route::post('/{dailyTimeRecord}/approve', [DtrApprovalController::class, 'approve'])->name('approve');
             Route::post('/{dailyTimeRecord}/reject', [DtrApprovalController::class, 'reject'])->name('reject');
             Route::post('/{dailyTimeRecord}/approve-correction', [DtrApprovalController::class, 'approveCorrection'])->name('approve-correction');
@@ -260,11 +263,20 @@ Route::middleware('auth')->group(function () {
             Route::post('/generate-period/{payrollGroup}', [DtrApprovalController::class, 'quickGeneratePeriod'])->name('quick-generate-period');
             Route::post('/generate', [DtrApprovalController::class, 'generateDtrs'])->name('generate');
             Route::post('/advance-week/{group}', [DtrApprovalController::class, 'advanceWeek'])->name('advance-week');
+            Route::post('/period/{period}/redo', [DtrApprovalController::class, 'redoPeriod'])->name('redo-period');
+            Route::post('/period/{period}/edit-open', [DtrApprovalController::class, 'editPeriod'])->name('edit-open');
+
+            // Publishing Routes
+            Route::post('/period/{period}/publish', [\App\Http\Controllers\PublishDtrController::class, 'publish'])->name('publish');
+            Route::post('/period/{period}/unpublish', [\App\Http\Controllers\PublishDtrController::class, 'unpublish'])->name('unpublish');
         });
 
         // Payroll Management
         Route::get('/payroll', [PayrollController::class, 'index'])->name('payroll.index');
         Route::get('/payroll/periods', [PayrollController::class, 'periods'])->name('payroll.periods');
+        
+        // Payroll Period Management
+        Route::resource('payroll-periods', PayrollPeriodController::class);
         
         // Modification routes restricted to HR Accounting
         Route::middleware('role:accounting,super_admin')->group(function () {
@@ -283,39 +295,6 @@ Route::middleware('auth')->group(function () {
         Route::get('/payroll/periods/{period}/generate-report', [PayrollController::class, 'generateReport'])->name('payroll.generate-report');
         Route::get('/payroll/{payroll}/payslip', [PayrollController::class, 'payslip'])->name('payroll.payslip');
         Route::get('/payroll/{payroll}/payslip-pdf', [PayrollController::class, 'payslipPdf'])->name('payroll.payslip-pdf');
-
-        // Payroll Computation (DTR-Based Workflow) - Restricted to HR Accounting
-        Route::prefix('payroll/computation')->name('payroll.computation.')->middleware('role:accounting,super_admin')->group(function () {
-            // New 3-Phase Wizard - REMOVED PER USER REQUEST
-            // Route::get('/wizard/{period}', [App\Http\Controllers\PayrollWizardController::class, 'show'])->name('wizard');
-            
-            // Progress API
-            Route::get('/period/{period}/progress', [PayrollComputationController::class, 'progress'])->name('progress');
-            Route::post('/period/{period}/reset', [PayrollComputationController::class, 'resetProcessing'])->name('reset');
-
-            Route::get('/', [PayrollComputationController::class, 'dashboard'])->name('dashboard');
-            Route::get('/period/{period}/preview', [PayrollComputationController::class, 'preview'])->name('preview');
-            Route::post('/period/{period}/compute', [PayrollComputationController::class, 'compute'])->name('compute');
-            Route::get('/period/{period}', [PayrollComputationController::class, 'show'])->name('show');
-            Route::get('/period/{period}/status', [PayrollComputationController::class, 'status'])->name('status');
-            Route::get('/period/{period}/export', [PayrollComputationController::class, 'export'])->name('export');
-            Route::post('/period/{period}/generate-dtrs', [PayrollComputationController::class, 'generateDtrs'])->name('generate-dtrs');
-            
-            Route::get('/{payroll}/details', [PayrollComputationController::class, 'details'])->name('details');
-            Route::get('/{payroll}/edit', [PayrollComputationController::class, 'edit'])->name('edit');
-            Route::put('/{payroll}', [PayrollComputationController::class, 'update'])->name('update');
-            Route::post('/{payroll}/recompute', [PayrollComputationController::class, 'recompute'])->name('recompute');
-            Route::post('/{payroll}/approve', [PayrollComputationController::class, 'approve'])->name('approve');
-            Route::post('/{payroll}/release', [PayrollComputationController::class, 'release'])->name('release');
-            Route::post('/{payroll}/reject', [PayrollComputationController::class, 'reject'])->name('reject');
-            Route::post('/{payroll}/post', [PayrollComputationController::class, 'post'])->name('post');
-            
-            Route::post('/period/{period}/bulk-approve', [PayrollComputationController::class, 'bulkApprove'])->name('bulk-approve');
-            Route::post('/period/{period}/bulk-release', [PayrollComputationController::class, 'bulkRelease'])->name('bulk-release');
-            Route::post('/period/{period}/bulk-post', [PayrollComputationController::class, 'bulkPost'])->name('bulk-post');
-            Route::delete('/period/{period}/bulk-delete', [PayrollComputationController::class, 'bulkDelete'])->name('bulk-delete');
-            Route::delete('/{payroll}', [PayrollComputationController::class, 'destroy'])->name('destroy');
-        });
 
         // Payslip Management (Admin/HR)
         Route::prefix('payslip-admin')->name('payslip.admin.')->group(function () {

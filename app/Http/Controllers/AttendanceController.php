@@ -139,17 +139,18 @@ class AttendanceController extends Controller
      */
     public function manage(Request $request)
     {
-        $date = $request->get('date', today()->format('Y-m-d'));
-        $departmentFilter = $request->get('department');
+        $dateFrom = $request->get('date_from', today()->format('Y-m-d'));
+        $dateTo = $request->get('date_to', today()->format('Y-m-d'));
+        $groupIdFilter = $request->get('payroll_group_id');
         $statusFilter = $request->get('status');
         $searchTerm = $request->get('search');
 
         $query = Attendance::with(['user.account', 'user.site', 'user.account.activeSchedule'])
-            ->whereDate('date', $date);
+            ->whereBetween('date', [$dateFrom, $dateTo]);
 
-        if ($departmentFilter) {
-            $query->whereHas('user', function ($q) use ($departmentFilter) {
-                $q->where('department', $departmentFilter);
+        if ($groupIdFilter) {
+            $query->whereHas('user', function ($q) use ($groupIdFilter) {
+                $q->where('payroll_group_id', $groupIdFilter);
             });
         }
 
@@ -164,32 +165,31 @@ class AttendanceController extends Controller
             });
         }
 
-        $attendances = $query->orderBy('created_at', 'desc')->paginate(20);
+        $attendances = $query->orderBy('date', 'desc')->orderBy('created_at', 'desc')->paginate(50);
 
-        // Get all departments for filter
-        $departments = User::whereNotNull('department')
-            ->distinct()
-            ->pluck('department');
+        // Get all payroll groups for filter
+        $payrollGroups = \App\Models\PayrollGroup::orderBy('name')->get();
 
-        // Stats for today
-        $todayDate = Carbon::parse($date);
+        // Stats for current date range
         $totalEmployees = User::where('is_active', true)->where('role', 'employee')->count();
-        $presentToday = Attendance::whereDate('date', $todayDate)->whereIn('status', ['present', 'late'])->count();
-        $lateToday = Attendance::whereDate('date', $todayDate)->where('status', 'late')->count();
-        $onLeave = Attendance::whereDate('date', $todayDate)->where('status', 'on_leave')->count();
+        $presentCount = Attendance::whereBetween('date', [$dateFrom, $dateTo])->whereIn('status', ['present', 'late'])->count();
+        $lateCount = Attendance::whereBetween('date', [$dateFrom, $dateTo])->where('status', 'late')->count();
+        $onLeaveCount = Attendance::whereBetween('date', [$dateFrom, $dateTo])->where('status', 'on_leave')->count();
+        $absentCount = Attendance::whereBetween('date', [$dateFrom, $dateTo])->where('status', 'absent')->count();
         
         $stats = [
             'total_employees' => $totalEmployees,
-            'present_today' => $presentToday,
-            'late_today' => $lateToday,
-            'on_leave' => $onLeave,
-            'absent' => $totalEmployees - $presentToday - $onLeave,
+            'present_today' => $presentCount,
+            'late_today' => $lateCount,
+            'on_leave' => $onLeaveCount,
+            'absent' => $absentCount
         ];
 
         return view('attendance.admin-index', compact(
             'attendances',
-            'date',
-            'departments',
+            'dateFrom',
+            'dateTo',
+            'payrollGroups',
             'stats'
         ));
     }

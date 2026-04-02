@@ -61,12 +61,27 @@ class ComputePayrollJob implements ShouldQueue
             'manual_mode' => $this->manualMode,
         ]);
 
+        // IDEMPOTENCY check: If period is already completed/released, exit.
+        $this->payrollPeriod->refresh();
+        if (in_array($this->payrollPeriod->status, ['completed', 'released'])) {
+            Log::channel('payroll')->warning('Job skipped: Period already finalized.', ['period_id' => $this->payrollPeriod->id]);
+            return;
+        }
+
         try {
             $results = $payrollService->computePayrollForPeriod(
                 $this->payrollPeriod,
                 $this->userIds,
                 $this->manualMode
             );
+
+            // FINAL SYNC: Ensure status is explicitly marked as completed
+            if ($this->payrollPeriod->status !== 'completed') {
+                $this->payrollPeriod->update([
+                    'status' => 'completed',
+                    'payroll_computed_at' => now()
+                ]);
+            }
 
             Log::channel('payroll')->info('Payroll computation job completed', [
                 'period_id' => $this->payrollPeriod->id,
@@ -79,6 +94,10 @@ class ComputePayrollJob implements ShouldQueue
             $this->notifyCompletion($results);
 
         } catch (\Exception $e) {
+            // ERROR RECOVERY: If it fails, move back to draft so user can retry
+            $this->payrollPeriod->update(['status' => 'draft']);
+            Cache::forget("payroll_progress_{$this->payrollPeriod->id}");
+
             Log::channel('payroll')->error('Payroll computation job failed', [
                 'period_id' => $this->payrollPeriod->id,
                 'error' => $e->getMessage(),

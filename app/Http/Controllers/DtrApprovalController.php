@@ -75,12 +75,111 @@ class DtrApprovalController extends Controller
     }
 
     /**
+     * Clear DTRs for a period/group
+     */
+    public function clearDtrs(Request $request)
+    {
+        $user = Auth::user();
+        if (!$user->canApproveMajorDecisions()) {
+            abort(403);
+        }
+
+        $validated = $request->validate([
+            'payroll_period_id' => 'required',
+            'payroll_group_id' => 'required|exists:payroll_groups,id',
+        ]);
+
+        $groupId = $validated['payroll_group_id'];
+        $periodId = $validated['payroll_period_id'];
+        $period = PayrollPeriod::find($periodId);
+
+        // RESET LOGIC: Revert period status and delete DTRs
+        if ($period) {
+            $period->status = 'draft';
+            $period->payroll_computed = false;
+            $period->is_published = false;
+            $period->save();
+        }
+
+        // Delete DTRs for this group and period range
+        $query = DailyTimeRecord::whereHas('user', function($q) use ($groupId) {
+            $q->where('payroll_group_id', $groupId);
+        });
+
+        if ($period) {
+            $query->where(function($q) use ($period) {
+                $q->where('payroll_period_id', $period->id)
+                  ->orWhereBetween('date', [$period->start_date->toDateString(), $period->end_date->toDateString()]);
+            });
+        }
+
+        $count = $query->delete();
+
+        return redirect()->route('dtr-approval.index', ['payroll_group_id' => $groupId])
+            ->with('success', "RESET SUCCESS: Period status reverted to DRAFT and $count DTR record(s) cleared. You can now re-process this group.");
+    }
+
+    /**
      * Display DTR records list with filters
      */
     public function index(Request $request)
     {
         $user = Auth::user();
+
+        // Handle Clear DTR option immediately
+        if ($request->get('status') === 'clear') {
+            return $this->clearDtrs($request);
+        }
+
+        // Apply filters to query
         $query = DailyTimeRecord::with(['user.site', 'user.account', 'user.payrollGroup', 'payrollPeriod', 'attendance']);
+
+        // Check if we need to filter by date range from a payroll period even if the ID isn't linked to records
+        if ($request->filled('payroll_period_id')) {
+            $period = PayrollPeriod::find($request->payroll_period_id);
+            if ($period) {
+                // Check if period is already finalized/processed
+                if ($request->get('status') === 'process' && in_array($period->status, ['completed', 'processed', 'finalized'])) {
+                    // Check if it's already processed and offer options
+                    return redirect()->route('dtr-approval.index', ['payroll_group_id' => $request->payroll_group_id])
+                        ->with('error', 'Payroll already processed. Redo or Edit?')
+                        ->with('period_id', $period->id)
+                        ->with('show_redo_edit', true);
+                }
+
+                // Apply date filters instead of relying solely on payroll_period_id link
+                $query->where(function($q) use ($period) {
+                    $q->where('payroll_period_id', $period->id)
+                      ->orWhereBetween('date', [$period->start_date->toDateString(), $period->end_date->toDateString()]);
+                });
+            }
+        }
+
+        // Status-based logic for filtering results
+        if ($request->filled('status')) {
+            if ($request->status === 'pending') { 
+                // Phase 2: Show only finalized/approved records
+                $query->whereIn('status', ['approved', 'final', 'processed']);
+            } elseif ($request->status === 'process') {
+                // Phase 1: Review & Approve Drafts (Only show records that ARE NOT yet approved)
+                $query->whereNotIn('status', ['approved', 'final', 'processed']);
+                
+                $query->orderByRaw("CASE 
+                        WHEN (time_in IS NULL OR time_out IS NULL) AND attendance_status != 'absent' THEN 0 
+                        WHEN late_minutes > 0 OR undertime_minutes > 0 THEN 1 
+                        WHEN attendance_status = 'absent' THEN 2 
+                        ELSE 3 END ASC")
+                      ->orderBy('date', 'desc');
+            } elseif ($request->status === 'correction_pending') {
+                // "Check DTR Status"
+                $query->where(function($q) {
+                    $q->where('status', 'correction_pending')
+                      ->orWhere('correction_requested', true);
+                });
+            } else {
+                $query->where('status', $request->status);
+            }
+        }
 
         // Role-based filtering
         if ($user->role === 'employee') {
@@ -110,20 +209,12 @@ class DtrApprovalController extends Controller
             });
         }
 
-        if ($request->filled('payroll_period_id')) {
-            $query->where('payroll_period_id', $request->payroll_period_id);
-        }
-
-        if ($request->filled('status')) {
-            $query->where('status', $request->status);
-        }
-
         if ($request->filled('date_from')) {
-            $query->where('date', '>=', $request->date_from);
+            $query->whereDate('date', '>=', $request->date_from);
         }
 
         if ($request->filled('date_to')) {
-            $query->where('date', '<=', $request->date_to);
+            $query->whereDate('date', '<=', $request->date_to);
         }
 
         if ($request->filled('day_type')) {
@@ -154,6 +245,12 @@ class DtrApprovalController extends Controller
         $dtrs = $query->orderBy('date', 'desc')
             ->paginate($request->get('per_page', 15));
 
+        // Get the specific period if filtered
+        $period = null;
+        if ($request->filled('payroll_period_id')) {
+            $period = PayrollPeriod::find($request->payroll_period_id);
+        }
+
         $payrollPeriods = PayrollPeriod::orderBy('start_date', 'desc')
             ->take(12)
             ->get();
@@ -168,11 +265,97 @@ class DtrApprovalController extends Controller
 
         $stats = $this->approvalService->getApprovalStats($request->payroll_period_id);
 
+        return view('dtr-approval.index', compact(
+            'dtrs', 'payrollPeriods', 'sites', 'accounts', 'payrollGroups', 'employees', 'stats', 'period'
+        ));
+
         if ($request->filled('payroll_group_id') && $dtrs->total() === 0) {
-            session()->flash('info', 'No records found matching your current filter. Try changing status or period.');
+            $message = 'No records found matching your current filter. Try changing status or period.';
+            
+            if ($request->get('status') === 'pending') {
+                $message = 'No DTRs have been approved for this period yet. Please use "Process DTR" to view and approve pending records.';
+            } elseif ($request->get('status') === 'correction_pending') {
+                $message = 'No records are currently awaiting correction for this period.';
+            }
+
+            session()->flash('info', $message);
         }
 
         return view('dtr-approval.index', compact('dtrs', 'payrollPeriods', 'employees', 'stats', 'sites', 'accounts', 'payrollGroups'));
+    }
+
+    public function create(Request $request)
+    {
+        $user = Auth::user();
+        if (!$user->canApproveMajorDecisions()) {
+            abort(403);
+        }
+
+        $employees = User::where('is_active', true)->where('role', 'employee')->orderBy('name')->get();
+        $periods = PayrollPeriod::orderBy('start_date', 'desc')->take(20)->get();
+        $sites = \App\Models\Site::where('is_active', true)->orderBy('name')->get();
+
+        return view('dtr-approval.create', compact('employees', 'periods', 'sites'));
+    }
+
+    public function store(Request $request)
+    {
+        $user = Auth::user();
+        if (!$user->canApproveMajorDecisions()) {
+            abort(403);
+        }
+
+        $validated = $request->validate([
+            'user_id' => 'required|exists:users,id',
+            'payroll_period_id' => 'required|exists:payroll_periods,id',
+            'date' => 'required|date',
+            'time_in' => 'nullable|date_format:H:i',
+            'time_out' => 'nullable|date_format:H:i',
+            'attendance_status' => 'required|in:present,absent,on_leave,late,half_day',
+            'remarks' => 'nullable|string',
+        ]);
+
+        $employee = User::findOrFail($validated['user_id']);
+        
+        // Merge date with times
+        if ($validated['time_in']) {
+            $validated['time_in'] = Carbon::parse($validated['date'] . ' ' . $validated['time_in']);
+        }
+        if ($validated['time_out']) {
+            $validated['time_out'] = Carbon::parse($validated['date'] . ' ' . $validated['time_out']);
+        }
+
+        $dtr = DailyTimeRecord::create([
+            'user_id' => $validated['user_id'],
+            'payroll_period_id' => $validated['payroll_period_id'],
+            'date' => $validated['date'],
+            'time_in' => $validated['time_in'],
+            'time_out' => $validated['time_out'],
+            'status' => 'approved', // Manual entries are usually pre-approved
+            'attendance_status' => $validated['attendance_status'],
+            'remarks' => $validated['remarks'],
+            'day_type' => 'regular', // Default
+        ]);
+
+        // Recompute hours using DtrService
+        $this->dtrService->recomputeDtr($dtr);
+
+        return redirect()->route('dtr-approval.index', ['payroll_group_id' => $employee->payroll_group_id])
+            ->with('success', 'DTR record created manually.');
+    }
+
+    public function destroy(DailyTimeRecord $dailyTimeRecord)
+    {
+        $user = Auth::user();
+        if (!$user->canApproveMajorDecisions()) {
+            abort(403);
+        }
+
+        $groupId = $dailyTimeRecord->user->payroll_group_id;
+        $dailyTimeRecord->delete();
+
+        return redirect()->route('dtr-approval.index', ['payroll_group_id' => $groupId])
+            ->with('success', 'DTR record deleted successfully.');
     }
 
     /**
@@ -186,9 +369,74 @@ class DtrApprovalController extends Controller
             abort(403, 'Unauthorized access');
         }
 
-        $dailyTimeRecord->load(['user', 'payrollPeriod', 'attendance.breaks', 'approvedByUser']);
+        $dailyTimeRecord->load(['user.site', 'user.account', 'user.payrollGroup', 'payrollPeriod', 'attendance.breaks', 'approvedByUser']);
+        
+        // Load department relationship carefully as it might be named differently or missing in some context
+        if (method_exists($dailyTimeRecord->user, 'department')) {
+             $dailyTimeRecord->user->load('department');
+        } elseif (method_exists($dailyTimeRecord->user, 'department_rel')) {
+             $dailyTimeRecord->user->load('department_rel');
+        }
 
-        return view('dtr-approval.show', compact('dailyTimeRecord'));
+        // Fetch Period Context: All sibling DTRs for this period and user
+        $periodRecords = DailyTimeRecord::with(['attendance.breaks'])
+            ->where('user_id', $dailyTimeRecord->user_id)
+            ->where('payroll_period_id', $dailyTimeRecord->payroll_period_id)
+            ->orderBy('date')
+            ->get();
+
+        // Fetch all Filed Forms for the period
+        $period = $dailyTimeRecord->payrollPeriod;
+
+        // Fallback: If DTR has no period link, try to find one by date
+        if (!$period) {
+            $period = \App\Models\PayrollPeriod::where('start_date', '<=', $dailyTimeRecord->date)
+                ->where('end_date', '>=', $dailyTimeRecord->date)
+                ->first();
+        }
+
+        if (!$period) {
+             // Second Fallback: Just use current date range if absolutely no period exists
+             $period = (object)[
+                 'start_date' => \Carbon\Carbon::parse($dailyTimeRecord->date)->startOfMonth(),
+                 'end_date' => \Carbon\Carbon::parse($dailyTimeRecord->date)->endOfMonth()
+             ];
+        }
+
+        $filedForms = [
+            'leaves' => \App\Models\LeaveRequest::where('user_id', $dailyTimeRecord->user_id)
+                ->where('status', 'approved')
+                ->where(function($q) use ($period) {
+                    $q->whereBetween('start_date', [$period->start_date, $period->end_date])
+                      ->orWhereBetween('end_date', [$period->start_date, $period->end_date]);
+                })->get(),
+            'obs' => \App\Models\OfficialBusiness::where('user_id', $dailyTimeRecord->user_id)
+                ->where('status', 'approved')
+                ->whereBetween('date', [$period->start_date, $period->end_date])
+                ->get(),
+            'ots' => \App\Models\OvertimeRequest::where('user_id', $dailyTimeRecord->user_id)
+                ->where('status', 'approved')
+                ->whereBetween('date', [$period->start_date, $period->end_date])
+                ->get(),
+            'shifts' => \App\Models\ShiftChangeRequest::where('employee_id', $dailyTimeRecord->user_id)
+                ->where('status', 'approved')
+                ->whereBetween('requested_date', [$period->start_date, $period->end_date])
+                ->get(),
+        ];
+
+        // Summary Statistics (Legacy Format)
+        $summary = [
+            'regular_hours' => $periodRecords->sum('regular_hours'),
+            'overtime_hours' => $periodRecords->sum('overtime_hours'),
+            'night_diff_hours' => $periodRecords->sum('night_diff_hours'),
+            'late_minutes' => $periodRecords->sum('late_minutes'),
+            'undertime_minutes' => $periodRecords->sum('undertime_minutes'),
+            'absent_count' => $periodRecords->where('attendance_status', 'absent')->count(),
+            'tardiness_count' => $periodRecords->where('late_minutes', '>', 0)->count(),
+            'undertime_count' => $periodRecords->where('undertime_minutes', '>', 0)->count(),
+        ];
+
+        return view('dtr-approval.show', compact('dailyTimeRecord', 'periodRecords', 'filedForms', 'summary'));
     }
 
     /**
@@ -635,6 +883,42 @@ class DtrApprovalController extends Controller
             'approved_count' => $dtrs->where('status', 'approved')->count(),
             'pending_count' => $dtrs->whereIn('status', ['pending', 'draft'])->count(),
         ]);
+    }
+
+    /**
+     * Re-open a finalized period for editing
+     */
+    public function editPeriod(PayrollPeriod $period)
+    {
+        $user = Auth::user();
+        if (!$user->canApproveMajorDecisions()) { abort(403); }
+
+        $period->update(['status' => 'draft']);
+        
+        // Revert all DTRs to 'process' status so they can be reviewed again
+        DailyTimeRecord::where('payroll_period_id', $period->id)
+            ->where('status', 'approved')
+            ->update(['status' => 'process']);
+
+        return redirect()->route('dtr-approval.index', ['payroll_group_id' => $period->payroll_group_id, 'status' => 'process', 'payroll_period_id' => $period->id])
+            ->with('success', 'Period re-opened for editing.');
+    }
+
+    /**
+     * Redo a finalized period (re-generate DTRs)
+     */
+    public function redoPeriod(PayrollPeriod $period)
+    {
+        $user = Auth::user();
+        if (!$user->canApproveMajorDecisions()) { abort(403); }
+
+        $period->update(['status' => 'draft']);
+        
+        // Clear existing DTRs to allow fresh generation
+        DailyTimeRecord::where('payroll_period_id', $period->id)->delete();
+
+        return redirect()->route('dtr-approval.index', ['payroll_group_id' => $period->payroll_group_id, 'status' => 'process', 'payroll_period_id' => $period->id])
+            ->with('info', 'Period reset. Please click Generate again to re-process DTRs.');
     }
 
     /**

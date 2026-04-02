@@ -3,495 +3,329 @@
         <div class="flex justify-between items-center">
             <div class="flex items-center gap-4">
                 <h2 class="font-black text-2xl text-slate-800 uppercase tracking-tighter">
-                    Payroll <span class="text-indigo-600">Dashboard</span>
+                    Payroll <span class="text-indigo-600">Pipeline</span>
                 </h2>
+                <div class="hidden md:flex items-center bg-slate-100 rounded-full px-3 py-1 border border-slate-200">
+                    <div class="flex items-center gap-2 text-[10px] font-bold text-slate-500 uppercase tracking-wider">
+                        <span class="w-2 h-2 rounded-full bg-green-500 animate-pulse"></span>
+                        System Ready
+                    </div>
+                </div>
             </div>
             <div class="flex items-center gap-3">
-                <span class="text-[10px] font-black uppercase tracking-widest text-slate-400">Payroll System v2.0</span>
+                <a href="{{ route('payroll.create-period') }}" class="inline-flex items-center px-4 py-2 bg-indigo-600 text-white rounded-lg text-sm font-bold hover:bg-indigo-700 transition shadow-sm border-b-4 border-indigo-800 active:border-b-0 active:translate-y-1">
+                    <svg class="w-4 h-4 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-8H4" />
+                    </svg>
+                    New Pay Period
+                </a>
             </div>
         </div>
     </x-slot>
 
-    <div class="py-6">
+    <div class="py-6 bg-slate-50 min-h-screen">
         <div class="max-w-7xl mx-auto sm:px-6 lg:px-8">
-            {{-- Unified Filter Bar --}}
-            <div class="bg-white p-4 rounded-xl shadow-sm border border-gray-100 mb-8 flex flex-wrap items-center justify-between gap-4">
-                <div class="flex items-center gap-4 flex-wrap">
-                    <h3 class="text-sm font-bold text-gray-500 uppercase tracking-widest mr-2">Filters:</h3>
-                    
-                    {{-- Site Filter --}}
-                    <div class="w-48">
-                        <select onchange="window.location.href = this.value" class="w-full border-gray-200 rounded-lg text-sm focus:ring-blue-500 focus:border-blue-500">
-                            <option value="{{ route('payroll.computation.dashboard') }}">All Sites</option>
-                            @foreach($sites as $site)
-                                <option value="{{ route('payroll.computation.dashboard', ['site_id' => $site->id]) }}" {{ request('site_id') == $site->id ? 'selected' : '' }}>
-                                    {{ $site->name }}
-                                </option>
-                            @endforeach
-                        </select>
-                    </div>
-
-                    {{-- Group Filter --}}
-                    <div class="w-48">
-                        <select onchange="window.location.href = this.value" class="w-full border-gray-200 rounded-lg text-sm focus:ring-blue-500 focus:border-blue-500">
-                            <option value="{{ route('payroll.computation.dashboard') }}">All Groups</option>
-                            @foreach($groups as $group)
-                                <option value="{{ route('payroll.computation.dashboard', ['group_id' => $group->id]) }}" {{ request('group_id') == $group->id ? 'selected' : '' }}>
-                                    {{ $group->name }}
-                                </option>
-                            @endforeach
-                        </select>
-                    </div>
+            
+            {{-- Pipeline Visualizer --}}
+            <div class="mb-8 relative">
+                <div class="absolute inset-0 flex items-center" aria-hidden="true">
+                    <div class="w-full border-t-2 border-slate-200 border-dashed"></div>
                 </div>
-
-                <div class="flex gap-2">
-                    <a href="{{ route('dtr-approval.index') }}" class="inline-flex items-center px-4 py-2 bg-green-600 text-white rounded-lg text-sm font-bold hover:bg-green-700 transition shadow-sm">
-                        <svg class="w-4 h-4 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z" />
-                        </svg>
-                        DTR Center
-                    </a>
-                    <a href="{{ route('payroll-groups.index') }}" class="inline-flex items-center px-4 py-2 bg-slate-800 text-white rounded-lg text-sm font-bold hover:bg-slate-900 transition shadow-sm">
-                        <svg class="w-4 h-4 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 20h5v-2a3 3 0 00-5.356-1.857M17 20H7m10 0v-2c0-.656-.126-1.283-.356-1.857M7 20H2v-2a3 3 0 015.356-1.857M7 20v-2c0-.656.126-1.283.356-1.857m0 0a5.002 5.002 0 019.288 0M15 7a3 3 0 11-6 0 3 3 0 016 0zm6 3a2 2 0 11-4 0 2 2 0 014 0zM7 10a2 2 0 11-4 0 2 2 0 014 0z" />
-                        </svg>
-                        Manage Groups
-                    </a>
-                    <a href="{{ route('payroll.periods') }}" class="inline-flex items-center px-4 py-2 bg-indigo-600 text-white rounded-lg text-sm font-bold hover:bg-indigo-700 transition shadow-sm">
-                        <svg class="w-4 h-4 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z" />
-                        </svg>
-                        View All Periods
-                    </a>
-                    <a href="{{ route('payroll.create-period') }}" class="inline-flex items-center px-4 py-2 bg-blue-600 text-white rounded-lg text-sm font-bold hover:bg-blue-700 transition shadow-sm">
-                        <svg class="w-4 h-4 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-8H4" />
-                        </svg>
-                        New Pay Period
-                    </a>
+                <div class="relative flex justify-between">
+                    <div class="bg-white px-4 flex flex-col items-center gap-2">
+                        <div class="w-10 h-10 rounded-full bg-yellow-100 text-yellow-600 flex items-center justify-center border-2 border-yellow-200 shadow-sm transition-transform hover:scale-110">
+                            <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z" /></svg>
+                        </div>
+                        <span class="text-[10px] font-black uppercase tracking-widest text-slate-400">Step 1: DTR</span>
+                    </div>
+                    <div class="bg-white px-4 flex flex-col items-center gap-2">
+                        <div class="w-10 h-10 rounded-full bg-blue-100 text-blue-600 flex items-center justify-center border-2 border-blue-200 shadow-sm transition-transform hover:scale-110">
+                            <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 7h6m0 10v-3m-3 3h.01M9 17h.01M9 14h.01M12 14h.01M15 11h.01M12 11h.01M9 11h.01M7 21h10a2 2 0 002-2V5a2 2 0 00-2-2H7a2 2 0 00-2 2v14a2 2 0 002 2z" /></svg>
+                        </div>
+                        <span class="text-[10px] font-black uppercase tracking-widest text-slate-400">Step 2: Compute</span>
+                    </div>
+                    <div class="bg-white px-4 flex flex-col items-center gap-2">
+                        <div class="w-10 h-10 rounded-full bg-indigo-100 text-indigo-600 flex items-center justify-center border-2 border-indigo-200 shadow-sm transition-transform hover:scale-110">
+                            <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z" /><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z" /></svg>
+                        </div>
+                        <span class="text-[10px] font-black uppercase tracking-widest text-slate-400">Step 3: Review</span>
+                    </div>
+                    <div class="bg-white px-4 flex flex-col items-center gap-2">
+                        <div class="w-10 h-10 rounded-full bg-green-100 text-green-600 flex items-center justify-center border-2 border-green-200 shadow-sm transition-transform hover:scale-110">
+                            <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 17h2a2 2 0 002-2v-4a2 2 0 00-2-2H5a2 2 0 00-2 2v4a2 2 0 002 2h2m2 4h6a2 2 0 002-2v-4a2 2 0 00-2-2H9a2 2 0 00-2 2v4a2 2 0 002 2zm8-12V5a2 2 0 00-2-2H9a2 2 0 00-2 2v4h10z" /></svg>
+                        </div>
+                        <span class="text-[10px] font-black uppercase tracking-widest text-slate-400">Step 4: Payslips</span>
+                    </div>
                 </div>
             </div>
 
             {{-- Flash Messages --}}
             @if (session('success'))
-                <div class="mb-4 bg-green-100 border border-green-400 text-green-700 px-4 py-3 rounded">
-                    {{ session('success') }}
+                <div class="mb-4 flex items-center p-4 bg-emerald-50 border-l-4 border-emerald-500 rounded-r-lg shadow-sm">
+                    <div class="flex-shrink-0 text-emerald-500 uppercase tracking-widest font-black text-xs mr-3">Success</div>
+                    <div class="text-sm font-bold text-emerald-800">{{ session('success') }}</div>
                 </div>
             @endif
 
-            @if (session('error'))
-                <div class="mb-4 bg-red-100 border border-red-400 text-red-700 px-4 py-3 rounded">
-                    {{ session('error') }}
-                </div>
-            @endif
-
-            {{-- Stats Overview --}}
-            <div class="grid grid-cols-1 md:grid-cols-4 gap-6 mb-6">
-                <div class="bg-white overflow-hidden shadow-sm rounded-lg">
-                    <div class="p-6">
-                        <div class="flex items-center">
-                            <div class="p-3 rounded-full bg-green-100 text-green-600">
-                                <svg class="w-8 h-8" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z"></path>
-                                </svg>
+            {{-- Main Workflow Area --}}
+            <div class="grid grid-cols-1 lg:grid-cols-12 gap-8">
+                
+                {{-- LEFT COLUMN: Active Pipeline --}}
+                <div class="lg:col-span-8 space-y-8">
+                    
+                    {{-- PHASE 2: PROCESSING (Top Priority) --}}
+                    @if($processingPeriods->isNotEmpty())
+                        <div class="bg-white rounded-2xl shadow-xl overflow-hidden border border-blue-100 animate-in fade-in slide-in-from-bottom-4 duration-500">
+                            <div class="p-6 bg-gradient-to-r from-blue-600 to-indigo-700 text-white flex justify-between items-center">
+                                <div>
+                                    <h3 class="text-xl font-black uppercase tracking-tighter italic">Active Computations</h3>
+                                    <p class="text-blue-100 text-xs font-bold uppercase tracking-widest">Real-time status tracking</p>
+                                </div>
+                                <div class="bg-blue-400/20 px-3 py-1 rounded-full border border-blue-400/30">
+                                    <span class="text-[10px] font-black uppercase tracking-widest animate-pulse">Running...</span>
+                                </div>
                             </div>
-                            <div class="ml-4">
-                                <p class="text-sm font-medium text-gray-500">Ready to Compute</p>
-                                <p class="text-2xl font-semibold text-gray-900">{{ $stats['ready_count'] }}</p>
-                            </div>
-                        </div>
-                    </div>
-                </div>
-
-                <div class="bg-white overflow-hidden shadow-sm rounded-lg">
-                    <div class="p-6">
-                        <div class="flex items-center">
-                            <div class="p-3 rounded-full bg-yellow-100 text-yellow-600">
-                                <svg class="w-8 h-8" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z"></path>
-                                </svg>
-                            </div>
-                            <div class="ml-4">
-                                <p class="text-sm font-medium text-gray-500">Pending DTR Approval</p>
-                                <p class="text-2xl font-semibold text-gray-900">{{ $stats['pending_count'] }}</p>
-                            </div>
-                        </div>
-                    </div>
-                </div>
-
-                <div class="bg-white overflow-hidden shadow-sm rounded-lg">
-                    <div class="p-6">
-                        <div class="flex items-center">
-                            <div class="p-3 rounded-full bg-blue-100 text-blue-600">
-                                <svg class="w-8 h-8" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15"></path>
-                                </svg>
-                            </div>
-                            <div class="ml-4">
-                                <p class="text-sm font-medium text-gray-500">Processing</p>
-                                <p class="text-2xl font-semibold text-gray-900">{{ $stats['processing_count'] }}</p>
-                            </div>
-                        </div>
-                    </div>
-                </div>
-
-                <div class="bg-white overflow-hidden shadow-sm rounded-lg">
-                    <div class="p-6">
-                        <div class="flex items-center">
-                            <div class="p-3 rounded-full bg-indigo-100 text-indigo-600">
-                                <svg class="w-8 h-8" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 20h5v-2a3 3 0 00-5.356-1.857M17 20H7m10 0v-2c0-.656-.126-1.283-.356-1.857M7 20H2v-2a3 3 0 015.356-1.857M7 20v-2c0-.656.126-1.283.356-1.857m0 0a5.002 5.002 0 019.288 0M15 7a3 3 0 11-6 0 3 3 0 016 0zm6 3a2 2 0 11-4 0 2 2 0 014 0zM7 10a2 2 0 11-4 0 2 2 0 014 0z"></path>
-                                </svg>
-                            </div>
-                            <div class="ml-4">
-                                <p class="text-sm font-medium text-gray-500">Active Employees</p>
-                                <p class="text-2xl font-semibold text-gray-900">{{ $stats['total_employees'] }}</p>
-                            </div>
-                        </div>
-                    </div>
-                </div>
-            </div>
-
-            {{-- Periods Ready for Computation --}}
-            <div class="bg-white overflow-hidden shadow-sm rounded-lg mb-6">
-                <div class="p-6 border-b border-gray-200">
-                    <h3 class="text-lg font-semibold text-green-600 flex items-center">
-                        <svg class="w-5 h-5 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z"></path>
-                        </svg>
-                        Ready for Payroll Computation
-                    </h3>
-                    <p class="text-sm text-gray-500 mt-1">All DTRs approved - ready to compute payroll</p>
-                </div>
-
-                @if($readyPeriods->isEmpty())
-                    <div class="p-6 text-center text-gray-500">
-                        <svg class="w-12 h-12 mx-auto text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2"></path>
-                        </svg>
-                        <p class="mt-2">No periods ready for computation</p>
-                        <p class="text-sm">Approve all DTRs for a period to enable computation</p>
-                    </div>
-                @else
-                    <div class="overflow-x-auto">
-                        <table class="min-w-full divide-y divide-gray-200">
-                            <thead class="bg-gray-50">
-                                <tr>
-                                    <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Period</th>
-                                    <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Group</th>
-                                    <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Type</th>
-                                    <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Pay Date</th>
-                                    <th class="px-6 py-3 text-right text-xs font-medium text-gray-500 uppercase tracking-wider">Actions</th>
-                                </tr>
-                            </thead>
-                            <tbody class="bg-white divide-y divide-gray-200">
-                                @foreach($readyPeriods as $period)
-                                    <tr class="hover:bg-green-50">
-                                        <td class="px-6 py-4 whitespace-nowrap">
-                                            <div class="text-sm font-medium text-gray-900">
-                                                {{ $period->start_date->format('M d') }} - {{ $period->end_date->format('M d, Y') }}
-                                            </div>
-                                        </td>
-                                        <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
-                                            {{ $period->payrollGroup->name ?? 'Global' }}
-                                        </td>
-                                        <td class="px-6 py-4 whitespace-nowrap">
-                                            <span class="px-2 inline-flex text-xs leading-5 font-semibold rounded-full bg-gray-100 text-gray-800">
-                                                {{ ucfirst(str_replace('_', ' ', $period->period_type)) }}
-                                            </span>
-                                        </td>
-                                        <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
-                                            {{ $period->pay_date->format('M d, Y') }}
-                                        </td>
-                                        <td class="px-6 py-4 whitespace-nowrap text-right text-sm font-medium space-x-2">
-                                            <a href="{{ route('payroll.computation.show', $period) }}" class="inline-flex items-center px-4 py-2 bg-blue-600 border border-transparent rounded-md font-semibold text-xs text-white uppercase tracking-widest hover:bg-blue-700 active:bg-blue-900 focus:outline-none focus:border-blue-900 focus:ring ring-blue-300 disabled:opacity-25 transition ease-in-out duration-150">
-                                                Manage Payroll
-                                            </a>
-                                        </td>
-                                    </tr>
-                                @endforeach
-                            </tbody>
-                        </table>
-                    </div>
-                @endif
-            </div>
-
-            {{-- Periods Pending DTR Approval --}}
-            <div class="bg-white overflow-hidden shadow-sm rounded-lg mb-6">
-                <div class="p-6 border-b border-gray-200">
-                    <h3 class="text-lg font-semibold text-yellow-600 flex items-center">
-                        <svg class="w-5 h-5 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z"></path>
-                        </svg>
-                        Pending DTR Approval
-                    </h3>
-                    <p class="text-sm text-gray-500 mt-1">DTRs need approval before payroll can be computed</p>
-                </div>
-
-                @if($pendingPeriods->isEmpty())
-                    <div class="p-6 text-center text-gray-500">
-                        <p>No periods with pending DTRs</p>
-                    </div>
-                @else
-                    <div class="overflow-x-auto">
-                        <table class="min-w-full divide-y divide-gray-200">
-                            <thead class="bg-gray-50">
-                                <tr>
-                                    <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Period</th>
-                                    <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Group</th>
-                                    <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">DTR Progress</th>
-                                    <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Status</th>
-                                    <th class="px-6 py-3 text-right text-xs font-medium text-gray-500 uppercase tracking-wider">Actions</th>
-                                </tr>
-                            </thead>
-                            <tbody class="bg-white divide-y divide-gray-200">
-                                @foreach($pendingPeriods as $period)
-                                    @php
-                                        $progressPercent = $period->total_dtrs > 0 
-                                            ? round(($period->approved_dtrs / $period->total_dtrs) * 100) 
-                                            : 0;
-                                    @endphp
-                                    <tr class="hover:bg-yellow-50">
-                                        <td class="px-6 py-4 whitespace-nowrap">
-                                            <div class="text-sm font-medium text-gray-900">
-                                                {{ $period->start_date->format('M d') }} - {{ $period->end_date->format('M d, Y') }}
-                                            </div>
-                                        </td>
-                                        <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
-                                            {{ $period->payrollGroup->name ?? 'Global' }}
-                                        </td>
-                                        <td class="px-6 py-4">
-                                            <div class="flex items-center">
-                                                <div class="flex-1 mr-4">
-                                                    <div class="w-full bg-gray-200 rounded-full h-2.5">
-                                                        <div class="bg-yellow-500 h-2.5 rounded-full" style="width: {{ $progressPercent }}%"></div>
-                                                    </div>
-                                                </div>
-                                                <div class="text-sm text-gray-500">
-                                                    {{ $period->approved_dtrs }}/{{ $period->total_dtrs }}
-                                                </div>
-                                            </div>
-                                        </td>
-                                        <td class="px-6 py-4 whitespace-nowrap">
-                                            @if($period->total_dtrs > 0)
-                                                <span class="text-sm text-yellow-600">
-                                                    {{ $period->pending_dtrs }} pending approval
-                                                </span>
-                                            @else
-                                                <span class="text-sm text-blue-600 font-semibold">
-                                                    New Period - Ready to Start
-                                                </span>
-                                            @endif
-                                        </td>
-                                        <td class="px-6 py-4 whitespace-nowrap text-right text-sm font-medium space-x-3">
-                                            <a href="{{ route('dtr-approval.index', ['payroll_period_id' => $period->id, 'payroll_group_id' => $period->payroll_group_id]) }}" class="inline-flex items-center px-4 py-2 bg-indigo-50 text-indigo-700 border border-indigo-200 rounded-md font-semibold text-xs uppercase tracking-widest hover:bg-indigo-100 transition ease-in-out duration-150">
-                                                Review DTRs
-                                            </a>
-                                            <a href="{{ route('payroll.computation.show', $period) }}" class="inline-flex items-center px-4 py-2 bg-yellow-600 border border-transparent rounded-md font-semibold text-xs text-white uppercase tracking-widest hover:bg-yellow-700 active:bg-yellow-900 focus:outline-none focus:border-yellow-900 focus:ring ring-yellow-300 disabled:opacity-25 transition ease-in-out duration-150">
-                                                Manage Payroll
-                                            </a>
-                                        </td>
-                                    </tr>
-                                @endforeach
-                            </tbody>
-                        </table>
-                    </div>
-                @endif
-            </div>
-
-            {{-- Currently Processing --}}
-            @if($processingPeriods->isNotEmpty())
-                <div class="bg-white overflow-hidden shadow-sm rounded-lg mb-6">
-                    <div class="p-6 border-b border-gray-200">
-                        <h3 class="text-lg font-semibold text-blue-600 flex items-center">
-                            <svg class="w-5 h-5 mr-2 animate-spin" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15"></path>
-                            </svg>
-                            Currently Processing
-                        </h3>
-                    </div>
-
-                    <div class="overflow-x-auto">
-                        <table class="min-w-full divide-y divide-gray-200">
-                            <thead class="bg-gray-50">
-                                <tr>
-                                    <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Period</th>
-                                    <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Group</th>
-                                    <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Started</th>
-                                    <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider w-1/3">Progress</th>
-                                    <th class="px-6 py-3 text-right text-xs font-medium text-gray-500 uppercase tracking-wider">Actions</th>
-                                </tr>
-                            </thead>
-                            <tbody class="bg-white divide-y divide-gray-200">
+                            <div class="p-6 space-y-6">
                                 @foreach($processingPeriods as $period)
-                                    <tr class="hover:bg-blue-50">
-                                        <td class="px-6 py-4 whitespace-nowrap">
-                                            <div class="text-sm font-medium text-gray-900">
-                                                {{ $period->start_date->format('M d') }} - {{ $period->end_date->format('M d, Y') }}
-                                            </div>
-                                        </td>
-                                        <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
-                                            {{ $period->payrollGroup->name ?? 'Global' }}
-                                        </td>
-                                        <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
-                                            {{ $period->updated_at->diffForHumans() }}
-                                        </td>
-                                        <td class="px-6 py-4 whitespace-nowrap w-1/3">
-                                            <!-- Progress Bar -->
-                                            <div class="relative pt-1 w-full" id="progress-container-{{ $period->id }}">
-                                                <div class="flex mb-2 items-center justify-between">
-                                                    <div>
-                                                        <span class="text-xs font-semibold inline-block py-1 px-2 uppercase rounded-full text-blue-600 bg-blue-200" id="progress-badge-{{ $period->id }}">
-                                                            Running
-                                                        </span>
-                                                    </div>
-                                                    <div class="text-right">
-                                                        <span class="text-xs font-semibold inline-block text-blue-600" id="progress-msg-{{ $period->id }}">
-                                                            Initializing...
-                                                        </span>
-                                                    </div>
-                                                </div>
-                                                <div class="overflow-hidden h-2 mb-4 text-xs flex rounded bg-blue-200">
-                                                    <div style="width:0%" id="progress-bar-{{ $period->id }}" class="shadow-none flex flex-col text-center whitespace-nowrap text-white justify-center bg-blue-500 transition-all duration-500"></div>
+                                    <div class="bg-slate-50 rounded-xl p-5 border border-slate-200 shadow-inner" id="period-card-{{ $period->id }}">
+                                        <div class="flex flex-wrap justify-between items-start gap-4 mb-4">
+                                            <div>
+                                                <h4 class="font-black text-slate-800 uppercase tracking-tight text-lg">
+                                                    {{ $period->period_label }}
+                                                </h4>
+                                                <div class="flex gap-2 mt-1">
+                                                    <span class="bg-slate-200 text-slate-600 text-[10px] font-black px-2 py-0.5 rounded uppercase tracking-wider">
+                                                        {{ $period->payrollGroup->name ?? 'Global' }}
+                                                    </span>
+                                                    <span class="text-slate-400 text-[10px] font-bold uppercase tracking-widest">
+                                                        Started {{ $period->updated_at->diffForHumans() }}
+                                                    </span>
                                                 </div>
                                             </div>
-                                        </td>
-                                        <td class="px-6 py-4 whitespace-nowrap text-right text-sm font-medium space-x-2">
-                                            <a href="{{ route('payroll.computation.show', $period) }}" class="inline-flex items-center px-4 py-2 bg-blue-600 border border-transparent rounded-md font-semibold text-xs text-white uppercase tracking-widest hover:bg-blue-700 active:bg-blue-900 focus:outline-none focus:border-blue-900 focus:ring ring-blue-300 disabled:opacity-25 transition ease-in-out duration-150">
-                                                Manage
-                                            </a>
-                                            <form action="{{ route('payroll.computation.reset', $period) }}" method="POST" class="inline">
-                                                @csrf
-                                                <button type="submit" class="text-red-500 hover:text-red-700 text-xs font-bold underline" onclick="return confirm('Are you sure you want to stop processing and reset this period?')">
-                                                    Reset
-                                                </button>
-                                            </form>
-                                        </td>
-                                    </tr>
-                                @endforeach
-                            </tbody>
-                        </table>
-                    </div>
-                </div>
+                                            <div class="flex gap-2">
+                                                <form action="{{ route('payroll.computation.reset', $period) }}" method="POST">
+                                                    @csrf
+                                                    <button type="submit" class="text-[10px] font-black text-red-500 uppercase tracking-widest hover:underline" onclick="return confirm('Stop and reset?')">Stop Job</button>
+                                                </form>
+                                            </div>
+                                        </div>
 
-                <script>
-                    document.addEventListener('DOMContentLoaded', function() {
-                        const periods = @json($processingPeriods->pluck('id'));
+                                        <div class="relative pt-1">
+                                            <div class="flex mb-2 items-center justify-between">
+                                                <div>
+                                                    <span id="progress-msg-{{ $period->id }}" class="text-[10px] font-black uppercase tracking-widest text-blue-600 bg-blue-50 px-2 py-1 rounded border border-blue-100">
+                                                        Connecting...
+                                                    </span>
+                                                </div>
+                                                <div class="text-right">
+                                                    <span id="progress-pct-{{ $period->id }}" class="text-sm font-black text-blue-700">0%</span>
+                                                </div>
+                                            </div>
+                                            <div class="overflow-hidden h-4 mb-4 text-xs flex rounded-full bg-slate-200 shadow-inner">
+                                                <div style="width:0%" id="progress-bar-{{ $period->id }}" class="shadow-none flex flex-col text-center whitespace-nowrap text-white justify-center bg-blue-600 transition-all duration-700 animate-pulse"></div>
+                                            </div>
+                                        </div>
+                                    </div>
+                                @endforeach
+                            </div>
+                        </div>
+                    @endif
+
+                    {{-- PHASE 1: DTR BLOCKDOWN (Step 1) --}}
+                    <div class="bg-white rounded-2xl shadow-lg overflow-hidden border border-slate-200">
+                        <div class="p-5 border-b border-slate-100 bg-slate-50 flex justify-between items-center">
+                            <div>
+                                <h3 class="text-sm font-black text-slate-800 uppercase tracking-widest italic flex items-center">
+                                    <span class="w-6 h-6 rounded bg-yellow-400 flex items-center justify-center text-white mr-2 text-xs italic">1</span>
+                                    DTR Lockdown & Prep
+                                </h3>
+                            </div>
+                            <span class="text-[10px] font-black text-slate-400 uppercase tracking-widest">{{ $readyPeriods->count() + $pendingPeriods->count() }} Periods</span>
+                        </div>
                         
-                        periods.forEach(periodId => {
-                            const progressBar = document.getElementById(`progress-bar-${periodId}`);
-                            const progressMsg = document.getElementById(`progress-msg-${periodId}`);
-                            const progressBadge = document.getElementById(`progress-badge-${periodId}`);
-                            let pollInterval;
-
-                            function checkProgress() {
-                                fetch(`/payroll/computation/period/${periodId}/progress`)
-                                    .then(response => response.json())
-                                    .then(data => {
-                                        // Update width
-                                        const percentage = data.percentage || 0;
-                                        progressBar.style.width = `${percentage}%`;
+                        <div class="divide-y divide-slate-100">
+                            {{-- Periods Waiting for Approvals --}}
+                            @foreach($pendingPeriods as $period)
+                                @php $progressPercent = $period->total_dtrs > 0 ? round(($period->approved_dtrs / $period->total_dtrs) * 100) : 0; @endphp
+                                <div class="p-6 hover:bg-slate-50 transition-colors">
+                                    <div class="flex flex-wrap items-center justify-between gap-4">
+                                        <div class="space-y-1 min-w-[200px]">
+                                            <h4 class="font-black text-slate-800 leading-tight">{{ $period->period_label }}</h4>
+                                            <span class="inline-block bg-yellow-100 text-yellow-700 text-[10px] font-black px-2 py-0.5 rounded uppercase tracking-wider border border-yellow-200">
+                                                Needs Approval
+                                            </span>
+                                        </div>
                                         
-                                        // Update message
-                                        progressMsg.innerText = data.message || `${percentage}%`;
-                                        
-                                        // Update badge
-                                        if ((data.status === 'completed' || percentage >= 100) && data.db_status !== 'processing') {
-                                            progressBadge.className = "text-xs font-semibold inline-block py-1 px-2 uppercase rounded-full text-green-600 bg-green-200";
-                                            progressBadge.innerText = "Completed";
-                                            progressBar.classList.remove('bg-blue-500');
-                                            progressBar.classList.add('bg-green-500');
-                                            
-                                            // Stop polling and reload shortly after (Only if status shifted in DB)
-                                            clearInterval(pollInterval);
-                                            setTimeout(() => {
-                                                window.location.reload();
-                                            }, 2000);
-                                        } else if (data.status === 'failed' || data.db_status === 'draft') {
-                                            progressBadge.className = "text-xs font-semibold inline-block py-1 px-2 uppercase rounded-full text-red-600 bg-red-200";
-                                            progressBadge.innerText = data.db_status === 'draft' ? "Reset/Draft" : "Error";
-                                            progressBar.classList.remove('bg-blue-500');
-                                            progressBar.classList.add('bg-red-500');
-                                            clearInterval(pollInterval);
-                                            // Optional reload after fail to move to draft section
-                                            if(data.db_status === 'draft') {
-                                                setTimeout(() => window.location.reload(), 2000);
-                                            }
-                                        }
-                                    })
-                                    .catch(err => console.error('Error fetching progress:', err));
-                            }
-
-                            // Initial check
-                            checkProgress();
-                            // Poll every 2 seconds
-                            pollInterval = setInterval(checkProgress, 2000);
-                        });
-                    });
-                </script>
-            @endif
-
-            {{-- Recently Completed --}}
-            <div class="bg-white overflow-hidden shadow-sm rounded-lg">
-                <div class="p-6 border-b border-gray-200">
-                    <h3 class="text-lg font-semibold text-gray-700 flex items-center">
-                        <svg class="w-5 h-5 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"></path>
-                        </svg>
-                        Recently Completed
-                    </h3>
-                </div>
-
-                @if($completedPeriods->isEmpty())
-                    <div class="p-6 text-center text-gray-500">
-                        <p>No completed periods yet</p>
-                    </div>
-                @else
-                    <div class="overflow-x-auto">
-                        <table class="min-w-full divide-y divide-gray-200">
-                            <thead class="bg-gray-50">
-                                <tr>
-                                    <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Period</th>
-                                    <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Group</th>
-                                    <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Completed</th>
-                                    <th class="px-6 py-3 text-right text-xs font-medium text-gray-500 uppercase tracking-wider">Actions</th>
-                                </tr>
-                            </thead>
-                            <tbody class="bg-white divide-y divide-gray-200">
-                                @foreach($completedPeriods as $period)
-                                    <tr class="hover:bg-gray-50">
-                                        <td class="px-6 py-4 whitespace-nowrap">
-                                            <div class="text-sm font-medium text-gray-900">
-                                                {{ $period->start_date->format('M d') }} - {{ $period->end_date->format('M d, Y') }}
+                                        <div class="flex-1 max-w-xs px-4">
+                                            <div class="flex justify-between items-center mb-1">
+                                                <span class="text-[10px] font-black text-slate-400 uppercase tracking-widest italic">Approvals</span>
+                                                <span class="text-[10px] font-black text-slate-800 italic">{{ $progressPercent }}%</span>
                                             </div>
-                                        </td>
-                                        <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
-                                            {{ $period->payrollGroup->name ?? 'Global' }}
-                                        </td>
-                                        <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
-                                            {{ $period->payroll_computed_at ? $period->payroll_computed_at->format('M d, Y g:i A') : '-' }}
-                                        </td>
-                                        <td class="px-6 py-4 whitespace-nowrap text-right text-sm font-medium space-x-2">
-                                            <a href="{{ route('payroll.computation.show', $period) }}" class="text-indigo-600 hover:text-indigo-900 font-bold">
-                                                View
+                                            <div class="overflow-hidden h-2 text-xs flex rounded bg-slate-100 border border-slate-200 shadow-inner">
+                                                <div style="width:{{ $progressPercent }}%" class="bg-yellow-400 transition-all duration-1000"></div>
+                                            </div>
+                                        </div>
+
+                                        <div class="flex items-center gap-3">
+                                            <a href="{{ route('dtr-approval.index', ['payroll_period_id' => $period->id]) }}" class="text-[10px] font-black text-indigo-600 uppercase tracking-widest hover:underline">
+                                                Go to DTR Center →
                                             </a>
-                                            <a href="{{ route('payroll.computation.export', $period) }}" class="text-green-600 hover:text-green-900">
-                                                Export
-                                            </a>
-                                            <form action="{{ route('payroll.computation.reset', $period) }}" method="POST" class="inline">
+                                        </div>
+                                    </div>
+                                </div>
+                            @endforeach
+
+                            {{-- Periods Ready to Compute --}}
+                            @foreach($readyPeriods as $period)
+                                <div class="p-6 bg-emerald-50/30 border-l-4 border-emerald-500">
+                                    <div class="flex flex-wrap items-center justify-between gap-4">
+                                        <div class="space-y-1">
+                                            <h4 class="font-black text-slate-800 leading-tight">{{ $period->period_label }}</h4>
+                                            <span class="inline-block bg-emerald-100 text-emerald-700 text-[10px] font-black px-2 py-0.5 rounded uppercase tracking-wider border border-emerald-200">
+                                                DTRs Locked {{ $period->total_dtrs }}/{{ $period->total_dtrs }}
+                                            </span>
+                                        </div>
+
+                                        <div class="flex items-center gap-4">
+                                            <form action="{{ route('payroll.computation.compute', $period) }}" method="POST">
                                                 @csrf
-                                                <button type="submit" class="text-red-600 hover:text-red-900 ml-2" onclick="return confirm('DANGER: This will reset the status to DRAFT. \n\nAre you sure you want to re-open this payroll period?')">
-                                                    Reset
+                                                <button type="submit" class="inline-flex items-center px-6 py-2 bg-emerald-600 text-white rounded-lg text-[11px] font-black uppercase tracking-widest hover:bg-emerald-700 transition shadow-sm border-b-4 border-emerald-800 active:border-b-0 active:translate-y-1">
+                                                    Start Computation
                                                 </button>
                                             </form>
-                                        </td>
-                                    </tr>
-                                @endforeach
-                            </tbody>
-                        </table>
+                                        </div>
+                                    </div>
+                                </div>
+                            @endforeach
+                            
+                            @if($readyPeriods->isEmpty() && $pendingPeriods->isEmpty())
+                                <div class="p-12 text-center">
+                                    <div class="w-16 h-16 bg-slate-100 rounded-full flex items-center justify-center mx-auto mb-4 border-2 border-slate-200 border-dashed">
+                                        <svg class="w-8 h-8 text-slate-300" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-8H4" /></svg>
+                                    </div>
+                                    <p class="text-sm font-bold text-slate-400 uppercase tracking-widest">No Active Workflows</p>
+                                    <p class="text-[10px] text-slate-400 font-medium">Create a new pay period to start the pipeline.</p>
+                                </div>
+                            @endif
+                        </div>
                     </div>
-                @endif
+
+                    {{-- PHASE 3: COMPLETED / RELEASE (Step 3 & 4) --}}
+                    <div class="bg-white rounded-2xl shadow-lg border border-slate-200 overflow-hidden">
+                        <div class="p-5 border-b border-slate-100 bg-slate-50 flex justify-between items-center">
+                            <h3 class="text-sm font-black text-slate-800 uppercase tracking-widest italic flex items-center">
+                                <span class="w-6 h-6 rounded bg-indigo-500 flex items-center justify-center text-white mr-2 text-xs italic">3</span>
+                                Computed & Finalized
+                            </h3>
+                            <span class="text-[10px] font-black text-slate-400 uppercase tracking-widest">Archive</span>
+                        </div>
+                        <div class="divide-y divide-slate-100">
+                            @foreach($completedPeriods as $period)
+                                <div class="p-6 hover:bg-slate-50 transition-colors flex flex-wrap items-center justify-between gap-6">
+                                    <div class="space-y-1">
+                                        <h4 class="font-black text-slate-800 leading-tight">{{ $period->period_label }}</h4>
+                                        <div class="flex gap-2">
+                                            <span class="text-[10px] font-black text-slate-400 uppercase tracking-widest italic">
+                                                Computed {{ optional($period->payroll_computed_at)->format('M d, H:i') ?? 'N/A' }}
+                                            </span>
+                                        </div>
+                                    </div>
+                                    <div class="flex gap-3">
+                                        <a href="{{ route('payroll.computation.show', $period) }}" class="inline-flex items-center px-4 py-2 bg-slate-100 text-slate-700 rounded-lg text-[10px] font-black uppercase tracking-widest hover:bg-slate-200 border border-slate-200 transition">
+                                            View Register
+                                        </a>
+                                        <a href="{{ route('payroll.report', $period) }}" class="inline-flex items-center px-4 py-2 bg-indigo-50 text-indigo-700 rounded-lg text-[10px] font-black uppercase tracking-widest hover:bg-indigo-100 border border-indigo-200 transition">
+                                            Download PDF
+                                        </a>
+                                    </div>
+                                </div>
+                            @endforeach
+                        </div>
+                    </div>
+
+                </div>
+
+                {{-- RIGHT COLUMN: Context & Stats --}}
+                <div class="lg:col-span-4 space-y-8">
+                    
+                    {{-- Quick Stats Card --}}
+                    <div class="bg-slate-800 rounded-2xl p-6 text-white shadow-xl relative overflow-hidden group">
+                        <div class="absolute -right-10 -top-10 w-40 h-40 bg-indigo-500/10 rounded-full group-hover:scale-150 transition-transform duration-1000"></div>
+                        <h3 class="text-xs font-black uppercase tracking-widest text-indigo-300 italic mb-6">Pipeline Health</h3>
+                        
+                        <div class="space-y-6">
+                            <div class="flex items-center justify-between">
+                                <span class="text-[10px] font-black uppercase tracking-widest text-slate-400 italic">Pre-Computation</span>
+                                <span class="text-xl font-black italic">{{ $stats['pending_count'] }}</span>
+                            </div>
+                            <div class="flex items-center justify-between">
+                                <span class="text-[10px] font-black uppercase tracking-widest text-slate-400 italic">Computing</span>
+                                <span class="text-xl font-black italic text-blue-400">{{ $stats['processing_count'] }}</span>
+                            </div>
+                            <div class="flex items-center justify-between border-t border-slate-700 pt-4">
+                                <span class="text-[10px] font-black uppercase tracking-widest text-indigo-300 italic">Employees Total</span>
+                                <span class="text-2xl font-black italic tracking-tighter">{{ $stats['total_employees'] }}</span>
+                            </div>
+                        </div>
+                    </div>
+
+                    {{-- Admin Actions --}}
+                    <div class="bg-white rounded-2xl shadow-lg border border-slate-200 p-6">
+                        <h3 class="text-xs font-black uppercase tracking-widest text-slate-400 italic mb-4">Command Center</h3>
+                        <div class="grid grid-cols-1 gap-3">
+                            <a href="{{ route('payroll-groups.index') }}" class="flex items-center p-3 rounded-xl border border-slate-100 hover:bg-slate-50 transition group">
+                                <div class="w-8 h-8 rounded-lg bg-slate-100 text-slate-500 flex items-center justify-center mr-3 group-hover:bg-slate-800 group-hover:text-white transition-colors">
+                                    <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 20h5v-2a3 3 0 00-5.356-1.857M17 20H7m10 0v-2c0-.656-.126-1.283-.356-1.857M7 20H2v-2a3 3 0 015.356-1.857M7 20v-2c0-.656.126-1.283.356-1.857m0 0a5.002 5.002 0 019.288 0M15 7a3 3 0 11-6 0 3 3 0 016 0zm6 3a2 2 0 11-4 0 2 2 0 014 0z" /></svg>
+                                </div>
+                                <span class="text-[10px] font-black text-slate-700 uppercase tracking-widest">Manage Groups</span>
+                            </a>
+                            <a href="{{ route('payroll.periods') }}" class="flex items-center p-3 rounded-xl border border-slate-100 hover:bg-slate-50 transition group">
+                                <div class="w-8 h-8 rounded-lg bg-slate-100 text-slate-500 flex items-center justify-center mr-3 group-hover:bg-indigo-600 group-hover:text-white transition-colors">
+                                    <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z" /></svg>
+                                </div>
+                                <span class="text-[10px] font-black text-slate-700 uppercase tracking-widest">History</span>
+                            </a>
+                        </div>
+                    </div>
+
+                </div>
             </div>
         </div>
     </div>
+
+    @if($processingPeriods->isNotEmpty())
+    <script>
+        document.addEventListener('DOMContentLoaded', function() {
+            const periods = @json($processingPeriods->pluck('id'));
+            
+            periods.forEach(periodId => {
+                const progressBar = document.getElementById(`progress-bar-${periodId}`);
+                const progressMsg = document.getElementById(`progress-msg-${periodId}`);
+                const progressPct = document.getElementById(`progress-pct-${periodId}`);
+                let pollInterval;
+
+                function checkProgress() {
+                    fetch(`/payroll/computation/period/${periodId}/progress`)
+                        .then(response => response.json())
+                        .then(data => {
+                            const percentage = data.percentage || 0;
+                            if (progressBar) progressBar.style.width = `${percentage}%`;
+                            if (progressPct) progressPct.innerText = `${percentage}%`;
+                            if (progressMsg) progressMsg.innerText = data.message || `Processing...`;
+                            
+                            if (data.status === 'completed' || percentage >= 100) {
+                                clearInterval(pollInterval);
+                                if (progressMsg) progressMsg.innerText = "Completed! Wrapping up...";
+                                setTimeout(() => window.location.reload(), 1500);
+                            }
+                        })
+                        .catch(err => console.error('Poll failed:', err));
+                }
+
+                checkProgress();
+                pollInterval = setInterval(checkProgress, 2000);
+            });
+        });
+    </script>
+    @endif
 </x-app-layout>

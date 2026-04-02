@@ -202,14 +202,6 @@
                     <span class="text-xl font-semibold text-green-600">{{ $payrollStats['released_this_month'] }}</span>
                 </div>
             </div>
-            <div class="mt-6">
-                <a href="{{ route('payroll.computation.dashboard') }}" class="inline-flex items-center px-4 py-2 bg-purple-600 text-white text-sm font-medium rounded-lg hover:bg-purple-700 transition">
-                    <svg class="w-4 h-4 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5l7 7-7 7"/>
-                    </svg>
-                    Payroll Computation
-                </a>
-            </div>
         </div>
     </div>
 
@@ -279,18 +271,6 @@
                     <div>
                         <p class="text-sm font-medium text-gray-900">Process Leaves</p>
                         <p class="text-xs text-gray-500">Approve leave requests</p>
-                    </div>
-                </a>
-
-                <a href="{{ route('payroll.computation.dashboard') }}" class="flex items-center gap-3 p-3 rounded-lg border border-gray-200 hover:border-purple-500 hover:bg-purple-50 transition">
-                    <div class="p-2 rounded-lg bg-purple-100">
-                        <svg class="w-5 h-5 text-purple-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 7h6m0 10v-3m-3 3h.01M9 17h.01M9 14h.01M12 14h.01M15 11h.01M12 11h.01M9 11h.01M7 21h10a2 2 0 002-2V5a2 2 0 00-2-2H7a2 2 0 00-2 2v14a2 2 0 002 2z"/>
-                        </svg>
-                    </div>
-                    <div>
-                        <p class="text-sm font-medium text-gray-900">Compute Payroll</p>
-                        <p class="text-xs text-gray-500">Run payroll computation</p>
                     </div>
                 </a>
 

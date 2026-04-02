@@ -207,7 +207,7 @@ class PayrollComputationController extends Controller
 
         // Get recently completed periods
         $completedPeriods = PayrollPeriod::with('payrollGroup')
-            ->where('status', 'completed')
+            ->whereIn('status', ['completed', 'posted', 'released', 'archived'])
             ->orderBy('payroll_computed_at', 'desc')
             ->limit(10)
             ->get();
@@ -293,121 +293,6 @@ class PayrollComputationController extends Controller
     }
 
     /**
-     * Compute payroll for a period
-     */
-    public function compute(Request $request, PayrollPeriod $period)
-    {
-        if (!auth()->user()->canApproveMajorDecisions()) {
-            abort(403, 'Unauthorized. Only Super Admins are permitted to perform payroll computations.');
-        }
-
-        $manualMode = $request->boolean('manual_mode', false);
-
-        // Validate period status
-        // Allow re-compute/reset for Manual Mode even if not draft
-        if ($period->status !== 'draft' && !$manualMode) {
-            return redirect()->back()
-                ->with('error', 'Automated computation can only be run for draft periods.');
-        }
-
-        // Check if DTRs exist (Skip for Manual Mode)
-        if (!$manualMode) {
-            $totalDtrs = DailyTimeRecord::where('payroll_period_id', $period->id)->count();
-            if ($totalDtrs === 0) {
-                return redirect()->back()
-                    ->with('error', "Cannot compute. No DTRs generated for this period.");
-            }
-        }
-
-        // Validation: Cannot compute future payroll
-        if ($period->start_date->isFuture() && !$manualMode) {
-            return redirect()->back()->with('error', "Cannot compute payroll for a future period. Please wait until the period starts.");
-        }
-
-        // Check if all DTRs are approved (Skip for Manual Mode)
-        $unapprovedDtrs = 0;
-        if (!$manualMode) {
-            $unapprovedDtrs = DailyTimeRecord::where('payroll_period_id', $period->id)
-                ->where('status', '!=', 'approved')
-                ->count();
-        }
-
-        // Allow bypassing DTR check if manual mode is enabled
-        if ($unapprovedDtrs > 0 && !$manualMode) {
-            return redirect()->back()
-                ->with('error', "Cannot compute. {$unapprovedDtrs} DTR(s) are not yet approved.");
-        }
-
-        // Choose sync or async based on employee count
-        $cntQuery = User::where('is_active', true);
-        if ($period->payroll_group_id) {
-            $cntQuery->where('payroll_group_id', $period->payroll_group_id);
-        } else {
-            $cntQuery->whereNull('payroll_group_id');
-        }
-        $employeeCount = $cntQuery->count();
-
-        // Manual mode is super fast (zeros), never queue it.
-        // Automated is also relatively fast, but keep queue if $> 50 employees and NOT manual.
-        $useQueue = !$manualMode && $request->get('use_queue', $employeeCount > 50);
-
-        if ($useQueue) {
-            // Update status to processing immediately so the UI shows the loading state
-            $period->update(['status' => 'processing']);
-            
-            // Dispatch to queue
-            ComputePayrollJob::dispatch($period, null, auth()->id(), $manualMode)
-                ->onQueue('payroll');
-
-            Log::channel('payroll')->info('Payroll computation queued', [
-                'period_id' => $period->id,
-                'employee_count' => $employeeCount,
-                'user_id' => auth()->id(),
-            ]);
-
-            return redirect()->route('payroll.computation.show', $period)
-                ->with('success', "Payroll computation queued for {$employeeCount} employees. Please wait...");
-
-        }
-
-        // Synchronous computation for small batches
-        try {
-            // Updated to pass manualMode flag
-            $results = $this->computationService->computePayrollForPeriod($period, null, $manualMode);
-
-            if ($manualMode) {
-                 $message = sprintf(
-                    'Manual Payroll Initialized! Created %d blank records. You can now edit each employee manually below.',
-                    count($results['success'])
-                 );
-            } else {
-                $message = sprintf(
-                    'Payroll computed successfully. %d computed, %d failed.',
-                    count($results['success']),
-                    $results['failed']
-                );
-            }
-
-            Log::channel('payroll')->info('Payroll computed synchronously', [
-                'period_id' => $period->id,
-                'success_count' => count($results['success']),
-                'failed_count' => $results['failed'],
-            ]);
-
-            return redirect()->route('payroll.computation.show', $period)
-                ->with('success', $message);
-        } catch (\Exception $e) {
-            Log::error('Payroll computation failed', [
-                'period_id' => $period->id,
-                'error' => $e->getMessage(),
-            ]);
-
-            return redirect()->back()
-                ->with('error', 'Payroll computation failed: ' . $e->getMessage());
-        }
-    }
-
-    /**
      * Show computed payrolls for a period
      */
     public function show(PayrollPeriod $period)
@@ -429,6 +314,59 @@ class PayrollComputationController extends Controller
             ->toArray();
 
         return view('payroll.computation.show', compact('period', 'payrolls', 'summary', 'statusCounts'));
+    }
+
+    /**
+     * Compute payroll for a period
+     */
+    public function compute(PayrollPeriod $period)
+    {
+        if (!auth()->user()->canApproveMajorDecisions()) {
+            abort(403, 'Unauthorized. Only Super Admins can compute the company payroll.');
+        }
+
+        // 1. Validation Logic
+        if ($period->status === 'processing') {
+            return redirect()->back()->with('error', 'This period is already being processed.');
+        }
+
+        if ($period->status === 'completed' || $period->status === 'released') {
+            return redirect()->back()->with('warning', 'Payroll for this period has already been finalized.');
+        }
+
+        // Check for unapproved DTRs
+        $unapprovedCount = DailyTimeRecord::where('payroll_period_id', $period->id)
+            ->where('status', '!=', 'approved')
+            ->count();
+
+        if ($unapprovedCount > 0) {
+            return redirect()->back()->with('error', "Cannot compute. There are {$unapprovedCount} unapproved DTRs in this period.");
+        }
+
+        try {
+            DB::beginTransaction();
+
+            // Set period to processing status
+            $period->update(['status' => 'processing']);
+            
+            // Clear progress cache
+            Cache::forget("payroll_progress_{$period->id}");
+
+            // Dispatch background Job
+            ComputePayrollJob::dispatch($period, null, auth()->id());
+
+            DB::commit();
+
+            return redirect()->route('payroll.computation.dashboard')
+                ->with('success', 'Payroll computation started in the background. You can monitor the progress here.');
+        } catch (\Exception $e) {
+            DB::rollBack();
+            Log::channel('payroll')->error('Payroll Dispatch Failed', [
+                'period_id' => $period->id,
+                'error' => $e->getMessage()
+            ]);
+            return redirect()->back()->with('error', 'System error during dispatch: ' . $e->getMessage());
+        }
     }
 
     /**

@@ -228,8 +228,14 @@
                                                     {{ ucfirst($period->status) }}
                                                 </span>
                                             </td>
-                                            <td class="px-4 py-2 text-sm text-gray-500">
+                                            <td class="px-4 py-2 text-sm text-gray-500 flex items-center gap-3">
+                                                <a href="{{ route('payroll-periods.edit', $period) }}" class="text-indigo-600 hover:text-indigo-900 border-r pr-3">Edit</a>
                                                 <a href="{{ route('payroll.show-period', $period) }}" class="text-indigo-600 hover:text-indigo-900">View</a>
+                                                <form action="{{ route('payroll.destroy-period', $period) }}" method="POST" onsubmit="return confirm('WARNING: Are you sure you want to delete this payroll period? This will also delete all associated DTR records and payroll data for this period.');">
+                                                    @csrf
+                                                    @method('DELETE')
+                                                    <button type="submit" class="text-red-500 hover:text-red-700">Delete</button>
+                                                </form>
                                             </td>
                                         </tr>
                                     @empty
