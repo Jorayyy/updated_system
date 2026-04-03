@@ -103,6 +103,12 @@
                         <x-nav-link :href="route('payroll.index')" :active="request()->routeIs('payroll.index')">
                             {{ __('Payroll Center') }}
                         </x-nav-link>
+
+                        <x-nav-link :href="route('payroll.processing.index')" :active="request()->routeIs('payroll.processing.*')">
+                            <span class="bg-teal-50 text-teal-700 px-2 py-0.5 rounded border border-teal-200 font-bold">
+                                {{ __('Sync Payslips') }}
+                            </span>
+                        </x-nav-link>
                     @endif
                     
                     @if(auth()->user()->isAdmin() || auth()->user()->isHr())

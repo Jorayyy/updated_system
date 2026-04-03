@@ -1,211 +1,319 @@
 <x-app-layout>
-    <x-slot name="header">
-        <div class="flex justify-between items-center">
-            <div>
-                <h2 class="font-semibold text-xl text-gray-800 leading-tight">
-                    {{ __('Payslip') }}
-                </h2>
-                <p class="text-sm text-gray-500">{{ $payroll->payrollPeriod->name }}</p>
-            </div>
-            <div class="flex items-center gap-3">
-                <a href="{{ route('payroll.payslip-pdf', $payroll) }}" 
-                    class="bg-green-600 text-white px-4 py-2 rounded-md hover:bg-green-700">
-                    Download PDF
-                </a>
-                <a href="javascript:void(0)" onclick="window.history.back()" class="text-gray-600 hover:text-gray-800 flex items-center">
-                    <i class="fas fa-arrow-left mr-1"></i> Back
-                </a>
+    <style>
+        @media print {
+            .no-print { display: none !important; }
+            body { background: white !important; }
+            .print-container { padding: 0 !important; max-width: 100% !important; border: 0 !important; box-shadow: none !important; }
+            .bg-slate-100 { background-color: white !important; }
+        }
+        .double-border-t { border-top: 4px double #334155; }
+        .double-border-b { border-bottom: 4px double #334155; }
+        .grid-cols-13 { grid-template-columns: repeat(13, minmax(0, 1fr)); }
+    </style>
+
+    <div class="py-2 bg-slate-100 min-h-screen font-sans text-[10px]">
+        <!-- Top Actions (Hidden on Print) -->
+        <div class="max-w-[1100px] mx-auto px-2 no-print mb-2 text-gray-900">
+            <div class="flex items-center justify-between gap-2">
+                <div class="flex items-center gap-2">
+                    <a href="javascript:void(0)" onclick="window.history.back()"
+                       class="p-1.5 bg-white border border-slate-200 rounded text-slate-400 hover:text-indigo-600 hover:border-indigo-100 transition shadow-sm">
+                        <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10 19l-7-7m0 0l7-7m-7 7h18"></path></svg>
+                    </a>
+                    <div>
+                        <h2 class="text-base font-black text-slate-900 leading-tight">Admin Payslip View</h2>
+                        <p class="text-[9px] font-bold text-slate-400 uppercase tracking-widest">{{ $payroll->payrollPeriod->name }}</p>
+                    </div>
+                </div>
+                
+                <div class="flex items-center gap-2">
+                    @if(auth()->user()->isAdmin() || auth()->user()->isHr())
+                        <a href="{{ route('payroll.computation.edit', $payroll) }}" 
+                            class="inline-flex items-center px-4 py-1.5 bg-blue-600 text-white text-[9px] font-black uppercase rounded shadow-sm hover:bg-blue-700 transition tracking-widest">
+                            <i class="fas fa-edit mr-1"></i> Adjust Payslip
+                        </a>
+                    @endif
+                    <button onclick="window.print()" class="inline-flex items-center px-4 py-1.5 bg-rose-600 text-white text-[9px] font-black uppercase rounded shadow-sm hover:bg-rose-700 transition tracking-widest">
+                        Print
+                    </button>
+                    <a href="{{ route('payroll.payslip-pdf', $payroll) }}" class="inline-flex items-center px-4 py-1.5 bg-indigo-600 text-white text-[9px] font-black uppercase rounded shadow-sm hover:bg-indigo-700 transition tracking-widest">
+                        Download PDF
+                    </a>
+                </div>
             </div>
         </div>
-    </x-slot>
 
-    <div class="py-4">
-        <div class="max-w-4xl mx-auto sm:px-6 lg:px-8">
-            <div class="bg-white overflow-hidden shadow-sm sm:rounded-lg border-2 border-amber-200">
-                <div class="p-8">
-                    @if(auth()->user()->isAdmin() || auth()->user()->isHr())
-                        <div class="flex justify-end mb-4">
-                            <a href="{{ route('payroll.computation.edit', $payroll) }}" 
-                                class="bg-blue-600 hover:bg-blue-700 text-white px-6 py-3 rounded-xl font-bold shadow-lg transition-all transform hover:scale-105 flex items-center border-2 border-blue-400">
-                                <i class="fas fa-edit mr-2"></i> Click Here to Adjust This Payslip
-                            </a>
-                        </div>
-                    @endif
-                    <!-- Header -->
-                    <div class="text-center border-b pb-6 mb-6">
-                        <h1 class="text-2xl font-bold text-gray-800">MEBS Call Center</h1>
-                        <p class="text-gray-500">Tacloban City, Leyte, Philippines</p>
-                        <h2 class="text-xl font-semibold mt-4">PAYSLIP</h2>
-                        <p class="text-gray-600">{{ $payroll->payrollPeriod->name }}</p>
-                        @if($payroll->is_manually_adjusted)
-                            <div class="mt-2 text-xs font-semibold uppercase tracking-wider text-amber-600">
-                                <span class="bg-amber-100 px-2 py-1 rounded">
-                                    <i class="fas fa-edit mr-1"></i> Manually Adjusted
-                                </span>
-                            </div>
-                        @endif
+        <!-- Official Payslip Mockup -->
+        <div class="max-w-[1100px] mx-auto bg-white border border-slate-800 shadow-lg print-container overflow-hidden text-gray-900">
+            <!-- HEADER STRIPE -->
+            <div class="bg-[#002B49] text-white px-4 py-2 flex justify-between items-center border-b border-slate-900">
+                <div class="flex items-center gap-3">
+                    <div class="w-8 h-8 bg-white/10 rounded flex items-center justify-center border border-white/20">
+                        <svg class="w-5 h-5 text-white/50" fill="currentColor" viewBox="0 0 24 24"><path d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm0 18c-4.41 0-8-3.59-8-8s3.59-8 8-8 8 3.59 8 8-3.59 8-8 8z"></path></svg>
                     </div>
-
-                    <!-- Employee Info -->
-                    <div class="grid grid-cols-2 gap-6 mb-8">
-                        <div>
-                            <h3 class="text-sm font-medium text-gray-500 mb-2">Employee Information</h3>
-                            <div class="space-y-1">
-                                <p><span class="text-gray-500">Employee ID:</span> <span class="font-medium">{{ $payroll->user->employee_id }}</span></p>
-                                <p><span class="text-gray-500">Name:</span> <span class="font-medium">{{ $payroll->user->name }}</span></p>
-                                <p><span class="text-gray-500">Department:</span> <span class="font-medium">{{ $payroll->user->department ?? '-' }}</span></p>
-                                <p><span class="text-gray-500">Position:</span> <span class="font-medium">{{ $payroll->user->position ?? '-' }}</span></p>
-                            </div>
-                        </div>
-                        <div>
-                            <h3 class="text-sm font-medium text-gray-500 mb-2">Pay Period</h3>
-                            <div class="space-y-1">
-                                <p><span class="text-gray-500">Period:</span> <span class="font-medium">{{ $payroll->payrollPeriod->start_date->format('M d') }} - {{ $payroll->payrollPeriod->end_date->format('M d, Y') }}</span></p>
-                                <p><span class="text-gray-500">Pay Date:</span> <span class="font-medium">{{ $payroll->payrollPeriod->pay_date->format('M d, Y') }}</span></p>
-                                <p><span class="text-gray-500">Days Worked:</span> <span class="font-medium">{{ $payroll->days_worked }}</span></p>
-                                <p><span class="text-gray-500">Hours Worked:</span> <span class="font-medium">{{ $payroll->hours_worked }}</span></p>
-                            </div>
-                        </div>
+                    <h1 class="text-sm font-[1000] uppercase tracking-tight italic">
+                        {{ App\Models\CompanySetting::getValue('company_name', 'Mancao Electronic Connect Business Solutions') }}
+                    </h1>
+                </div>
+                <div class="text-right leading-tight">
+                    <div class="text-[11px] font-[1000] text-sky-400">
+                        {{ $payroll->payrollPeriod->start_date->format('Y-M-d') }} - {{ $payroll->payrollPeriod->end_date->format('Y-M-d') }}
                     </div>
-
-                    <!-- Earnings & Deductions -->
-                    <div class="grid grid-cols-2 gap-8 mb-8">
-                        <!-- Earnings -->
-                        <div>
-                            <h3 class="text-lg font-semibold text-gray-800 mb-4 pb-2 border-b">Earnings</h3>
-                            <div class="space-y-2">
-                                <div class="flex justify-between">
-                                    <span class="text-gray-600">Basic Pay</span>
-                                    <span class="font-medium">₱{{ number_format($payroll->basic_pay, 2) }}</span>
-                                </div>
-                                @if(($payroll->overtime_pay ?? 0) > 0)
-                                    <div class="flex justify-between">
-                                        <span class="text-gray-600">Overtime Pay ({{ $payroll->overtime_hours ?? 0 }} hrs)</span>
-                                        <span class="font-medium">₱{{ number_format($payroll->overtime_pay, 2) }}</span>
-                                    </div>
-                                @endif
-                                @if(($payroll->holiday_pay ?? 0) > 0)
-                                    <div class="flex justify-between">
-                                        <span class="text-gray-600">Holiday Pay</span>
-                                        <span class="font-medium">₱{{ number_format($payroll->holiday_pay, 2) }}</span>
-                                    </div>
-                                @endif
-                                @if(($payroll->night_diff_pay ?? 0) > 0)
-                                    <div class="flex justify-between">
-                                        <span class="text-gray-600">Night Differential</span>
-                                        <span class="font-medium">₱{{ number_format($payroll->night_diff_pay, 2) }}</span>
-                                    </div>
-                                @endif
-                                @if(($payroll->rest_day_pay ?? 0) > 0)
-                                    <div class="flex justify-between">
-                                        <span class="text-gray-600">Rest Day Pay</span>
-                                        <span class="font-medium">₱{{ number_format($payroll->rest_day_pay, 2) }}</span>
-                                    </div>
-                                @endif
-                                @if(($payroll->allowances ?? 0) > 0)
-                                    <div class="flex justify-between">
-                                        <span class="text-gray-600">Allowances</span>
-                                        <span class="font-medium">₱{{ number_format($payroll->allowances, 2) }}</span>
-                                    </div>
-                                @endif
-                                @if(($payroll->bonus ?? 0) > 0)
-                                    <div class="flex justify-between">
-                                        <span class="text-gray-600">Bonus</span>
-                                        <span class="font-medium">₱{{ number_format($payroll->bonus, 2) }}</span>
-                                    </div>
-                                @endif
-                                <div class="flex justify-between pt-2 border-t font-bold text-lg">
-                                    <span>Gross Pay</span>
-                                    <span>₱{{ number_format($payroll->gross_pay, 2) }}</span>
-                                </div>
-                            </div>
-                        </div>
-
-                        <!-- Deductions -->
-                        <div>
-                            <h3 class="text-lg font-semibold text-gray-800 mb-4 pb-2 border-b">Deductions</h3>
-                            <div class="space-y-2">
-                                <div class="flex justify-between">
-                                    <span class="text-gray-600">SSS Contribution</span>
-                                    <span class="font-medium text-red-600">₱{{ number_format($payroll->sss_contribution, 2) }}</span>
-                                </div>
-                                <div class="flex justify-between">
-                                    <span class="text-gray-600">PhilHealth Contribution</span>
-                                    <span class="font-medium text-red-600">₱{{ number_format($payroll->philhealth_contribution, 2) }}</span>
-                                </div>
-                                <div class="flex justify-between">
-                                    <span class="text-gray-600">Pag-IBIG Contribution</span>
-                                    <span class="font-medium text-red-600">₱{{ number_format($payroll->pagibig_contribution, 2) }}</span>
-                                </div>
-                                <div class="flex justify-between">
-                                    <span class="text-gray-600">Withholding Tax</span>
-                                    <span class="font-medium text-red-600">₱{{ number_format($payroll->withholding_tax, 2) }}</span>
-                                </div>
-                                @if(($payroll->late_deductions ?? 0) > 0)
-                                    <div class="flex justify-between">
-                                        <span class="text-gray-600">Late Deductions</span>
-                                        <span class="font-medium text-red-600">₱{{ number_format($payroll->late_deductions, 2) }}</span>
-                                    </div>
-                                @endif
-                                @if(($payroll->undertime_deductions ?? 0) > 0)
-                                    <div class="flex justify-between">
-                                        <span class="text-gray-600">Undertime Deductions</span>
-                                        <span class="font-medium text-red-600">₱{{ number_format($payroll->undertime_deductions, 2) }}</span>
-                                    </div>
-                                @endif
-                                @if(($payroll->absent_deductions ?? 0) > 0)
-                                    <div class="flex justify-between">
-                                        <span class="text-gray-600">Absent Deductions</span>
-                                        <span class="font-medium text-red-600">₱{{ number_format($payroll->absent_deductions, 2) }}</span>
-                                    </div>
-                                @endif
-                                @if(($payroll->loan_deductions ?? 0) > 0)
-                                    <div class="flex justify-between">
-                                        <span class="text-gray-600">Loan Deductions</span>
-                                        <span class="font-medium text-red-600">₱{{ number_format($payroll->loan_deductions, 2) }}</span>
-                                    </div>
-                                @endif
-                                @if(($payroll->leave_without_pay_deductions ?? 0) > 0)
-                                    <div class="flex justify-between">
-                                        <span class="text-gray-600">LWOP Deductions</span>
-                                        <span class="font-medium text-red-600">₱{{ number_format($payroll->leave_without_pay_deductions, 2) }}</span>
-                                    </div>
-                                @endif
-                                @if(($payroll->other_deductions ?? 0) > 0)
-                                    <div class="flex justify-between">
-                                        <span class="text-gray-600">Other Deductions</span>
-                                        <span class="font-medium text-red-600">₱{{ number_format($payroll->other_deductions, 2) }}</span>
-                                    </div>
-                                @endif
-                                <div class="flex justify-between pt-2 border-t font-bold text-lg">
-                                    <span>Total Deductions</span>
-                                    <span class="text-red-600">₱{{ number_format($payroll->total_deductions, 2) }}</span>
-                                </div>
-                            </div>
-                        </div>
-                    </div>
-
-                    <!-- Net Pay -->
-                    <div class="bg-green-50 rounded-lg p-6 text-center">
-                        <p class="text-gray-600 mb-2">Net Pay</p>
-                        <p class="text-4xl font-bold text-green-600">₱{{ number_format($payroll->net_pay, 2) }}</p>
-                    </div>
-
-                    <!-- Remarks -->
-                    @if($payroll->remarks)
-                        <div class="mt-6 p-4 bg-gray-50 rounded-lg">
-                            <h4 class="text-sm font-medium text-gray-500 mb-2">Remarks</h4>
-                            <p class="text-gray-700">{{ $payroll->remarks }}</p>
-                        </div>
-                    @endif
-
-                    <!-- Footer -->
-                    <div class="mt-8 pt-6 border-t text-center text-sm text-gray-500">
-                        <p>This is a computer-generated payslip. No signature required.</p>
-                        <p>Generated on {{ now()->format('F d, Y h:i A') }}</p>
+                    <div class="text-[10px] font-black uppercase tracking-wider text-white/90">
+                        {{ $payroll->user->employee_id }} | {{ $payroll->user->name }}
                     </div>
                 </div>
             </div>
+
+            <!-- MAIN GRID -->
+            <div class="grid grid-cols-12 auto-rows-min text-[10px] font-medium text-slate-900">
+                
+                {{-- EARNINGS COLUMN (Left) --}}
+                <div class="col-span-12 lg:col-span-5 border-r border-slate-200">
+                    <table class="w-full border-collapse">
+                        <thead>
+                            <tr class="bg-slate-50 border-b border-slate-200">
+                                <th class="text-left px-2 py-1 uppercase font-[1000] tracking-wider text-[#002B49]">EARNINGS</th>
+                                <th class="text-left px-2 py-1 uppercase font-[1000] tracking-wider text-[#002B49] border-l border-slate-200">DAY(S)/HR</th>
+                                <th class="text-right px-2 py-1 uppercase font-[1000] tracking-wider text-[#002B49] border-l border-slate-200">AMOUNT</th>
+                            </tr>
+                        </thead>
+                        <tbody class="divide-y divide-slate-100">
+                            <tr>
+                                <td class="px-2 py-0.5 font-bold">Salary</td>
+                                <td class="px-2 py-0.5 border-l border-slate-200 text-slate-400">daily rate</td>
+                                <td class="px-2 py-0.5 border-l border-slate-200 text-right font-black">{{ number_format($payroll->user->daily_rate ?? 0, 2) }}</td>
+                            </tr>
+                            <tr class="bg-indigo-50/30">
+                                <td class="px-2 py-0.5 font-bold">Net Basic</td>
+                                <td class="px-2 py-0.5 border-l border-slate-200"></td>
+                                <td class="px-2 py-0.5 border-l border-slate-200 text-right font-black">{{ number_format($payroll->basic_pay, 2) }}</td>
+                            </tr>
+                            <tr>
+                                <td class="px-2 py-0.5 font-bold">Leave Pay</td>
+                                <td class="px-2 py-0.5 border-l border-slate-200"></td>
+                                <td class="px-2 py-0.5 border-l border-slate-200 text-right font-black">0.00</td>
+                            </tr>
+                            <tr class="bg-slate-50/50">
+                                <td class="px-2 py-0.5 font-bold uppercase text-[9px]">Basic <span class="lowercase font-normal text-slate-400">(net)</span></td>
+                                <td class="px-2 py-0.5 border-l border-slate-200"></td>
+                                <td class="px-2 py-0.5 border-l border-slate-200 text-right font-black">{{ number_format($payroll->basic_pay, 2) }}</td>
+                            </tr>
+                            <tr>
+                                <td class="px-2 py-0.5 font-bold">Taxable Allow.</td>
+                                <td class="px-2 py-0.5 border-l border-slate-200"></td>
+                                <td class="px-2 py-0.5 border-l border-slate-200 text-right font-black">{{ number_format($payroll->allowances ?? 0, 2) }}</td>
+                            </tr>
+                            <tr>
+                                <td class="px-2 py-0.5 font-bold">COLA</td>
+                                <td class="px-2 py-0.5 border-l border-slate-200"></td>
+                                <td class="px-2 py-0.5 border-l border-slate-200 text-right font-black opacity-30">0.00</td>
+                            </tr>
+                        </tbody>
+                    </table>
+
+                    {{-- LEAVE USED Section --}}
+                    <div class="border-t border-slate-200">
+                        <table class="w-full">
+                            <thead>
+                                <tr class="bg-slate-50 border-b border-slate-200">
+                                    <th class="text-left px-2 py-1 uppercase font-[1000] tracking-wider text-[#002B49]" colspan="2">LEAVE USED</th>
+                                </tr>
+                            </thead>
+                            <tbody class="divide-y divide-slate-100 italic">
+                                <tr>
+                                    <td class="px-2 py-0.5 font-bold w-2/3">Vacation Leave</td>
+                                    <td class="px-2 py-0.5 text-center font-black">0</td>
+                                </tr>
+                                <tr>
+                                    <td class="px-2 py-0.5 font-bold w-2/3">Sick Leave</td>
+                                    <td class="px-2 py-0.5 text-center font-black">0</td>
+                                </tr>
+                                <tr>
+                                    <td class="px-2 py-0.5 font-bold w-2/3 uppercase text-[8px]">Others</td>
+                                    <td class="px-2 py-0.5 text-center font-black">0</td>
+                                </tr>
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+
+                {{-- DEDUCTIONS COLUMN (Middle) --}}
+                <div class="col-span-12 lg:col-span-4 border-r border-slate-200">
+                    <table class="w-full border-collapse">
+                        <thead>
+                            <tr class="bg-slate-50 border-b border-slate-200">
+                                <th class="text-left px-2 py-1 uppercase font-[1000] tracking-wider text-[#002B49]">DEDUCTIONS</th>
+                                <th class="text-right px-2 py-1 uppercase font-[1000] tracking-wider text-[#002B49] border-l border-slate-200">AMOUNT</th>
+                                <th class="text-right px-2 py-1 uppercase font-[1000] tracking-wider text-[#002B49] border-l border-slate-200">YTD</th>
+                            </tr>
+                        </thead>
+                        <tbody class="divide-y divide-slate-100">
+                            <tr>
+                                <td class="px-2 py-0.5 font-bold">SSS Contribution</td>
+                                <td class="px-2 py-0.5 border-l border-slate-200 text-right font-black">{{ number_format($payroll->sss_contribution, 2) }}</td>
+                                <td class="px-2 py-0.5 border-l border-slate-200 text-right text-slate-400 italic">{{ number_format($ytdSum['total_sss'] ?? 0, 2) }}</td>
+                            </tr>
+                            <tr>
+                                <td class="px-2 py-0.5 font-bold">PHILHEALTH</td>
+                                <td class="px-2 py-0.5 border-l border-slate-200 text-right font-black">{{ number_format($payroll->philhealth_contribution, 2) }}</td>
+                                <td class="px-2 py-0.5 border-l border-slate-200 text-right text-slate-400 italic">{{ number_format($ytdSum['total_philhealth'] ?? 0, 2) }}</td>
+                            </tr>
+                            <tr>
+                                <td class="px-2 py-0.5 font-bold">PAGIBIG</td>
+                                <td class="px-2 py-0.5 border-l border-slate-200 text-right font-black">{{ number_format($payroll->pagibig_contribution, 2) }}</td>
+                                <td class="px-2 py-0.5 border-l border-slate-200 text-right text-slate-400 italic">{{ number_format($ytdSum['total_pagibig'] ?? 0, 2) }}</td>
+                            </tr>
+                            <tr>
+                                <td class="px-2 py-0.5 font-bold">WTAX <span class="text-[7px] text-slate-400">(S/ME)</span></td>
+                                <td class="px-2 py-0.5 border-l border-slate-200 text-right font-black">{{ number_format($payroll->withholding_tax, 2) }}</td>
+                                <td class="px-2 py-0.5 border-l border-slate-200 text-right text-slate-400 italic">{{ number_format($ytdSum['total_tax'] ?? 0, 2) }}</td>
+                            </tr>
+                            <tr class="bg-rose-50/30">
+                                <td class="px-2 py-0.5 font-bold">ABSENT/LATE</td>
+                                <td class="px-2 py-0.5 border-l border-slate-200 text-right font-black text-rose-700">{{ number_format($payroll->absent_deductions + $payroll->late_deductions, 2) }}</td>
+                                <td class="px-2 py-0.5 border-l border-slate-200 text-right text-slate-200 italic">0.00</td>
+                            </tr>
+                            <tr class="bg-rose-50/30">
+                                <td class="px-2 py-0.5 font-bold uppercase text-[8px]">Undertime</td>
+                                <td class="px-2 py-0.5 border-l border-slate-200 text-right font-black text-rose-700">{{ number_format($payroll->undertime_deductions, 2) }}</td>
+                                <td class="px-2 py-0.5 border-l border-slate-200 text-right text-slate-200 italic">0.00</td>
+                            </tr>
+                            <tr>
+                                <td class="px-2 py-0.5 font-bold opacity-40">OVERBREAK</td>
+                                <td class="px-2 py-0.5 border-l border-slate-200 text-right font-black opacity-40">0</td>
+                                <td class="px-2 py-0.5 border-l border-slate-200 text-right opacity-20">0</td>
+                            </tr>
+                        </tbody>
+                    </table>
+
+                    {{-- LOANS Section --}}
+                    <div class="border-t border-slate-200">
+                        <table class="w-full">
+                            <thead>
+                                <tr class="bg-slate-50 border-b border-slate-200">
+                                    <th class="text-left px-2 py-1 uppercase font-[1000] tracking-wider text-[#002B49]">LOAN(S)</th>
+                                    <th class="text-center px-1 py-1 uppercase font-[1000] text-[#002B49] border-l border-slate-200 text-[8px]">PMT#</th>
+                                    <th class="text-right px-2 py-1 uppercase font-[1000] tracking-wider text-[#002B49] border-l border-slate-200">AMT</th>
+                                    <th class="text-right px-2 py-1 uppercase font-[1000] tracking-wider text-[#002B49] border-l border-slate-200">BAL</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                <tr>
+                                    <td class="text-center italic text-slate-200 uppercase py-2 font-black tracking-widest" colspan="4">NONE</td>
+                                </tr>
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+
+                {{-- ADDITIONS & SUMMARY (Right) --}}
+                <div class="col-span-12 lg:col-span-3 flex flex-col h-full divide-y divide-slate-100">
+                    {{-- OTHER ADDITIONS --}}
+                    <div class="flex-1">
+                        <div class="bg-slate-50 px-2 py-1 border-b border-slate-200 font-[1000] uppercase tracking-wider text-[#002B49]">
+                            ADDITIONS
+                        </div>
+                        <div class="p-2 space-y-1">
+                            @if($payroll->bonus > 0 || $payroll->night_diff_pay > 0 || $payroll->rest_day_pay > 0 || $payroll->holiday_pay > 0)
+                                @if($payroll->bonus > 0)
+                                <div class="flex justify-between items-center text-[9px] border-b border-slate-50">
+                                    <span class="font-bold text-slate-500">Bonus</span>
+                                    <span class="font-black text-blue-700">{{ number_format($payroll->bonus, 2) }}</span>
+                                </div>
+                                @endif
+                                @if($payroll->night_diff_pay > 0)
+                                <div class="flex justify-between items-center text-[9px] border-b border-slate-50">
+                                    <span class="font-bold text-slate-500">ND Pay</span>
+                                    <span class="font-black text-blue-700">{{ number_format($payroll->night_diff_pay, 2) }}</span>
+                                </div>
+                                @endif
+                                @if($payroll->rest_day_pay > 0)
+                                <div class="flex justify-between items-center text-[9px] border-b border-slate-50">
+                                    <span class="font-bold text-slate-500">Rest Day</span>
+                                    <span class="font-black text-blue-700">{{ number_format($payroll->rest_day_pay, 2) }}</span>
+                                </div>
+                                @endif
+                            @else
+                                <div class="text-center text-[9px] text-slate-300 italic py-2">No Other Earnings</div>
+                            @endif
+                        </div>
+                    </div>
+
+                    {{-- TOTAL SUMMARY --}}
+                    <div class="bg-slate-50/50 p-2 space-y-1 mt-auto border-t border-slate-200">
+                        <div class="flex justify-between items-center border-b border-slate-200 pb-0.5">
+                            <span class="font-black uppercase text-slate-400">Gross</span>
+                            <span class="font-[1000] text-slate-900">{{ number_format($payroll->gross_pay, 2) }}</span>
+                        </div>
+                        <div class="flex justify-between items-center border-b border-slate-200 pb-0.5">
+                            <span class="font-black uppercase text-slate-400">Total Ded.</span>
+                            <span class="font-[1000] text-rose-600">{{ number_format($payroll->total_deductions, 2) }}</span>
+                        </div>
+                        <div class="flex flex-col items-end pt-1">
+                            <span class="font-black text-[8px] uppercase text-[#002B49]/50 leading-none">Net Compensation</span>
+                            <span class="text-lg font-[1000] text-[#002B49] leading-tight tabular-nums">₱ {{ number_format($payroll->net_pay, 2) }}</span>
+                        </div>
+                    </div>
+                </div>
+
+                {{-- OVERTIME BREAKDOWN (Condensed) --}}
+                <div class="col-span-12 border-t border-slate-300">
+                    <table class="w-full border-collapse">
+                        <thead class="bg-slate-50">
+                            <tr class="divide-x divide-slate-200 border-b border-slate-200">
+                                <th class="text-left px-2 py-1 uppercase font-[1000] text-[#002B49] w-[15%]">OT TYPE</th>
+                                <th class="px-2 py-1 uppercase font-[1000] text-[#002B49]">REGULAR</th>
+                                <th class="px-2 py-1 uppercase font-[1000] text-[#002B49]">OT PAY</th>
+                                <th class="px-2 py-1 uppercase font-[1000] text-[#002B49]">REG w/ ND</th>
+                                <th class="px-2 py-1 uppercase font-[1000] text-[#002B49]">OT w/ ND</th>
+                            </tr>
+                        </thead>
+                        <tbody class="divide-y divide-slate-100 font-bold text-center">
+                            @php $hasOt = ($payroll->overtime_pay > 0 || $payroll->night_diff_pay > 0 || $payroll->holiday_pay > 0 || $payroll->rest_day_pay > 0); @endphp
+                            @if($hasOt)
+                                @if($payroll->overtime_pay > 0)
+                                <tr class="divide-x divide-slate-100">
+                                    <td class="text-left px-2 py-0.5 text-slate-600 uppercase text-[9px]">Regular OT</td>
+                                    <td>0.00</td><td class="bg-indigo-50/20">{{ number_format($payroll->overtime_pay, 2) }}</td><td>0.00</td><td>0.00</td>
+                                </tr>
+                                @endif
+                                @if($payroll->holiday_pay > 0)
+                                <tr class="divide-x divide-slate-100">
+                                    <td class="text-left px-2 py-0.5 text-slate-600 uppercase text-[9px]">Holiday Pay</td>
+                                    <td>{{ number_format($payroll->holiday_pay, 2) }}</td><td>0.00</td><td>0.00</td><td>0.00</td>
+                                </tr>
+                                @endif
+                            @else
+                                <tr><td colspan="5" class="py-1 text-slate-300 italic">No breakdown available</td></tr>
+                            @endif
+                        </tbody>
+                    </table>
+                </div>
+
+                {{-- FOOTER / SIGNATURE --}}
+                <div class="col-span-12 px-4 py-2 bg-slate-50/50 flex justify-between items-end border-t border-slate-200">
+                    <div class="flex gap-10">
+                        <div>
+                            <div class="text-[7px] font-black uppercase text-slate-400 mb-0.5">Taxable Gross</div>
+                            <div class="text-xs font-black text-rose-900 leading-none">{{ number_format($payroll->gross_pay - ($payroll->sss_contribution + $payroll->philhealth_contribution + $payroll->pagibig_contribution), 2) }}</div>
+                        </div>
+                        <div>
+                            <div class="text-[7px] font-black uppercase text-slate-400 mb-0.5">YTD Gross</div>
+                            <div class="text-xs font-black text-slate-600 leading-none italic">{{ number_format($ytdSum['total_gross'] ?? 0, 2) }}</div>
+                        </div>
+                    </div>
+                    <div class="text-[8px] font-bold text-slate-400 uppercase italic opacity-60 max-w-[50%] text-right">
+                        I acknowledge receipt of full payment for services rendered.
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <div class="text-center mt-4 no-print opacity-30">
+            <p class="text-[8px] font-black uppercase tracking-widest leading-none">
+                {{ date('Y-M-d H:i:s') }} • MEBS CLOUD INFRASTRUCTURE
+            </p>
         </div>
     </div>
 </x-app-layout>

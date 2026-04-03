@@ -8,6 +8,8 @@ use App\Http\Controllers\LeaveController;
 use App\Http\Controllers\LeaveTypeController;
 use App\Http\Controllers\DTRController;
 use App\Http\Controllers\PayrollController;
+use App\Http\Controllers\PayrollProcessingController;
+use App\Http\Controllers\PayrollComputationController;
 use App\Http\Controllers\PayslipController;
 use App\Http\Controllers\HolidayController;
 use App\Http\Controllers\NotificationController;
@@ -276,10 +278,17 @@ Route::middleware('auth')->group(function () {
         Route::get('/payroll/periods', [PayrollController::class, 'periods'])->name('payroll.periods');
         
         // Payroll Period Management
-        Route::resource('payroll-periods', PayrollPeriodController::class);
+        Route::resource('payroll-periods', PayrollController::class)->names('payroll-periods');
         
         // Modification routes restricted to HR Accounting
         Route::middleware('role:accounting,super_admin')->group(function () {
+            // Accounting Manual Processing Routes
+            Route::prefix('payroll-processing')->name('payroll.processing.')->group(function () {
+                Route::get('/', [PayrollProcessingController::class, 'index'])->name('index');
+                Route::get('/period/{period}', [PayrollProcessingController::class, 'selectPeriod'])->name('select');
+                Route::post('/period/{period}/process', [PayrollProcessingController::class, 'process'])->name('process');
+            });
+
             Route::get('/payroll/periods/create', [PayrollController::class, 'createPeriod'])->name('payroll.create-period');
             Route::post('/payroll/periods', [PayrollController::class, 'storePeriod'])->name('payroll.store-period');
             Route::post('/payroll/periods/{period}/process', [PayrollController::class, 'processPeriod'])->name('payroll.process-period');
@@ -295,6 +304,14 @@ Route::middleware('auth')->group(function () {
         Route::get('/payroll/periods/{period}/generate-report', [PayrollController::class, 'generateReport'])->name('payroll.generate-report');
         Route::get('/payroll/{payroll}/payslip', [PayrollController::class, 'payslip'])->name('payroll.payslip');
         Route::get('/payroll/{payroll}/payslip-pdf', [PayrollController::class, 'payslipPdf'])->name('payroll.payslip-pdf');
+
+        // Payroll Computation & Manual Adjustments
+        Route::prefix('payroll-computation')->name('payroll.computation.')->group(function () {
+            Route::get('/{payroll}/edit', [PayrollComputationController::class, 'edit'])->name('edit');
+            Route::put('/{payroll}', [PayrollComputationController::class, 'update'])->name('update');
+            Route::get('/period/{period}/progress', [PayrollComputationController::class, 'progress'])->name('progress');
+            Route::post('/period/{period}/reset', [PayrollComputationController::class, 'resetProcessing'])->name('reset');
+        });
 
         // Payslip Management (Admin/HR)
         Route::prefix('payslip-admin')->name('payslip.admin.')->group(function () {

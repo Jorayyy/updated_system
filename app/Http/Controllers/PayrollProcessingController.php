@@ -1,0 +1,95 @@
+<?php
+
+namespace App\Http\Controllers;
+
+use App\Models\PayrollGroup;
+use App\Models\PayrollPeriod;
+use App\Models\Payroll;
+use App\Models\User;
+use App\Services\PayrollComputationService;
+use Illuminate\Http\Request;
+use Illuminate\Support\Facades\DB;
+use Illuminate\Support\Facades\Log;
+
+class PayrollProcessingController extends Controller
+{
+    protected PayrollComputationService $payrollService;
+
+    public function __construct(PayrollComputationService $payrollService)
+    {
+        $this->payrollService = $payrollService;
+    }
+
+    /**
+     * Dashboard for selecting a payroll group and period for manual processing.
+     */
+    public function index()
+    {
+        $groups = PayrollGroup::withCount(['periods' => function($q) {
+            $q->where('status', 'draft');
+        }])->get();
+
+        $pendingPeriods = PayrollPeriod::whereIn('status', ['draft', 'processing'])
+            ->with('payrollGroup')
+            ->orderBy('start_date', 'desc')
+            ->get();
+
+        return view('payroll.processing.index', compact('groups', 'pendingPeriods'));
+    }
+
+    /**
+     * Select specific period to finalize and generate into payslips.
+     */
+    public function selectPeriod(PayrollPeriod $period)
+    {
+        $period->load('payrollGroup');
+        
+        // Find employees for this group
+        $employees = User::where('payroll_group_id', $period->payroll_group_id)
+            ->where('is_active', true)
+            ->where('role', 'employee')
+            ->orderBy('name')
+            ->get();
+
+        // Check existing payroll records
+        $existingPayrolls = Payroll::where('payroll_period_id', $period->id)->get()->keyBy('user_id');
+
+        return view('payroll.processing.select', compact('period', 'employees', 'existingPayrolls'));
+    }
+
+    /**
+     * Bulk process selected employees for this period.
+     */
+    public function process(Request $request, PayrollPeriod $period)
+    {
+        $userIds = $request->input('user_ids', []);
+
+        if (empty($userIds)) {
+            return back()->with('error', 'Please select at least one employee to generate payslips for.');
+        }
+
+        try {
+            // Update period to processing
+            $period->update(['status' => 'processing']);
+
+            // Manually process payslips for selected users
+            $results = $this->payrollService->computePayrollForPeriod($period, $userIds, false);
+
+            if (isset($results['success']) && $results['success'] === false) {
+                 return back()->with('error', 'Computation failed: ' . ($results['message'] ?? 'Unknown error.'));
+            }
+
+            // Sync the period status back to draft if it's still being "manually" worked on
+            // or keep it if finalized. For now, let's keep it in draft so they can add more people.
+            $period->update(['status' => 'draft']);
+
+            return redirect()->route('payroll-periods.show', $period->id)
+                ->with('success', "Payslips generated for " . ($results['computed'] ?? 0) . " selected employees.");
+
+        } catch (\Exception $e) {
+            $period->update(['status' => 'draft']);
+            Log::error('Payroll payslip generation failed: ' . $e->getMessage());
+            return back()->with('error', 'Failed to generate payslips: ' . $e->getMessage());
+        }
+    }
+}

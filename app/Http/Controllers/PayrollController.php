@@ -9,6 +9,7 @@ use App\Models\PayrollGroup;
 use App\Models\User;
 use App\Jobs\ComputePayrollJob;
 use App\Services\PayrollComputationService;
+use App\Services\PayslipService;
 use Barryvdh\DomPDF\Facade\Pdf;
 use Carbon\Carbon;
 use Illuminate\Http\Request;
@@ -16,10 +17,12 @@ use Illuminate\Http\Request;
 class PayrollController extends Controller
 {
     protected PayrollComputationService $payrollService;
+    protected PayslipService $payslipService;
 
-    public function __construct(PayrollComputationService $payrollService)
+    public function __construct(PayrollComputationService $payrollService, PayslipService $payslipService)
     {
         $this->payrollService = $payrollService;
+        $this->payslipService = $payslipService;
     }
 
     /**
@@ -125,7 +128,10 @@ class PayrollController extends Controller
         $payroll->load(['user', 'payrollPeriod']);
         $period = $payroll->payrollPeriod;
 
-        return view('payroll.payslip', compact('payroll', 'period'));
+        // Get YTD Summary for the employee on the payroll
+        $ytdSum = $this->payslipService->getYtdSummary($payroll->user, $payroll->payrollPeriod->start_date->year);
+
+        return view('payroll.payslip', compact('payroll', 'period', 'ytdSum'));
     }
 
     /**
@@ -259,23 +265,17 @@ class PayrollController extends Controller
     /**
      * Admin/HR: View payroll period details
      */
+    public function show(PayrollPeriod $payroll_period)
+    {
+        return $this->showPeriod(request(), $payroll_period);
+    }
+
     public function showPeriod(Request $request, PayrollPeriod $period)
     {
-        $siteId = $request->get('site_id');
-        $accountId = $request->get('account_id');
-
         $period->load(['processor']);
         
         $query = Payroll::with('user')
             ->where('payroll_period_id', $period->id);
-
-        if ($siteId) {
-            $query->whereHas('user', fn($q) => $q->where('site_id', $siteId));
-        }
-
-        if ($accountId) {
-            $query->whereHas('user', fn($q) => $q->where('account_id', $accountId));
-        }
 
         $payrolls = $query->orderBy('created_at', 'desc')->paginate(20);
 
@@ -292,10 +292,7 @@ class PayrollController extends Controller
             'total_tax' => (clone $query)->sum('withholding_tax'),
         ];
 
-        $sites = \App\Models\Site::orderBy('name')->get();
-        $accounts = \App\Models\Account::orderBy('name')->get();
-
-        return view('payroll.show-period', compact('period', 'payrolls', 'summary', 'sites', 'accounts'));
+        return view('payroll.show-period', compact('period', 'payrolls', 'summary'));
     }
 
     /**

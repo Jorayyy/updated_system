@@ -340,7 +340,32 @@ class DTRController extends Controller
         $attendances = $this->attendanceService->getAttendanceForDTR($user, $startDate, $endDate);
         $summary = $this->calculateDTRSummary($attendances, $user, $startDate, $endDate);
 
-        return view('dtr.index', compact('attendances', 'summary', 'month', 'year', 'user', 'payrollPeriods', 'periodId', 'startDate', 'endDate'));
+        // Fetch processed DTR records if period is selected
+        $processedRecords = collect();
+        $isProcessed = false;
+        
+        if ($periodId) {
+            $processedRecords = \App\Models\DailyTimeRecord::where('user_id', $user->id)
+                ->where('payroll_period_id', $periodId)
+                ->orderBy('date', 'asc')
+                ->get();
+            
+            // Period is considered "processed" if DTRs are approved, locked, published, or if the period itself is finalized
+            if ($processedRecords->isNotEmpty()) {
+                $status = $processedRecords->first()->status;
+                $isProcessed = in_array($status, ['approved', 'locked', 'published']);
+            }
+
+            // Fallback: Check period status if records status isn't enough
+            if (!$isProcessed) {
+                $period = \App\Models\PayrollPeriod::find($periodId);
+                if ($period && in_array($period->status, ['completed', 'published', 'paid'])) {
+                    $isProcessed = true;
+                }
+            }
+        }
+
+        return view('dtr.index', compact('attendances', 'summary', 'month', 'year', 'user', 'payrollPeriods', 'periodId', 'startDate', 'endDate', 'isProcessed', 'processedRecords'));
     }
 
     /**

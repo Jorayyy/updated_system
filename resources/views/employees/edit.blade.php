@@ -68,8 +68,8 @@
                                     </select>
                                 </div>
                                 <div class="md:col-span-1">
-                                    <label class="block text-sm font-semibold text-gray-700 uppercase mb-1">First Name *</label>
-                                    <input type="text" name="first_name" value="{{ old('first_name', $employee->first_name) }}" required
+                                    <label class="block text-sm font-semibold text-gray-700 uppercase mb-1">First Name</label>
+                                    <input type="text" name="first_name" value="{{ old('first_name', $employee->first_name) }}"
                                         class="w-full border-gray-300 rounded-lg shadow-sm focus:border-indigo-500 focus:ring-indigo-500">
                                     @error('first_name')<p class="mt-1 text-xs text-red-600">{{ $message }}</p>@enderror
                                 </div>
@@ -79,8 +79,8 @@
                                         class="w-full border-gray-300 rounded-lg shadow-sm focus:border-indigo-500 focus:ring-indigo-500">
                                 </div>
                                 <div class="md:col-span-1">
-                                    <label class="block text-sm font-semibold text-gray-700 uppercase mb-1">Last Name *</label>
-                                    <input type="text" name="last_name" value="{{ old('last_name', $employee->last_name) }}" required
+                                    <label class="block text-sm font-semibold text-gray-700 uppercase mb-1">Last Name</label>
+                                    <input type="text" name="last_name" value="{{ old('last_name', $employee->last_name) }}"
                                         class="w-full border-gray-300 rounded-lg shadow-sm focus:border-indigo-500 focus:ring-indigo-500">
                                     @error('last_name')<p class="mt-1 text-xs text-red-600">{{ $message }}</p>@enderror
                                 </div>
@@ -90,14 +90,14 @@
                                         class="w-full border-gray-300 rounded-lg shadow-sm focus:border-indigo-500 focus:ring-indigo-500">
                                 </div>
                                 <div>
-                                    <label class="block text-sm font-semibold text-gray-700 uppercase mb-1">Birthday *</label>
-                                    <input type="date" name="birthday" value="{{ old('birthday', $employee->birthday?->format('Y-m-d')) }}" required
+                                    <label class="block text-sm font-semibold text-gray-700 uppercase mb-1">Birthday</label>
+                                    <input type="date" name="birthday" value="{{ old('birthday', $employee->birthday?->format('Y-m-d')) }}"
                                         class="w-full border-gray-300 rounded-lg shadow-sm focus:border-indigo-500 focus:ring-indigo-500">
                                     @error('birthday')<p class="mt-1 text-xs text-red-600">{{ $message }}</p>@enderror
                                 </div>
                                 <div>
-                                    <label class="block text-sm font-semibold text-gray-700 uppercase mb-1">Gender *</label>
-                                    <select name="gender" required class="w-full border-gray-300 rounded-lg shadow-sm focus:border-indigo-500 focus:ring-indigo-500">
+                                    <label class="block text-sm font-semibold text-gray-700 uppercase mb-1">Gender</label>
+                                    <select name="gender" class="w-full border-gray-300 rounded-lg shadow-sm focus:border-indigo-500 focus:ring-indigo-500">
                                         <option value="">Select Gender</option>
                                         <option value="Male" {{ old('gender', $employee->gender) == 'Male' ? 'selected' : '' }}>Male</option>
                                         <option value="Female" {{ old('gender', $employee->gender) == 'Female' ? 'selected' : '' }}>Female</option>
@@ -105,8 +105,8 @@
                                     @error('gender')<p class="mt-1 text-xs text-red-600">{{ $message }}</p>@enderror
                                 </div>
                                 <div>
-                                    <label class="block text-sm font-semibold text-gray-700 uppercase mb-1">Civil Status *</label>
-                                    <select name="civil_status" required class="w-full border-gray-300 rounded-lg shadow-sm focus:border-indigo-500 focus:ring-indigo-500">
+                                    <label class="block text-sm font-semibold text-gray-700 uppercase mb-1">Civil Status</label>
+                                    <select name="civil_status" class="w-full border-gray-300 rounded-lg shadow-sm focus:border-indigo-500 focus:ring-indigo-500">
                                         <option value="">Select Status</option>
                                         <option value="Single" {{ old('civil_status', $employee->civil_status) == 'Single' ? 'selected' : '' }}>Single</option>
                                         <option value="Married" {{ old('civil_status', $employee->civil_status) == 'Married' ? 'selected' : '' }}>Married</option>
@@ -148,14 +148,14 @@
 
                             <div class="grid grid-cols-1 md:grid-cols-4 gap-6">
                                 <div>
-                                    <label class="block text-sm font-semibold text-gray-700 uppercase mb-1">Employee ID *</label>
-                                    <input type="text" name="employee_id" value="{{ old('employee_id', $employee->employee_id) }}" required
+                                    <label class="block text-sm font-semibold text-gray-700 uppercase mb-1">Employee ID</label>
+                                    <input type="text" name="employee_id" value="{{ old('employee_id', $employee->employee_id) }}"
                                         class="w-full border-gray-300 rounded-lg shadow-sm focus:border-indigo-500 focus:ring-indigo-500 bg-slate-50 font-mono font-bold">
                                     @error('employee_id')<p class="mt-1 text-xs text-red-600">{{ $message }}</p>@enderror
                                 </div>
                                 <div class="md:col-span-1">
-                                    <label class="block text-sm font-semibold text-gray-700 uppercase mb-1">Employment Type *</label>
-                                    <select name="employment_type" required class="w-full border-gray-300 rounded-lg shadow-sm focus:border-indigo-500 focus:ring-indigo-500">
+                                    <label class="block text-sm font-semibold text-gray-700 uppercase mb-1">Employment Type</label>
+                                    <select name="employment_type" class="w-full border-gray-300 rounded-lg shadow-sm focus:border-indigo-500 focus:ring-indigo-500">
                                         <option value="Regular" {{ old('employment_type', $employee->employment_type) == 'Regular' ? 'selected' : '' }}>Regular</option>
                                         <option value="Probationary" {{ old('employment_type', $employee->employment_type) == 'Probationary' ? 'selected' : '' }}>Probationary</option>
                                         <option value="Contractual" {{ old('employment_type', $employee->employment_type) == 'Contractual' ? 'selected' : '' }}>Contractual</option>
@@ -163,8 +163,8 @@
                                     </select>
                                 </div>
                                 <div>
-                                    <label class="block text-sm font-semibold text-gray-700 uppercase mb-1">Classification *</label>
-                                    <select name="classification" required class="w-full border-gray-300 rounded-lg shadow-sm focus:border-indigo-500 focus:ring-indigo-500">
+                                    <label class="block text-sm font-semibold text-gray-700 uppercase mb-1">Classification</label>
+                                    <select name="classification" class="w-full border-gray-300 rounded-lg shadow-sm focus:border-indigo-500 focus:ring-indigo-500">
                                         <option value="Rank and File" {{ old('classification', $employee->classification) == 'Rank and File' ? 'selected' : '' }}>Rank and File</option>
                                         <option value="Supervisory" {{ old('classification', $employee->classification) == 'Supervisory' ? 'selected' : '' }}>Supervisory</option>
                                         <option value="Managerial" {{ old('classification', $employee->classification) == 'Managerial' ? 'selected' : '' }}>Managerial</option>
@@ -172,21 +172,21 @@
                                     </select>
                                 </div>
                                 <div>
-                                    <label class="block text-sm font-semibold text-gray-700 uppercase mb-1">Tax Code *</label>
-                                    <input type="text" name="tax_code" value="{{ old('tax_code', $employee->tax_code ?? 'M') }}" required
+                                    <label class="block text-sm font-semibold text-gray-700 uppercase mb-1">Tax Code</label>
+                                    <input type="text" name="tax_code" value="{{ old('tax_code', $employee->tax_code ?? 'M') }}"
                                         class="w-full border-gray-300 rounded-lg shadow-sm focus:border-indigo-500 focus:ring-indigo-500">
                                 </div>
                                 <div>
-                                    <label class="block text-sm font-semibold text-gray-700 uppercase mb-1">Pay Type *</label>
-                                    <select name="pay_type" required class="w-full border-gray-300 rounded-lg shadow-sm focus:border-indigo-500 focus:ring-indigo-500">
+                                    <label class="block text-sm font-semibold text-gray-700 uppercase mb-1">Pay Type</label>
+                                    <select name="pay_type" class="w-full border-gray-300 rounded-lg shadow-sm focus:border-indigo-500 focus:ring-indigo-500">
                                         <option value="Weekly" {{ old('pay_type', $employee->pay_type) == 'Weekly' ? 'selected' : '' }}>Weekly</option>
                                         <option value="Bi-Weekly" {{ old('pay_type', $employee->pay_type) == 'Bi-Weekly' ? 'selected' : '' }}>Bi-Weekly</option>
                                         <option value="Monthly" {{ old('pay_type', $employee->pay_type) == 'Monthly' ? 'selected' : '' }}>Monthly</option>
                                     </select>
                                 </div>
                                 <div>
-                                    <label class="block text-sm font-semibold text-gray-700 uppercase mb-1">Payroll Cycle *</label>
-                                    <select name="payroll_group_id" required class="w-full border-gray-300 rounded-lg shadow-sm focus:border-indigo-500 focus:ring-indigo-500">
+                                    <label class="block text-sm font-semibold text-gray-700 uppercase mb-1">Payroll Cycle</label>
+                                    <select name="payroll_group_id" class="w-full border-gray-300 rounded-lg shadow-sm focus:border-indigo-500 focus:ring-indigo-500">
                                         <option value="">Select Cycle</option>
                                         @foreach($payrollGroups as $group)
                                             <option value="{{ $group->id }}" {{ old('payroll_group_id', $employee->payroll_group_id) == $group->id ? 'selected' : '' }}>{{ $group->name }}</option>
@@ -195,8 +195,8 @@
                                     @error('payroll_group_id')<p class="mt-1 text-xs text-red-600">{{ $message }}</p>@enderror
                                 </div>
                                 <div>
-                                    <label class="block text-sm font-semibold text-gray-700 uppercase mb-1">Department *</label>
-                                    <select name="department_id" required class="w-full border-gray-300 rounded-lg shadow-sm focus:border-indigo-500 focus:ring-indigo-500">
+                                    <label class="block text-sm font-semibold text-gray-700 uppercase mb-1">Department</label>
+                                    <select name="department_id" class="w-full border-gray-300 rounded-lg shadow-sm focus:border-indigo-500 focus:ring-indigo-500">
                                         <option value="">Select Department</option>
                                         @foreach($departments as $dept)
                                             <option value="{{ $dept->id }}" {{ old('department_id', $employee->department_id) == $dept->id ? 'selected' : '' }}>{{ $dept->name }}</option>
@@ -204,13 +204,13 @@
                                     </select>
                                 </div>
                                 <div>
-                                    <label class="block text-sm font-semibold text-gray-700 uppercase mb-1">Position *</label>
-                                    <input type="text" name="position" value="{{ old('position', $employee->position) }}" required
+                                    <label class="block text-sm font-semibold text-gray-700 uppercase mb-1">Position</label>
+                                    <input type="text" name="position" value="{{ old('position', $employee->position) }}"
                                         class="w-full border-gray-300 rounded-lg shadow-sm focus:border-indigo-500 focus:ring-indigo-500">
                                 </div>
                                 <div>
-                                    <label class="block text-sm font-semibold text-gray-700 uppercase mb-1">Site *</label>
-                                    <select name="site_id" required class="w-full border-gray-300 rounded-lg shadow-sm focus:border-indigo-500 focus:ring-indigo-500">
+                                    <label class="block text-sm font-semibold text-gray-700 uppercase mb-1">Site</label>
+                                    <select name="site_id" class="w-full border-gray-300 rounded-lg shadow-sm focus:border-indigo-500 focus:ring-indigo-500">
                                         <option value="">Select Site</option>
                                         @foreach($sites as $site)
                                             <option value="{{ $site->id }}" {{ old('site_id', $employee->site_id) == $site->id ? 'selected' : '' }}>{{ $site->name }}</option>
@@ -218,21 +218,21 @@
                                     </select>
                                 </div>
                                 <div>
-                                    <label class="block text-sm font-semibold text-gray-700 uppercase mb-1">Date Hired *</label>
-                                    <input type="date" name="date_hired" value="{{ old('date_hired', $employee->date_hired?->format('Y-m-d')) }}" required
+                                    <label class="block text-sm font-semibold text-gray-700 uppercase mb-1">Date Hired</label>
+                                    <input type="date" name="date_hired" value="{{ old('date_hired', $employee->date_hired?->format('Y-m-d')) }}"
                                         class="w-full border-gray-300 rounded-lg shadow-sm focus:border-indigo-500 focus:ring-indigo-500">
                                     @error('date_hired')<p class="mt-1 text-xs text-red-600">{{ $message }}</p>@enderror
                                 </div>
                                 <div>
-                                    <label class="block text-sm font-semibold text-gray-700 uppercase mb-1">Status *</label>
-                                    <select name="is_active" required class="w-full border-gray-300 rounded-lg shadow-sm focus:border-indigo-500 focus:ring-indigo-500">
+                                    <label class="block text-sm font-semibold text-gray-700 uppercase mb-1">Status</label>
+                                    <select name="is_active" class="w-full border-gray-300 rounded-lg shadow-sm focus:border-indigo-500 focus:ring-indigo-500">
                                         <option value="1" {{ old('is_active', $employee->is_active) == '1' ? 'selected' : '' }}>Active</option>
                                         <option value="0" {{ old('is_active', $employee->is_active) == '0' ? 'selected' : '' }}>Inactive</option>
                                     </select>
                                 </div>
                                 <div>
-                                    <label class="block text-sm font-semibold text-gray-700 uppercase mb-1">Campaign Account *</label>
-                                    <select name="account_id" required class="w-full border-gray-300 rounded-lg shadow-sm focus:border-indigo-500 focus:ring-indigo-500">
+                                    <label class="block text-sm font-semibold text-gray-700 uppercase mb-1">Campaign Account</label>
+                                    <select name="account_id" class="w-full border-gray-300 rounded-lg shadow-sm focus:border-indigo-500 focus:ring-indigo-500">
                                         <option value="">Select Account</option>
                                         @foreach($accounts as $acc)
                                             <option value="{{ $acc->id }}" {{ old('account_id', $employee->account_id) == $acc->id ? 'selected' : '' }}>{{ $acc->name }}</option>
@@ -300,10 +300,74 @@
                             </div>
                         </div>
 
-                        <!-- Section 4: Banking & Government IDs -->
+                        <!-- Section 4: Compensation & Benefits -->
                         <div class="mb-12 border-t border-gray-100 pt-12">
                             <div class="flex items-center mb-6">
-                                <span class="flex items-center justify-center w-8 h-8 rounded-full bg-indigo-100 text-indigo-600 font-bold mr-3">4</span>
+                                <span class="flex items-center justify-center w-8 h-8 rounded-full bg-emerald-100 text-emerald-600 font-bold mr-3">4</span>
+                                <h3 class="text-xl font-bold text-gray-800 uppercase tracking-tight">Compensation & Benefits</h3>
+                                <div class="ml-4 flex-grow border-t border-gray-200"></div>
+                            </div>
+
+                            <div class="grid grid-cols-1 md:grid-cols-4 gap-6">
+                                <div>
+                                    <label class="block text-sm font-bold text-emerald-900 uppercase tracking-wide mb-1">Monthly Salary</label>
+                                    <div class="relative">
+                                        <span class="absolute left-3 top-2 text-gray-500">₱</span>
+                                        <input type="number" step="0.01" name="monthly_salary" value="{{ old('monthly_salary', $employee->monthly_salary) }}"
+                                            class="w-full pl-8 border-emerald-100 rounded-lg shadow-sm focus:border-emerald-500 focus:ring-emerald-500 bg-emerald-50/30 font-bold text-emerald-700">
+                                    </div>
+                                </div>
+                                <div>
+                                    <label class="block text-sm font-semibold text-gray-700 uppercase mb-1">Daily Rate</label>
+                                    <div class="relative">
+                                        <span class="absolute left-3 top-2 text-gray-400">₱</span>
+                                        <input type="number" step="0.01" name="daily_rate" value="{{ old('daily_rate', $employee->daily_rate) }}"
+                                            class="w-full pl-8 border-gray-200 rounded-lg shadow-sm focus:border-indigo-500 focus:ring-indigo-500">
+                                    </div>
+                                </div>
+                                <div>
+                                    <label class="block text-sm font-semibold text-gray-700 uppercase mb-1">Hourly Rate</label>
+                                    <div class="relative">
+                                        <span class="absolute left-3 top-2 text-gray-400">₱</span>
+                                        <input type="number" step="0.01" name="hourly_rate" value="{{ old('hourly_rate', $employee->hourly_rate) }}"
+                                            class="w-full pl-8 border-gray-200 rounded-lg shadow-sm focus:border-indigo-500 focus:ring-indigo-500">
+                                    </div>
+                                </div>
+                                <div>
+                                    <label class="block text-sm font-semibold text-gray-700 uppercase mb-1">COLA (Daily)</label>
+                                    <div class="relative">
+                                        <span class="absolute left-3 top-2 text-gray-400">₱</span>
+                                        <input type="number" step="0.01" name="cola" value="{{ old('cola', $employee->cola) }}"
+                                            class="w-full pl-8 border-gray-200 rounded-lg shadow-sm focus:border-indigo-500 focus:ring-indigo-500">
+                                    </div>
+                                </div>
+                                <div>
+                                    <label class="block text-sm font-semibold text-gray-700 uppercase mb-1">Meal Allowance</label>
+                                    <input type="number" step="0.01" name="meal_allowance" value="{{ old('meal_allowance', $employee->meal_allowance) }}"
+                                        class="w-full border-gray-200 rounded-lg shadow-sm focus:border-indigo-500 focus:ring-indigo-500">
+                                </div>
+                                <div>
+                                    <label class="block text-sm font-semibold text-gray-700 uppercase mb-1">Transpo Allowance</label>
+                                    <input type="number" step="0.01" name="transportation_allowance" value="{{ old('transportation_allowance', $employee->transportation_allowance) }}"
+                                        class="w-full border-gray-200 rounded-lg shadow-sm focus:border-indigo-500 focus:ring-indigo-500">
+                                </div>
+                                <div>
+                                    <label class="block text-sm font-semibold text-gray-700 uppercase mb-1">Comm. Allowance</label>
+                                    <input type="number" step="0.01" name="communication_allowance" value="{{ old('communication_allowance', $employee->communication_allowance) }}"
+                                        class="w-full border-gray-200 rounded-lg shadow-sm focus:border-indigo-500 focus:ring-indigo-500">
+                                </div>
+                                <div>
+                                    <label class="block text-sm font-semibold text-gray-700 uppercase mb-1">Other Allowances</label>
+                                    <input type="number" step="0.01" name="other_allowance" value="{{ old('other_allowance', $employee->other_allowance) }}"
+                                        class="w-full border-gray-200 rounded-lg shadow-sm focus:border-indigo-500 focus:ring-indigo-500">
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- Section 5: Banking & Government IDs -->
+                        <div class="mb-12 border-t border-gray-100 pt-12">
+                            <div class="flex items-center mb-6">
+                                <span class="flex items-center justify-center w-8 h-8 rounded-full bg-indigo-100 text-indigo-600 font-bold mr-3">5</span>
                                 <h3 class="text-xl font-bold text-gray-800 uppercase tracking-tight">Banking & Government IDs</h3>
                                 <div class="ml-4 flex-grow border-t border-gray-200"></div>
                             </div>
@@ -342,10 +406,10 @@
                             </div>
                         </div>
 
-                        <!-- Section 5: Contact & Social Information -->
+                        <!-- Section 6: Contact & Social Information -->
                         <div class="mb-12 border-t border-gray-100 pt-12">
                             <div class="flex items-center mb-6">
-                                <span class="flex items-center justify-center w-8 h-8 rounded-full bg-indigo-100 text-indigo-600 font-bold mr-3">5</span>
+                                <span class="flex items-center justify-center w-8 h-8 rounded-full bg-indigo-100 text-indigo-600 font-bold mr-3">6</span>
                                 <h3 class="text-xl font-bold text-gray-800 uppercase tracking-tight">Contact Information</h3>
                                 <div class="ml-4 flex-grow border-t border-gray-200"></div>
                             </div>
@@ -374,10 +438,10 @@
                             </div>
                         </div>
 
-                        <!-- Section 6: Address Details -->
+                        <!-- Section 7: Address Details -->
                         <div class="mb-12 border-t border-gray-100 pt-12">
                             <div class="flex items-center mb-6">
-                                <span class="flex items-center justify-center w-8 h-8 rounded-full bg-indigo-100 text-indigo-600 font-bold mr-3">6</span>
+                                <span class="flex items-center justify-center w-8 h-8 rounded-full bg-indigo-100 text-indigo-600 font-bold mr-3">7</span>
                                 <h3 class="text-xl font-bold text-gray-800 uppercase tracking-tight">Address Information</h3>
                                 <div class="ml-4 flex-grow border-t border-gray-200"></div>
                             </div>
@@ -420,10 +484,10 @@
                             </div>
                         </div>
 
-                        <!-- Section 7: Other Info -->
+                        <!-- Section 8: Other Info -->
                         <div class="mb-12 border-t border-gray-100 pt-12">
                             <div class="flex items-center mb-6">
-                                <span class="flex items-center justify-center w-8 h-8 rounded-full bg-indigo-100 text-indigo-600 font-bold mr-3">7</span>
+                                <span class="flex items-center justify-center w-8 h-8 rounded-full bg-indigo-100 text-indigo-600 font-bold mr-3">8</span>
                                 <h3 class="text-xl font-bold text-gray-800 uppercase tracking-tight">Additional Information</h3>
                                 <div class="ml-4 flex-grow border-t border-gray-200"></div>
                             </div>

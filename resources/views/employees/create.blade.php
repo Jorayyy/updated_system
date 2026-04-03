@@ -15,7 +15,23 @@
     <div class="py-12">
         <div class="max-w-7xl mx-auto sm:px-6 lg:px-8">
             <div class="bg-white overflow-hidden shadow-sm sm:rounded-lg">
-                <div class="p-8 text-gray-900">
+                    @if ($errors->any())
+                        <div class="mb-6 p-4 bg-red-50 border-l-4 border-red-500 text-red-700">
+                            <p class="font-bold">Please correct the following errors:</p>
+                            <ul class="mt-2 list-disc list-inside text-sm">
+                                @foreach ($errors->all() as $error)
+                                    <li>{{ $error }}</li>
+                                @endforeach
+                            </ul>
+                        </div>
+                    @endif
+
+                    @if (session('error'))
+                        <div class="mb-6 p-4 bg-red-50 border-l-4 border-red-500 text-red-700 font-bold">
+                            {{ session('error') }}
+                        </div>
+                    @endif
+
                     <form method="POST" action="{{ route('employees.store') }}" enctype="multipart/form-data">
                         @csrf
 
@@ -79,14 +95,14 @@
                                         class="w-full border-gray-300 rounded-lg shadow-sm focus:border-indigo-500 focus:ring-indigo-500">
                                 </div>
                                 <div>
-                                    <label class="block text-sm font-semibold text-gray-700 uppercase mb-1">Birthday *</label>
-                                    <input type="date" name="birthday" value="{{ old('birthday') }}" required
+                                    <label class="block text-sm font-semibold text-gray-700 uppercase mb-1">Birthday</label>
+                                    <input type="date" name="birthday" value="{{ old('birthday') }}"
                                         class="w-full border-gray-300 rounded-lg shadow-sm focus:border-indigo-500 focus:ring-indigo-500">
                                     @error('birthday')<p class="mt-1 text-xs text-red-600">{{ $message }}</p>@enderror
                                 </div>
                                 <div>
-                                    <label class="block text-sm font-semibold text-gray-700 uppercase mb-1">Gender *</label>
-                                    <select name="gender" required class="w-full border-gray-300 rounded-lg shadow-sm focus:border-indigo-500 focus:ring-indigo-500">
+                                    <label class="block text-sm font-semibold text-gray-700 uppercase mb-1">Gender</label>
+                                    <select name="gender" class="w-full border-gray-300 rounded-lg shadow-sm focus:border-indigo-500 focus:ring-indigo-500">
                                         <option value="">Select Gender</option>
                                         <option value="Male" {{ old('gender') == 'Male' ? 'selected' : '' }}>Male</option>
                                         <option value="Female" {{ old('gender') == 'Female' ? 'selected' : '' }}>Female</option>
@@ -94,8 +110,8 @@
                                     @error('gender')<p class="mt-1 text-xs text-red-600">{{ $message }}</p>@enderror
                                 </div>
                                 <div>
-                                    <label class="block text-sm font-semibold text-gray-700 uppercase mb-1">Civil Status *</label>
-                                    <select name="civil_status" required class="w-full border-gray-300 rounded-lg shadow-sm focus:border-indigo-500 focus:ring-indigo-500">
+                                    <label class="block text-sm font-semibold text-gray-700 uppercase mb-1">Civil Status</label>
+                                    <select name="civil_status" class="w-full border-gray-300 rounded-lg shadow-sm focus:border-indigo-500 focus:ring-indigo-500">
                                         <option value="">Select Status</option>
                                         <option value="Single" {{ old('civil_status') == 'Single' ? 'selected' : '' }}>Single</option>
                                         <option value="Married" {{ old('civil_status') == 'Married' ? 'selected' : '' }}>Married</option>
@@ -143,32 +159,32 @@
                                     @error('employee_id')<p class="mt-1 text-xs text-red-600">{{ $message }}</p>@enderror
                                 </div>
                                 <div class="md:col-span-1">
-                                    <label class="block text-sm font-semibold text-gray-700 uppercase mb-1">Employment Type *</label>
-                                    <select name="employment_type" required class="w-full border-gray-300 rounded-lg shadow-sm focus:border-indigo-500 focus:ring-indigo-500">
+                                    <label class="block text-sm font-semibold text-gray-700 uppercase mb-1">Employment Type</label>
+                                    <select name="employment_type" class="w-full border-gray-300 rounded-lg shadow-sm focus:border-indigo-500 focus:ring-indigo-500">
                                         <option value="Regular" {{ old('employment_type') == 'Regular' ? 'selected' : '' }}>Regular</option>
-                                        <option value="Probationary" {{ old('employment_type') == 'Probationary' ? 'selected' : '' }}>Probationary</option>
+                                        <option value="Probationary" {{ old('employment_type', 'Regular') == 'Probationary' ? 'selected' : '' }}>Probationary</option>
                                         <option value="Contractual" {{ old('employment_type') == 'Contractual' ? 'selected' : '' }}>Contractual</option>
                                         <option value="Project-based" {{ old('employment_type') == 'Project-based' ? 'selected' : '' }}>Project-based</option>
                                     </select>
                                 </div>
                                 <div>
-                                    <label class="block text-sm font-semibold text-gray-700 uppercase mb-1">Classification *</label>
-                                    <select name="classification" required class="w-full border-gray-300 rounded-lg shadow-sm focus:border-indigo-500 focus:ring-indigo-500">
-                                        <option value="Rank and File" {{ old('classification') == 'Rank and File' ? 'selected' : '' }}>Rank and File</option>
+                                    <label class="block text-sm font-semibold text-gray-700 uppercase mb-1">Classification</label>
+                                    <select name="classification" class="w-full border-gray-300 rounded-lg shadow-sm focus:border-indigo-500 focus:ring-indigo-500">
+                                        <option value="Rank and File" {{ old('classification', 'Rank and File') == 'Rank and File' ? 'selected' : '' }}>Rank and File</option>
                                         <option value="Supervisory" {{ old('classification') == 'Supervisory' ? 'selected' : '' }}>Supervisory</option>
                                         <option value="Managerial" {{ old('classification') == 'Managerial' ? 'selected' : '' }}>Managerial</option>
                                         <option value="Executive" {{ old('classification') == 'Executive' ? 'selected' : '' }}>Executive</option>
                                     </select>
                                 </div>
                                 <div>
-                                    <label class="block text-sm font-semibold text-gray-700 uppercase mb-1">Tax Code *</label>
-                                    <input type="text" name="tax_code" value="{{ old('tax_code', 'M') }}" required
+                                    <label class="block text-sm font-semibold text-gray-700 uppercase mb-1">Tax Code</label>
+                                    <input type="text" name="tax_code" value="{{ old('tax_code', 'M') }}"
                                         class="w-full border-gray-300 rounded-lg shadow-sm focus:border-indigo-500 focus:ring-indigo-500">
                                 </div>
                                 <div>
-                                    <label class="block text-sm font-semibold text-gray-700 uppercase mb-1">Pay Type *</label>
-                                    <select name="pay_type" required class="w-full border-gray-300 rounded-lg shadow-sm focus:border-indigo-500 focus:ring-indigo-500">
-                                        <option value="Weekly" {{ old('pay_type') == 'Weekly' ? 'selected' : '' }}>Weekly</option>
+                                    <label class="block text-sm font-semibold text-gray-700 uppercase mb-1">Pay Type</label>
+                                    <select name="pay_type" class="w-full border-gray-300 rounded-lg shadow-sm focus:border-indigo-500 focus:ring-indigo-500">
+                                        <option value="Weekly" {{ old('pay_type', 'Weekly') == 'Weekly' ? 'selected' : '' }}>Weekly</option>
                                         <option value="Bi-Weekly" {{ old('pay_type') == 'Bi-Weekly' ? 'selected' : '' }}>Bi-Weekly</option>
                                         <option value="Monthly" {{ old('pay_type') == 'Monthly' ? 'selected' : '' }}>Monthly</option>
                                     </select>
@@ -184,8 +200,8 @@
                                     @error('payroll_group_id')<p class="mt-1 text-xs text-red-600">{{ $message }}</p>@enderror
                                 </div>
                                 <div>
-                                    <label class="block text-sm font-semibold text-gray-700 uppercase mb-1">Department *</label>
-                                    <select name="department_id" required class="w-full border-gray-300 rounded-lg shadow-sm focus:border-indigo-500 focus:ring-indigo-500">
+                                    <label class="block text-sm font-semibold text-gray-700 uppercase mb-1">Department</label>
+                                    <select name="department_id" class="w-full border-gray-300 rounded-lg shadow-sm focus:border-indigo-500 focus:ring-indigo-500">
                                         <option value="">Select Department</option>
                                         @foreach($departments as $dept)
                                             <option value="{{ $dept->id }}" {{ old('department_id') == $dept->id ? 'selected' : '' }}>{{ $dept->name }}</option>
@@ -193,13 +209,13 @@
                                     </select>
                                 </div>
                                 <div>
-                                    <label class="block text-sm font-semibold text-gray-700 uppercase mb-1">Position *</label>
-                                    <input type="text" name="position" value="{{ old('position') }}" required
+                                    <label class="block text-sm font-semibold text-gray-700 uppercase mb-1">Position</label>
+                                    <input type="text" name="position" value="{{ old('position') }}"
                                         class="w-full border-gray-300 rounded-lg shadow-sm focus:border-indigo-500 focus:ring-indigo-500">
                                 </div>
                                 <div>
-                                    <label class="block text-sm font-semibold text-gray-700 uppercase mb-1">Site *</label>
-                                    <select name="site_id" required class="w-full border-gray-300 rounded-lg shadow-sm focus:border-indigo-500 focus:ring-indigo-500">
+                                    <label class="block text-sm font-semibold text-gray-700 uppercase mb-1">Site</label>
+                                    <select name="site_id" class="w-full border-gray-300 rounded-lg shadow-sm focus:border-indigo-500 focus:ring-indigo-500">
                                         <option value="">Select Site</option>
                                         @foreach($sites as $site)
                                             <option value="{{ $site->id }}" {{ old('site_id') == $site->id ? 'selected' : '' }}>{{ $site->name }}</option>
@@ -207,14 +223,14 @@
                                     </select>
                                 </div>
                                 <div>
-                                    <label class="block text-sm font-semibold text-gray-700 uppercase mb-1">Date Hired *</label>
-                                    <input type="date" name="date_hired" value="{{ old('date_hired') }}" required
+                                    <label class="block text-sm font-semibold text-gray-700 uppercase mb-1">Date Hired</label>
+                                    <input type="date" name="date_hired" value="{{ old('date_hired') }}"
                                         class="w-full border-gray-300 rounded-lg shadow-sm focus:border-indigo-500 focus:ring-indigo-500">
                                     @error('date_hired')<p class="mt-1 text-xs text-red-600">{{ $message }}</p>@enderror
                                 </div>
                                 <div class="md:col-span-2">
-                                    <label class="block text-sm font-semibold text-gray-700 uppercase mb-1">Campaign Account *</label>
-                                    <select name="account_id" required class="w-full border-gray-300 rounded-lg shadow-sm focus:border-indigo-500 focus:ring-indigo-500">
+                                    <label class="block text-sm font-semibold text-gray-700 uppercase mb-1">Campaign Account</label>
+                                    <select name="account_id" class="w-full border-gray-300 rounded-lg shadow-sm focus:border-indigo-500 focus:ring-indigo-500">
                                         <option value="">Select Campaign Account (e.g. Amazon, Microsoft)</option>
                                         @foreach($accounts as $acc)
                                             <option value="{{ $acc->id }}" {{ old('account_id') == $acc->id ? 'selected' : '' }}>{{ $acc->name }}</option>
@@ -371,13 +387,13 @@
                                         Permanent Address
                                     </h4>
                                     <div>
-                                        <label class="block text-xs font-bold text-gray-500 uppercase mb-1">Street / Barangay / City *</label>
-                                        <textarea name="permanent_address" rows="2" required
+                                        <label class="block text-xs font-bold text-gray-500 uppercase mb-1">Street / Barangay / City</label>
+                                        <textarea name="permanent_address" rows="2"
                                             class="w-full border-gray-300 rounded-lg shadow-sm focus:border-indigo-500 focus:ring-indigo-500">{{ old('permanent_address') }}</textarea>
                                     </div>
                                     <div>
-                                        <label class="block text-xs font-bold text-gray-500 uppercase mb-1">Province *</label>
-                                        <input type="text" name="permanent_province" value="{{ old('permanent_province') }}" required
+                                        <label class="block text-xs font-bold text-gray-500 uppercase mb-1">Province</label>
+                                        <input type="text" name="permanent_province" value="{{ old('permanent_province') }}"
                                             class="w-full border-gray-300 rounded-lg shadow-sm focus:border-indigo-500 focus:ring-indigo-500">
                                     </div>
                                 </div>
@@ -388,13 +404,13 @@
                                         Present Address
                                     </h4>
                                     <div>
-                                        <label class="block text-xs font-bold text-gray-500 uppercase mb-1">Street / Barangay / City *</label>
-                                        <textarea name="present_address" rows="2" required
+                                        <label class="block text-xs font-bold text-gray-500 uppercase mb-1">Street / Barangay / City</label>
+                                        <textarea name="present_address" rows="2"
                                             class="w-full border-gray-300 rounded-lg shadow-sm focus:border-indigo-500 focus:ring-indigo-500">{{ old('present_address') }}</textarea>
                                     </div>
                                     <div>
-                                        <label class="block text-xs font-bold text-gray-500 uppercase mb-1">Province *</label>
-                                        <input type="text" name="present_province" value="{{ old('present_province') }}" required
+                                        <label class="block text-xs font-bold text-gray-500 uppercase mb-1">Province</label>
+                                        <input type="text" name="present_province" value="{{ old('present_province') }}"
                                             class="w-full border-gray-300 rounded-lg shadow-sm focus:border-indigo-500 focus:ring-indigo-500">
                                     </div>
                                 </div>

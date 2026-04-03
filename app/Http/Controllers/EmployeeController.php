@@ -8,6 +8,8 @@ use App\Models\Account;
 use App\Models\Department;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Hash;
+use Illuminate\Support\Facades\DB;
+use Illuminate\Support\Facades\Log;
 use Illuminate\Validation\Rules;
 
 class EmployeeController extends Controller
@@ -86,62 +88,69 @@ class EmployeeController extends Controller
      */
     public function store(Request $request)
     {
-        $request->validate([
-            'employee_id' => 'required|string|max:50|unique:users,employee_id',
-            'first_name' => 'required|string|max:100',
-            'middle_name' => 'nullable|string|max:100',
-            'last_name' => 'required|string|max:100',
-            'name_extension' => 'nullable|string|max:10',
-            'email' => 'required|string|email|max:255|unique:users,email',
-            'password' => ['required', 'confirmed', Rules\Password::defaults()],
-            'role' => 'required|string|in:employee,accounting,hr,admin,super_admin',
-            'account_id' => 'required|exists:accounts,id',
-            'department_id' => 'nullable|exists:departments,id',
-            'position' => 'nullable|string|max:100',
-            'date_hired' => 'nullable|date',
-            'site_id' => 'nullable|exists:sites,id',
-            'profile_photo' => 'nullable|image|mimes:jpeg,png,jpg,gif|max:2048',
-            
-            // New Demographic Fields
-            'title' => 'nullable|string',
-            'birthday' => 'required|date',
-            'gender' => 'required|string',
-            'civil_status' => 'required|string',
-            'place_of_birth' => 'nullable|string',
-            'blood_type' => 'nullable|string',
-            'citizenship' => 'nullable|string',
-            'religion' => 'nullable|string',
-            
-            // Employment
-            'employment_type' => 'required|string',
-            'classification' => 'required|string',
-            'tax_code' => 'required|string',
-            'pay_type' => 'required|string',
-            'payroll_group_id' => 'required|exists:payroll_groups,id',
-            'report_to' => 'nullable|exists:users,id',
-            
-            // Account/Contact
-            'bank' => 'nullable|string',
-            'account_no' => 'nullable|string',
-            'tin' => 'nullable|string',
-            'sss_number' => 'nullable|string|max:50',
-            'philhealth_number' => 'nullable|string|max:50',
-            'pagibig_number' => 'nullable|string|max:50',
-            'mobile_no_1' => 'nullable|string',
-            'mobile_no_2' => 'nullable|string',
-            'tel_no_1' => 'nullable|string',
-            'tel_no_2' => 'nullable|string',
-            'facebook' => 'nullable|string',
-            'twitter' => 'nullable|string',
-            'instagram' => 'nullable|string',
-            'permanent_address' => 'required|string',
-            'permanent_province' => 'required|string',
-            'present_address' => 'required|string',
-            'present_province' => 'required|string',
-            'other_info' => 'nullable|string',
-        ]);
+        try {
+            $validatedData = $request->validate([
+                'employee_id' => 'required|string|max:50|unique:users,employee_id',
+                'first_name' => 'required|string|max:100',
+                'middle_name' => 'nullable|string|max:100',
+                'last_name' => 'required|string|max:100',
+                'name_extension' => 'nullable|string|max:10',
+                'email' => 'required|string|email|max:255|unique:users,email',
+                'password' => ['required', 'confirmed', Rules\Password::defaults()],
+                'role' => 'required|string|in:employee,accounting,hr,admin,super_admin',
+                'account_id' => 'nullable|exists:accounts,id',
+                'department_id' => 'nullable|exists:departments,id',
+                'position' => 'nullable|string|max:100',
+                'date_hired' => 'nullable|date',
+                'site_id' => 'nullable|exists:sites,id',
+                'profile_photo' => 'nullable|image|mimes:jpeg,png,jpg,gif|max:2048',
+                
+                // New Demographic Fields
+                'title' => 'nullable|string',
+                'birthday' => 'nullable|date',
+                'gender' => 'nullable|string',
+                'civil_status' => 'nullable|string',
+                'place_of_birth' => 'nullable|string',
+                'blood_type' => 'nullable|string',
+                'citizenship' => 'nullable|string',
+                'religion' => 'nullable|string',
+                
+                // Employment
+                'employment_type' => 'nullable|string',
+                'classification' => 'nullable|string',
+                'tax_code' => 'nullable|string',
+                'pay_type' => 'nullable|string',
+                'payroll_group_id' => 'required|exists:payroll_groups,id',
+                'report_to' => 'nullable|exists:users,id',
+                
+                // Account/Contact
+                'bank' => 'nullable|string',
+                'account_no' => 'nullable|string',
+                'tin' => 'nullable|string',
+                'sss_number' => 'nullable|string|max:50',
+                'philhealth_number' => 'nullable|string|max:50',
+                'pagibig_number' => 'nullable|string|max:50',
+                'mobile_no_1' => 'nullable|string',
+                'mobile_no_2' => 'nullable|string',
+                'tel_no_1' => 'nullable|string',
+                'tel_no_2' => 'nullable|string',
+                'facebook' => 'nullable|string',
+                'twitter' => 'nullable|string',
+                'instagram' => 'nullable|string',
+                'permanent_address' => 'nullable|string',
+                'permanent_province' => 'nullable|string',
+                'present_address' => 'nullable|string',
+                'present_province' => 'nullable|string',
+                'other_info' => 'nullable|string',
+            ]);
+        } catch (\Illuminate\Validation\ValidationException $e) {
+            // Re-throw to allow standard validation error feedback, 
+            // but we can log it here to see what specifically failed
+            Log::error('Validation failed for employee creation', $e->errors());
+            throw $e;
+        }
 
-        $account = Account::find($request->account_id);
+        $account = $request->account_id ? Account::find($request->account_id) : null;
         $department = $request->department_id ? Department::find($request->department_id) : null;
         $role = $request->role;
 
@@ -151,7 +160,7 @@ class EmployeeController extends Controller
         }
 
         // Hierarchy Check
-        if (!auth()->user()->isSuperAdmin()) {
+        if (!auth()->user()->isSuperAdmin() && $account) {
             if ($account->hierarchy_level >= auth()->user()->hierarchy_level) {
                 return back()->with('error', 'Hierarchy Restriction: You cannot create an account with an equal or higher level than yours.')->withInput();
             }
@@ -160,70 +169,98 @@ class EmployeeController extends Controller
         // Auto-generate name
         $fullName = trim($request->first_name . ' ' . $request->middle_name . ' ' . $request->last_name . ' ' . $request->name_extension);
 
-        User::create([
-            'employee_id' => $request->employee_id,
-            'name' => $fullName,
-            'first_name' => $request->first_name,
-            'middle_name' => $request->middle_name,
-            'last_name' => $request->last_name,
-            'name_extension' => $request->name_extension,
-            'email' => $request->email,
-            'profile_photo' => $profilePhotoPath,
-            'password' => Hash::make($request->password),
-            'role' => $role,
-            'department_id' => $request->department_id,
-            'department' => $department ? $department->name : null,
-            'position' => $request->position,
-            'date_hired' => $request->date_hired,
-            'site_id' => $request->site_id,
-            'account_id' => $request->account_id,
-            'payroll_group_id' => $request->payroll_group_id,
-            'is_active' => true,
-            
-            // Demographics
-            'title' => $request->title,
-            'birthday' => $request->birthday,
-            'gender' => $request->gender,
-            'civil_status' => $request->civil_status,
-            'place_of_birth' => $request->place_of_birth,
-            'blood_type' => $request->blood_type,
-            'citizenship' => $request->citizenship,
-            'religion' => $request->religion,
-            
-            // Employment
-            'employment_type' => $request->employment_type,
-            'classification' => $request->classification,
-            'tax_code' => $request->tax_code,
-            'pay_type' => $request->pay_type,
-            'report_to' => $request->report_to,
-            
-            // Banking/Gov
-            'bank' => $request->bank,
-            'account_no' => $request->account_no,
-            'tin' => $request->tin,
-            'sss_number' => $request->sss_number,
-            'philhealth_number' => $request->philhealth_number,
-            'pagibig_number' => $request->pagibig_number,
-            
-            // Communication
-            'mobile_no_1' => $request->mobile_no_1,
-            'mobile_no_2' => $request->mobile_no_2,
-            'tel_no_1' => $request->tel_no_1,
-            'tel_no_2' => $request->tel_no_2,
-            'facebook' => $request->facebook,
-            'twitter' => $request->twitter,
-            'instagram' => $request->instagram,
-            
-            // Address
-            'permanent_address' => $request->permanent_address,
-            'permanent_province' => $request->permanent_province,
-            'present_address' => $request->present_address,
-            'present_province' => $request->present_province,
-            'other_info' => $request->other_info,
-        ]);
+        try {
+            DB::beginTransaction();
 
-        return redirect()->route('employees.index')
-            ->with('success', 'Employee created successfully.');
+            $user = User::create([
+                'employee_id' => $request->employee_id,
+                'name' => $fullName,
+                'first_name' => $request->first_name,
+                'middle_name' => $request->middle_name,
+                'last_name' => $request->last_name,
+                'name_extension' => $request->name_extension,
+                'email' => $request->email,
+                'profile_photo' => $profilePhotoPath,
+                'password' => Hash::make($request->password),
+                'role' => $role,
+                'department_id' => $request->department_id,
+                'department' => $department ? $department->name : null,
+                'position' => $request->position,
+                'date_hired' => $request->date_hired,
+                'site_id' => $request->site_id,
+                'account_id' => $request->account_id,
+                'payroll_group_id' => $request->payroll_group_id,
+                'is_active' => true,
+
+                // Initialize mandatory numeric fields to 0
+                'hourly_rate' => 0,
+                'daily_rate' => 0,
+                'monthly_salary' => 0,
+                'meal_allowance' => 0,
+                'transportation_allowance' => 0,
+                'communication_allowance' => 0,
+                'perfect_attendance_bonus' => 0,
+                'site_incentive' => 0,
+                'attendance_incentive' => 0,
+                'cola' => 0,
+                'other_allowance' => 0,
+                
+                // Demographics
+                'title' => $request->title,
+                'birthday' => $request->birthday,
+                'gender' => $request->gender,
+                'civil_status' => $request->civil_status,
+                'place_of_birth' => $request->place_of_birth,
+                'blood_type' => $request->blood_type,
+                'citizenship' => $request->citizenship,
+                'religion' => $request->religion,
+                
+                // Employment
+                'employment_type' => $request->employment_type,
+                'classification' => $request->classification,
+                'tax_code' => $request->tax_code,
+                'pay_type' => $request->pay_type,
+                'report_to' => $request->report_to,
+                
+                // Banking/Gov
+                'bank' => $request->bank,
+                'account_no' => $request->account_no,
+                'tin' => $request->tin,
+                'sss_number' => $request->sss_number,
+                'philhealth_number' => $request->philhealth_number,
+                'pagibig_number' => $request->pagibig_number,
+                
+                // Communication
+                'mobile_no_1' => $request->mobile_no_1,
+                'mobile_no_2' => $request->mobile_no_2,
+                'tel_no_1' => $request->tel_no_1,
+                'tel_no_2' => $request->tel_no_2,
+                'facebook' => $request->facebook,
+                'twitter' => $request->twitter,
+                'instagram' => $request->instagram,
+                
+                // Address
+                'permanent_address' => $request->permanent_address,
+                'permanent_province' => $request->permanent_province,
+                'present_address' => $request->present_address,
+                'present_province' => $request->present_province,
+                'other_info' => $request->other_info,
+            ]);
+
+            DB::commit();
+
+            return redirect()->route('employees.index')
+                ->with('success', 'Employee created successfully.');
+
+        } catch (\Exception $e) {
+            DB::rollBack();
+            Log::error('Employee creation failed: ' . $e->getMessage(), [
+                'exception' => $e,
+                'request' => $request->all()
+            ]);
+            
+            return back()->with('error', 'Failed to create employee: ' . $e->getMessage())->withInput();
+        }
     }
 
     /**
@@ -272,36 +309,36 @@ class EmployeeController extends Controller
         }
 
         $request->validate([
-            'employee_id' => 'required|string|max:50|unique:users,employee_id,' . $employee->id,
-            'first_name' => 'required|string|max:100',
+            'employee_id' => 'nullable|string|max:50|unique:users,employee_id,' . $employee->id,
+            'first_name' => 'nullable|string|max:100',
             'middle_name' => 'nullable|string|max:100',
-            'last_name' => 'required|string|max:100',
+            'last_name' => 'nullable|string|max:100',
             'name_extension' => 'nullable|string|max:10',
             'email' => 'required|string|email|max:255|unique:users,email,' . $employee->id,
             'password' => ['nullable', 'confirmed', Rules\Password::defaults()],
             'role' => 'required|string|in:employee,accounting,hr,admin,super_admin',
-            'site_id' => 'required|exists:sites,id',
-            'account_id' => 'required|exists:accounts,id',
-            'department_id' => 'required|exists:departments,id',
-            'position' => 'required|string|max:100',
-            'date_hired' => 'required|date',
+            'site_id' => 'nullable|exists:sites,id',
+            'account_id' => 'nullable|exists:accounts,id',
+            'department_id' => 'nullable|exists:departments,id',
+            'position' => 'nullable|string|max:100',
+            'date_hired' => 'nullable|date',
             
             // New Demographic Fields
             'title' => 'nullable|string',
-            'birthday' => 'required|date',
-            'gender' => 'required|string',
-            'civil_status' => 'required|string',
+            'birthday' => 'nullable|date',
+            'gender' => 'nullable|string',
+            'civil_status' => 'nullable|string',
             'place_of_birth' => 'nullable|string',
             'blood_type' => 'nullable|string',
             'citizenship' => 'nullable|string',
             'religion' => 'nullable|string',
             
             // Employment
-            'employment_type' => 'required|string',
-            'classification' => 'required|string',
-            'tax_code' => 'required|string',
-            'pay_type' => 'required|string',
-            'payroll_group_id' => 'required|exists:payroll_groups,id',
+            'employment_type' => 'nullable|string',
+            'classification' => 'nullable|string',
+            'tax_code' => 'nullable|string',
+            'pay_type' => 'nullable|string',
+            'payroll_group_id' => 'nullable|exists:payroll_groups,id',
             'report_to' => 'nullable|exists:users,id',
             
             // Financial
@@ -331,10 +368,10 @@ class EmployeeController extends Controller
             'facebook' => 'nullable|string',
             'twitter' => 'nullable|string',
             'instagram' => 'nullable|string',
-            'permanent_address' => 'required|string',
-            'permanent_province' => 'required|string',
-            'present_address' => 'required|string',
-            'present_province' => 'required|string',
+            'permanent_address' => 'nullable|string',
+            'permanent_province' => 'nullable|string',
+            'present_address' => 'nullable|string',
+            'present_province' => 'nullable|string',
             'other_info' => 'nullable|string',
             'is_active' => 'boolean',
             'profile_photo' => 'nullable|image|mimes:jpeg,png,jpg,gif|max:2048',

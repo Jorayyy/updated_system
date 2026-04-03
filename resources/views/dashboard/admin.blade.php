@@ -308,6 +308,19 @@
                                 <span class="text-[10px] font-black text-slate-700 text-center uppercase tracking-widest leading-tight">Log Attendance</span>
                             </a>
 
+                            <a href="{{ route('payroll.processing.index') }}" class="group flex flex-col items-center gap-4 p-5 bg-teal-50 rounded-2xl hover:bg-teal-100 transition-all border border-teal-200 shadow-sm relative">
+                                <div class="p-3 bg-teal-100 rounded-xl group-hover:bg-teal-200 transition-colors shadow-sm">
+                                    <svg class="w-7 h-7 text-teal-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8c-1.657 0-3 .895-3 2s1.343 2 3 2 3 .895 3 2-1.343 2-3 2m0-8c1.11 0 2.08.402 2.599 1M12 8V7m0 1v8m0 0v1m0-1c-1.11 0-2.08-.402-2.599-1M21 12a9 9 0 11-18 0 9 9 0 0118 0z"/>
+                                    </svg>
+                                </div>
+                                <span class="text-[10px] font-black text-teal-800 text-center uppercase tracking-widest leading-tight">Sync Payslips</span>
+                                <span class="absolute -top-1 -right-1 flex h-4 w-4">
+                                  <span class="animate-ping absolute inline-flex h-full w-full rounded-full bg-teal-400 opacity-75"></span>
+                                  <span class="relative inline-flex rounded-full h-4 w-4 bg-teal-500 border-2 border-white"></span>
+                                </span>
+                            </a>
+
                             <a href="{{ route('payroll.create-period') }}" class="group flex flex-col items-center gap-4 p-5 bg-slate-50 rounded-2xl hover:bg-indigo-50 transition-all border border-transparent hover:border-indigo-100">
                                 <div class="p-3 bg-indigo-100 rounded-xl group-hover:bg-indigo-200 transition-colors shadow-sm">
                                     <svg class="w-7 h-7 text-indigo-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">

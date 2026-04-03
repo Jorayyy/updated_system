@@ -18,7 +18,7 @@
                     @else bg-red-100 text-red-800 @endif">
                     {{ ucfirst($period->status) }}
                 </span>
-                <a href="{{ route('payroll.periods') }}" class="text-gray-600 hover:text-gray-800">
+                <a href="{{ $period->payroll_group_id ? route('payroll-groups.show', $period->payroll_group_id) : route('payroll.periods') }}" class="text-gray-600 hover:text-gray-800">
                     &larr; Back
                 </a>
             </div>
@@ -38,41 +38,6 @@
                     {{ session('error') }}
                 </div>
             @endif
-
-            <!-- Filtering -->
-            <div class="bg-white overflow-hidden shadow-sm sm:rounded-lg mb-6">
-                <div class="p-4 flex flex-wrap items-center gap-4">
-                    <form method="GET" action="{{ route('payroll.show-period', $period) }}" class="flex flex-wrap items-center gap-4 w-full">
-                        <div class="w-full md:w-48">
-                            <label for="site_id" class="block text-xs font-medium text-gray-700 uppercase mb-1">Filter by Site</label>
-                            <select name="site_id" id="site_id" onchange="this.form.submit()" class="block w-full text-sm border-gray-300 rounded-md focus:ring-indigo-500 focus:border-indigo-500">
-                                <option value="">All Sites</option>
-                                @foreach($sites as $site)
-                                    <option value="{{ $site->id }}" {{ request('site_id') == $site->id ? 'selected' : '' }}>
-                                        {{ $site->name }}
-                                    </option>
-                                @endforeach
-                            </select>
-                        </div>
-                        
-                        <div class="w-full md:w-48">
-                            <label for="account_id" class="block text-xs font-medium text-gray-700 uppercase mb-1">Filter by Account</label>
-                            <select name="account_id" id="account_id" onchange="this.form.submit()" class="block w-full text-sm border-gray-300 rounded-md focus:ring-indigo-500 focus:border-indigo-500">
-                                <option value="">All Accounts</option>
-                                @foreach($accounts as $account)
-                                    <option value="{{ $account->id }}" {{ request('account_id') == $account->id ? 'selected' : '' }}>
-                                        {{ $account->name }}
-                                    </option>
-                                @endforeach
-                            </select>
-                        </div>
-
-                        <div class="flex items-end h-full pt-5">
-                            <a href="{{ route('payroll.show-period', $period) }}" class="text-sm text-gray-500 hover:text-indigo-600 underline">Clear Filters</a>
-                        </div>
-                    </form>
-                </div>
-            </div>
 
             <!-- Summary Cards -->
             <div class="grid grid-cols-2 md:grid-cols-5 gap-4 mb-6">
