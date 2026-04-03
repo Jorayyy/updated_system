@@ -286,6 +286,7 @@ Route::middleware('auth')->group(function () {
             Route::prefix('payroll-processing')->name('payroll.processing.')->group(function () {
                 Route::get('/', [PayrollProcessingController::class, 'index'])->name('index');
                 Route::get('/period/{period}', [PayrollProcessingController::class, 'selectPeriod'])->name('select');
+                Route::post('/period/{period}/review', [PayrollProcessingController::class, 'review'])->name('review');
                 Route::post('/period/{period}/process', [PayrollProcessingController::class, 'process'])->name('process');
             });
 

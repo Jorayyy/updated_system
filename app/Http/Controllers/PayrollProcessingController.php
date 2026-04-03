@@ -58,14 +58,43 @@ class PayrollProcessingController extends Controller
     }
 
     /**
-     * Bulk process selected employees for this period.
+     * Step 2: Review computed results before generation.
+     */
+    public function review(Request $request, PayrollPeriod $period)
+    {
+        $userIds = $request->input('user_ids', []);
+
+        if (empty($userIds)) {
+            return back()->with('error', 'Please select at least one employee to preview.');
+        }
+
+        $period->load('payrollGroup');
+        $employees = User::whereIn('id', $userIds)->orderBy('name')->get();
+        
+        $previews = [];
+        foreach ($employees as $employee) {
+            $result = $this->payrollService->computeFromDtr($employee, $period, null, null, null, false);
+            if ($result['success']) {
+                $previews[] = [
+                    'user' => $employee,
+                    'data' => $result['data']
+                ];
+            }
+        }
+
+        return view('payroll.processing.review', compact('period', 'previews', 'userIds'));
+    }
+
+    /**
+     * Step 3: Bulk process selected employees for this period.
      */
     public function process(Request $request, PayrollPeriod $period)
     {
         $userIds = $request->input('user_ids', []);
 
         if (empty($userIds)) {
-            return back()->with('error', 'Please select at least one employee to generate payslips for.');
+            return redirect()->route('payroll.processing.select', $period)
+                ->with('error', 'Please select at least one employee to generate payslips for.');
         }
 
         try {
@@ -76,11 +105,12 @@ class PayrollProcessingController extends Controller
             $results = $this->payrollService->computePayrollForPeriod($period, $userIds, false);
 
             if (isset($results['success']) && $results['success'] === false) {
-                 return back()->with('error', 'Computation failed: ' . ($results['message'] ?? 'Unknown error.'));
+                 $period->update(['status' => 'draft']);
+                 return redirect()->route('payroll.processing.select', $period)
+                    ->with('error', 'Computation failed: ' . ($results['message'] ?? 'Unknown error.'));
             }
 
-            // Sync the period status back to draft if it's still being "manually" worked on
-            // or keep it if finalized. For now, let's keep it in draft so they can add more people.
+            // Keep it in draft so they can add more people if needed, or complete it via main UI
             $period->update(['status' => 'draft']);
 
             return redirect()->route('payroll-periods.show', $period->id)
@@ -89,7 +119,8 @@ class PayrollProcessingController extends Controller
         } catch (\Exception $e) {
             $period->update(['status' => 'draft']);
             Log::error('Payroll payslip generation failed: ' . $e->getMessage());
-            return back()->with('error', 'Failed to generate payslips: ' . $e->getMessage());
+            return redirect()->route('payroll.processing.select', $period)
+                ->with('error', 'Failed to generate payslips: ' . $e->getMessage());
         }
     }
 }

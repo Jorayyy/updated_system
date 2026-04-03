@@ -29,7 +29,7 @@
             </div>
         </div>
 
-        <form action="{{ route('payroll.processing.process', $period) }}" method="POST">
+        <form action="{{ route('payroll.processing.review', $period) }}" method="POST">
             @csrf
             
             <div class="overflow-hidden bg-white shadow-sm sm:rounded-lg text-black">
@@ -112,8 +112,8 @@
                 <div class="p-6 bg-gray-50 border-t flex items-center justify-between">
                     <a href="{{ route('payroll.processing.index') }}" class="text-sm text-gray-600 hover:underline">Cancel & Back</a>
                     
-                    <button type="submit" class="inline-flex items-center px-6 py-3 bg-green-600 border border-transparent rounded-md font-bold text-sm text-white uppercase tracking-widest hover:bg-green-700 active:bg-green-900 focus:outline-none focus:border-green-900 focus:ring ring-green-300 disabled:opacity-25 transition ease-in-out duration-150">
-                        Process and Generate Selected
+                    <button type="submit" class="inline-flex items-center px-6 py-3 bg-indigo-600 border border-transparent rounded-md font-bold text-sm text-white uppercase tracking-widest hover:bg-indigo-700 active:bg-indigo-900 focus:outline-none focus:border-indigo-900 focus:ring ring-indigo-300 disabled:opacity-25 transition ease-in-out duration-150">
+                        Continue to Phase 2: Review Calculation
                         <svg class="ml-2 -mr-1 h-5 w-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 5l7 7-7 7M5 5l7 7-7 7"></path></svg>
                     </button>
                 </div>
