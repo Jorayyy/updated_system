@@ -77,7 +77,22 @@ class PayrollProcessingController extends Controller
             if ($result['success']) {
                 $previews[] = [
                     'user' => $employee,
-                    'data' => $result['data']
+                    'data' => [
+                        'basic_pay' => $result['breakdown']['earnings']['basic_pay'],
+                        'overtime_pay' => $result['breakdown']['earnings']['overtime_pay'],
+                        'holiday_pay' => $result['breakdown']['earnings']['holiday_pay'],
+                        'night_diff_pay' => $result['breakdown']['earnings']['night_diff_pay'],
+                        'rest_day_pay' => $result['breakdown']['earnings']['rest_day_pay'],
+                        'bonus' => $result['breakdown']['earnings']['bonuses'] ?? 0,
+                        'allowances' => $result['breakdown']['earnings']['allowances'] ?? 0,
+                        'gross_pay' => $result['breakdown']['gross_pay'],
+                        'total_deductions' => $result['breakdown']['total_deductions'],
+                        'net_pay' => $result['breakdown']['net_pay'],
+                        'late_deduction' => $result['breakdown']['deductions']['late'],
+                        'undertime_deduction' => $result['breakdown']['deductions']['undertime'],
+                        'absent_deduction' => $result['breakdown']['deductions']['absent'],
+                        'leave_without_pay_deduction' => $result['breakdown']['deductions']['leave_without_pay'],
+                    ]
                 ];
             }
         }
