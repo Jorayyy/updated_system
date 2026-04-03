@@ -5,6 +5,7 @@ namespace App\Http\Controllers;
 use App\Models\Attendance;
 use App\Models\User;
 use App\Services\AttendanceService;
+use App\Services\DtrService;
 use Barryvdh\DomPDF\Facade\Pdf;
 use Carbon\Carbon;
 use Illuminate\Http\Request;
@@ -12,10 +13,12 @@ use Illuminate\Http\Request;
 class DTRController extends Controller
 {
     protected AttendanceService $attendanceService;
+    protected DtrService $dtrService;
 
-    public function __construct(AttendanceService $attendanceService)
+    public function __construct(AttendanceService $attendanceService, DtrService $dtrService)
     {
         $this->attendanceService = $attendanceService;
+        $this->dtrService = $dtrService;
     }
 
     /**
@@ -64,11 +67,16 @@ class DTRController extends Controller
                 ->orderBy('start_date', 'desc')
                 ->first();
 
-            // If no active period for their group, just get ANY active one
-            if (!$activePeriod) {
-                $activePeriod = \App\Models\PayrollPeriod::whereDate('start_date', '<=', now())
-                    ->whereDate('end_date', '>=', now()->subDays(10))
+            // If no active period for their group, look for the MOST RECENT period for their group
+            if (!$activePeriod && $user->payroll_group_id) {
+                $activePeriod = \App\Models\PayrollPeriod::where('payroll_group_id', $user->payroll_group_id)
                     ->orderBy('start_date', 'desc')
+                    ->first();
+            }
+
+            // If still no period for their group, just get ANY most recent one
+            if (!$activePeriod) {
+                $activePeriod = \App\Models\PayrollPeriod::orderBy('start_date', 'desc')
                     ->first();
             }
 
@@ -106,7 +114,27 @@ class DTRController extends Controller
         // Calculate summary
         $summary = $this->calculateDTRSummary($attendances, $user, $startDate, $endDate);
 
-        return view('dtr.index', compact('attendances', 'summary', 'month', 'year', 'user', 'payrollPeriods', 'periodId', 'startDate', 'endDate'));
+        // Fetch processed DTR records if period is selected
+        $processedRecords = collect();
+        $isProcessed = false;
+        if ($periodId) {
+            $processedRecords = \App\Models\DailyTimeRecord::where('user_id', $user->id)
+                ->where('payroll_period_id', $periodId)
+                ->orderBy('date', 'asc')
+                ->get();
+            
+            // Period is considered "processed" if DTRs are approved, locked or published
+            if ($processedRecords->isNotEmpty()) {
+                $status = $processedRecords->first()->status;
+                $isProcessed = in_array($status, ['approved', 'locked', 'published']);
+            }
+        }
+
+        return view('dtr.index', compact(
+            'attendances', 'summary', 'month', 'year', 'user', 
+            'payrollPeriods', 'periodId', 'startDate', 'endDate',
+            'processedRecords', 'isProcessed'
+        ));
     }
 
     /**

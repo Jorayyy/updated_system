@@ -23,32 +23,30 @@ class PayslipController extends Controller
     public function index(Request $request)
     {
         $user = auth()->user();
-        $year = $request->get('year', date('Y'));
-
-        $payslips = Payroll::with('payrollPeriod')
-            ->where('user_id', $user->id)
+        
+        $payrollPeriods = Payroll::where('user_id', $user->id)
             ->where('is_posted', true)
-            ->whereIn('status', ['released', 'paid'])
-            ->whereYear('created_at', $year)
-            ->orderBy('created_at', 'desc')
-            ->paginate(12);
-
-        // YTD Summary
-        $ytdSummary = $this->payslipService->getYtdSummary($user, $year);
-
-        // Available years
-        $years = Payroll::where('user_id', $user->id)
-            ->where('is_posted', true)
-            ->whereIn('status', ['released', 'paid'])
-            ->select('created_at')
-            ->distinct()
-            ->orderBy('created_at', 'desc')
+            ->with('payrollPeriod')
             ->get()
-            ->map(fn($p) => $p->created_at->year)
-            ->unique()
-            ->values();
+            ->map(function($p) {
+                return [
+                    'id' => $p->id,
+                    'label' => $p->payrollPeriod->start_date->format('F d Y') . ' to ' . 
+                               $p->payrollPeriod->end_date->format('F d Y') . ' (Paydate:' . 
+                               ($p->payrollPeriod->pay_date ? $p->payrollPeriod->pay_date->format('Y-m-d') : 'N/A') . ')'
+                ];
+            })
+            ->sortByDesc('id');
 
-        return view('payslip.index', compact('payslips', 'ytdSummary', 'year', 'years'));
+        $selectedPayroll = null;
+        if ($request->has('payroll_id')) {
+            $selectedPayroll = Payroll::with(['user', 'payrollPeriod'])->find($request->payroll_id);
+            if ($selectedPayroll && $selectedPayroll->user_id !== $user->id) {
+                $selectedPayroll = null;
+            }
+        }
+
+        return view('payslip.index', compact('payrollPeriods', 'selectedPayroll'));
     }
 
     /**

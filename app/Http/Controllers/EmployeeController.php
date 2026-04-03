@@ -54,7 +54,7 @@ class EmployeeController extends Controller
             $query->where('account_id', $request->account_id);
         }
 
-        $employees = $query->orderBy('name')->paginate(15);
+        $employees = $query->with('payrollGroup.periods')->orderBy('name')->paginate(15);
         
         $departments = Department::orderBy('name')->get();
         
