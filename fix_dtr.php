@@ -1,1 +1,0 @@
-<?php \ = file_get_contents('app/Services/DtrService.php');
