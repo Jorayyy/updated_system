@@ -253,9 +253,8 @@ class PayrollComputationController extends Controller
         }
 
         // Get employees with approved DTRs for this period
-        // MODIFICATION: Only include the 'employee' role. Admin accounts that need payroll
-        // must use a separate employee account for computations.
-        $query = User::where('is_active', true)->where('role', 'employee');
+        // MODIFICATION: Include all active users in the group, regardless of role.
+        $query = User::where('is_active', true);
         if ($period->payroll_group_id) {
             $query->where('payroll_group_id', $period->payroll_group_id);
         } else {

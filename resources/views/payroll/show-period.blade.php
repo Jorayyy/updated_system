@@ -67,17 +67,14 @@
             @if($period->status == 'draft')
                 <div class="bg-white overflow-hidden shadow-sm sm:rounded-lg mb-6">
                     <div class="p-4 flex items-center justify-between">
-                        <div class="text-sm text-gray-600">
-                            <strong>Note:</strong> Review all payroll records before processing. 
-                            Once processed, individual records will be finalized.
+                        <div class="text-sm text-gray-600 italic">
+                            <strong>Manual Review:</strong> Use the Accounting workflow to review calculations before finishing.
                         </div>
-                        <form action="{{ route('payroll.process-period', $period) }}" method="POST"
-                            onsubmit="return confirm('Are you sure you want to process this payroll period? This will calculate payroll for all active employees.')">
-                            @csrf
-                            <button type="submit" class="bg-green-600 text-white px-6 py-2 rounded-md hover:bg-green-700">
-                                Process Payroll
-                            </button>
-                        </form>
+                        <div class="flex items-center space-x-3">
+                            <a href="{{ route('payroll.processing.select', $period) }}" class="bg-indigo-600 text-white px-6 py-2 rounded-md hover:bg-indigo-700 font-bold">
+                                ⚙️ Start Manual Review (3 Phases)
+                            </a>
+                        </div>
                     </div>
                 </div>
             @endif

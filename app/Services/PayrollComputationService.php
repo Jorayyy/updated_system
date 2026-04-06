@@ -305,11 +305,8 @@ class PayrollComputationService
         ];
 
         // Get employees
-        // User requesting to process only 'employee' role. 
-        // System accounts (Admin, Accountant, HR) must use their separate employee account
-        // if they need payroll.
-        $query = User::where('is_active', true)
-            ->where('role', 'employee');
+        // We include ALL active users in the group, regardless of role (Admin/HR also get paid)
+        $query = User::where('is_active', true);
             
         // Filter by Payroll Group if defined
         if ($period->payroll_group_id) {

@@ -260,7 +260,7 @@ class DtrApprovalController extends Controller
         $payrollGroups = \App\Models\PayrollGroup::orderBy('name')->get();
 
         $employees = $user->role !== 'employee' 
-            ? User::where('is_active', true)->where('role', 'employee')->orderBy('name')->get()
+            ? User::where('is_active', true)->orderBy('name')->get()
             : collect();
 
         $stats = $this->approvalService->getApprovalStats($request->payroll_period_id);

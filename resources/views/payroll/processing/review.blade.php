@@ -48,6 +48,7 @@
                                     <th class="px-4 py-3 text-right text-blue-600">OT/Holiday</th>
                                     <th class="px-4 py-3 text-right text-red-600">Late/Undert.</th>
                                     <th class="px-4 py-3 text-right text-red-600">Abs/LWOP</th>
+                                    <th class="px-4 py-3 text-right text-green-600">Allowance/Bonus</th>
                                     <th class="px-4 py-3 text-right font-bold bg-green-50">Gross Pay</th>
                                     <th class="px-4 py-3 text-right text-red-700 bg-red-50">Deductions</th>
                                     <th class="px-4 py-3 text-right font-black border-l-2 border-indigo-200 bg-indigo-50">Net Pay</th>
@@ -55,26 +56,55 @@
                             </thead>
                             <tbody class="divide-y divide-gray-200">
                                 @foreach($previews as $preview)
-                                    @php $data = $preview['data']; @endphp
-                                    <tr class="hover:bg-gray-50 transition-colors">
+                                    @php 
+                                        $data = $preview['data']; 
+                                        $uId = $preview['user']->id;
+                                    @endphp
+                                    <tr class="hover:bg-gray-50 transition-colors" x-data="{ 
+                                        basic: {{ $data['basic_pay'] }}, 
+                                        ot: {{ $data['overtime_pay'] + $data['holiday_pay'] + $data['night_diff_pay'] + $data['rest_day_pay'] }},
+                                        late: {{ $data['late_deduction'] + $data['undertime_deduction'] }},
+                                        absent: {{ $data['absent_deduction'] + $data['leave_without_pay_deduction'] }},
+                                        bonus: {{ $data['allowances'] + $data['bonus'] }},
+                                        gov: {{ $data['total_deductions'] - ($data['late_deduction'] + $data['undertime_deduction'] + $data['absent_deduction'] + $data['leave_without_pay_deduction']) }}
+                                    }">
                                         <td class="px-4 py-4 border-r">
                                             <div class="font-bold text-gray-900">{{ $preview['user']->name }}</div>
                                             <div class="text-[10px] text-gray-500">{{ $preview['user']->employee_id }}</div>
                                         </td>
-                                        <td class="px-4 py-4 text-right">₱{{ number_format($data['basic_pay'], 2) }}</td>
+                                        <td class="px-4 py-4 text-right">
+                                            <input type="number" step="0.01" name="adjustments[{{ $uId }}][basic_pay]" 
+                                                x-model.number="basic"
+                                                class="w-24 text-right border-gray-300 rounded-md text-xs focus:ring-indigo-500 focus:border-indigo-500">
+                                        </td>
                                         <td class="px-4 py-4 text-right text-blue-600 font-medium">
-                                            ₱{{ number_format($data['overtime_pay'] + $data['holiday_pay'] + $data['night_diff_pay'] + $data['rest_day_pay'], 2) }}
+                                            <input type="number" step="0.01" name="adjustments[{{ $uId }}][overtime_pay]" 
+                                                x-model.number="ot"
+                                                class="w-24 text-right border-gray-300 rounded-md text-xs focus:ring-blue-500 focus:border-blue-500 text-blue-600">
                                         </td>
                                         <td class="px-4 py-4 text-right text-red-500">
-                                            -₱{{ number_format($data['late_deduction'] + $data['undertime_deduction'], 2) }}
+                                            <input type="number" step="0.01" name="adjustments[{{ $uId }}][late_undertime_deduction]" 
+                                                x-model.number="late"
+                                                class="w-24 text-right border-gray-300 rounded-md text-xs focus:ring-red-500 focus:border-red-500 text-red-600">
                                         </td>
                                         <td class="px-4 py-4 text-right text-red-500">
-                                            -₱{{ number_format($data['absent_deduction'] + $data['leave_without_pay_deduction'], 2) }}
+                                            <input type="number" step="0.01" name="adjustments[{{ $uId }}][absent_lwop_deduction]" 
+                                                x-model.number="absent"
+                                                class="w-24 text-right border-gray-300 rounded-md text-xs focus:ring-red-500 focus:border-red-500 text-red-600">
                                         </td>
-                                        <td class="px-4 py-4 text-right font-bold bg-green-50">₱{{ number_format($data['gross_pay'], 2) }}</td>
-                                        <td class="px-4 py-4 text-right text-red-700 bg-red-50">-₱{{ number_format($data['total_deductions'], 2) }}</td>
+                                        <td class="px-4 py-4 text-right text-green-600">
+                                            <input type="number" step="0.01" name="adjustments[{{ $uId }}][allowance_bonus]" 
+                                                x-model.number="bonus"
+                                                class="w-24 text-right border-gray-300 rounded-md text-xs focus:ring-green-500 focus:border-green-500 text-green-600">
+                                        </td>
+                                        <td class="px-4 py-4 text-right font-bold bg-green-50">
+                                            ₱<span x-text="(basic + ot + bonus).toLocaleString(undefined, {minimumFractionDigits: 2, maximumFractionDigits: 2})"></span>
+                                        </td>
+                                        <td class="px-4 py-4 text-right text-red-700 bg-red-50">
+                                            -₱<span x-text="(gov + late + absent).toLocaleString(undefined, {minimumFractionDigits: 2, maximumFractionDigits: 2})"></span>
+                                        </td>
                                         <td class="px-4 py-4 text-right font-black border-l-2 border-indigo-200 bg-indigo-50 text-indigo-900">
-                                            ₱{{ number_format($data['net_pay'], 2) }}
+                                            ₱<span x-text="(basic + ot + bonus - (gov + late + absent)).toLocaleString(undefined, {minimumFractionDigits: 2, maximumFractionDigits: 2})"></span>
                                         </td>
                                     </tr>
                                 @endforeach

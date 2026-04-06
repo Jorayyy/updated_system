@@ -44,10 +44,9 @@ class PayrollProcessingController extends Controller
     {
         $period->load('payrollGroup');
         
-        // Find employees for this group
+        // Find employees for this group (include all roles, not just 'employee')
         $employees = User::where('payroll_group_id', $period->payroll_group_id)
             ->where('is_active', true)
-            ->where('role', 'employee')
             ->orderBy('name')
             ->get();
 
@@ -106,6 +105,7 @@ class PayrollProcessingController extends Controller
     public function process(Request $request, PayrollPeriod $period)
     {
         $userIds = $request->input('user_ids', []);
+        $adjustments = $request->input('adjustments', []);
 
         if (empty($userIds)) {
             return redirect()->route('payroll.processing.select', $period)
@@ -113,6 +113,8 @@ class PayrollProcessingController extends Controller
         }
 
         try {
+            DB::beginTransaction();
+
             // Update period to processing
             $period->update(['status' => 'processing']);
 
@@ -120,18 +122,69 @@ class PayrollProcessingController extends Controller
             $results = $this->payrollService->computePayrollForPeriod($period, $userIds, false);
 
             if (isset($results['success']) && $results['success'] === false) {
+                 DB::rollBack();
                  $period->update(['status' => 'draft']);
                  return redirect()->route('payroll.processing.select', $period)
                     ->with('error', 'Computation failed: ' . ($results['message'] ?? 'Unknown error.'));
             }
 
+            // Apply manual adjustments if any
+            foreach ($adjustments as $userId => $adj) {
+                $payroll = Payroll::where('payroll_period_id', $period->id)
+                    ->where('user_id', $userId)
+                    ->first();
+
+                if ($payroll) {
+                    $payroll->basic_pay = $adj['basic_pay'] ?? $payroll->basic_pay;
+                    $payroll->overtime_pay = $adj['overtime_pay'] ?? $payroll->overtime_pay;
+                    $payroll->late_deductions = $adj['late_undertime_deduction'] ?? $payroll->late_deductions;
+                    $payroll->absent_deductions = $adj['absent_lwop_deduction'] ?? $payroll->absent_deductions;
+                    $payroll->allowances = $adj['allowance_bonus'] ?? $payroll->allowances;
+                    
+                    // Zero out other components that might have been bundled into these inputs
+                    $payroll->holiday_pay = 0;
+                    $payroll->night_diff_pay = 0;
+                    $payroll->rest_day_pay = 0;
+                    $payroll->undertime_deductions = 0;
+                    $payroll->leave_without_pay_deductions = 0;
+                    $payroll->bonus = 0;
+
+                    // Recompute gross, total deductions, and net pay
+                    $payroll->gross_pay = $payroll->basic_pay + $payroll->overtime_pay + $payroll->allowances;
+                    
+                    // Note: We keep gov deductions as calculated by the service unless we want to allow editing them too.
+                    // For now, let's keep it simple as requested.
+                    $payroll->total_deductions = $payroll->sss_contribution + 
+                                               $payroll->philhealth_contribution + 
+                                               $payroll->pagibig_contribution + 
+                                               $payroll->withholding_tax + 
+                                               $payroll->late_deductions + 
+                                               $payroll->absent_deductions + 
+                                               $payroll->loan_deductions + 
+                                               $payroll->other_deductions;
+                    
+                    $payroll->net_pay = $payroll->gross_pay - $payroll->total_deductions;
+                    
+                    $payroll->is_manually_adjusted = true;
+                    $payroll->adjustment_reason = 'Manual adjustment during review phase';
+                    $payroll->adjusted_by = auth()->id();
+                    $payroll->adjusted_at = now();
+                    $payroll->save();
+                }
+            }
+
             // Keep it in draft so they can add more people if needed, or complete it via main UI
             $period->update(['status' => 'draft']);
 
-            return redirect()->route('payroll-periods.show', $period->id)
-                ->with('success', "Payslips generated for " . ($results['computed'] ?? 0) . " selected employees.");
+            DB::commit();
+
+            return view('payroll.processing.completed', [
+                'period' => $period,
+                'results' => $results
+            ]);
 
         } catch (\Exception $e) {
+            DB::rollBack();
             $period->update(['status' => 'draft']);
             Log::error('Payroll payslip generation failed: ' . $e->getMessage());
             return redirect()->route('payroll.processing.select', $period)
